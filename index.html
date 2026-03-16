@@ -657,20 +657,23 @@ function getExIcon(name, exType) {
   return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="6" y1="19" x2="18" y2="19"/></svg>`;
 }
 
+// Un día está completo SOLO cuando tiene el registro _day_complete
+function isDayComplete(dayLabel) {
+  const r = q(
+    "SELECT COUNT(*) FROM workout_log WHERE week=? AND day_label=? AND exercise='_day_complete'",
+    [currentWeek, dayLabel]
+  );
+  return r.length && r[0].values.length ? (r[0].values[0][0]||0) > 0 : false;
+}
+
 // Determina el índice del día actual (el siguiente sin completar)
 function getCurrentDayIndex() {
   const days = getDays();
   for (let di = 0; di < days.length; di++) {
-    const d = days[di];
-    const label = d.session_name || 'Día '+(di+1);
-    const logged = q(
-      "SELECT COUNT(*) FROM workout_log WHERE week=? AND day_label=?",
-      [currentWeek, label]
-    );
-    const count = logged.length && logged[0].values.length ? (logged[0].values[0][0]||0) : 0;
-    if (count === 0) return di;
+    const label = days[di].session_name || 'Día '+(di+1);
+    if (!isDayComplete(label)) return di;
   }
-  return 0; // si todos están hechos, volver al primero
+  return 0; // todos completos, volver al primero
 }
 
 function renderToday() {
@@ -737,10 +740,8 @@ function renderWorkout() {
   days.forEach((dayObj, di) => {
     const dayLabel = dayObj.session_name || 'Día ' + (di+1);
     const exList = dayObj.exercises || [];
-    // Saber si este día ya tiene logs
-    const logged = q("SELECT COUNT(*) FROM workout_log WHERE week=? AND day_label=?",
-      [currentWeek, dayLabel]);
-    const isDone = (logged.length && logged[0].values.length ? logged[0].values[0][0] : 0) > 0;
+    // Un día está completo solo si tiene _day_complete
+    const isDone = isDayComplete(dayLabel);
 
     const card = document.createElement('div');
     card.className = 'day-card';
@@ -1014,6 +1015,7 @@ function saveLog() {
 
   loggedThisSession.add(modalData.logId);
   closeModal();
+  renderToday();
   renderWorkout();
   renderHome();
   showToast('✓ ' + modalData.exName + ' registrado');
