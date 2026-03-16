@@ -74,6 +74,18 @@ body{background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 .ex-tag.superset{background:rgba(167,139,250,.12);color:var(--accent2);border-color:rgba(167,139,250,.3)}
 .ex-tag.tempo{background:rgba(251,191,36,.1);color:var(--amber);border-color:rgba(251,191,36,.25)}
 .ex-row.is-superset{border-left:2px solid var(--accent2)}
+.ex-row.is-grouped{border-left:2px solid var(--accent2)}
+.ex-tag.group-superset{background:rgba(167,139,250,.12);color:var(--accent2);border-color:rgba(167,139,250,.3)}
+.ex-tag.group-triset{background:rgba(96,165,250,.12);color:var(--blue);border-color:rgba(96,165,250,.3)}
+.ex-tag.group-giant{background:rgba(52,211,153,.12);color:var(--green);border-color:rgba(52,211,153,.3)}
+.ex-tag.group-pyramid{background:rgba(251,191,36,.12);color:var(--amber);border-color:rgba(251,191,36,.3)}
+.ex-tag.group-dropset{background:rgba(248,113,113,.12);color:var(--red);border-color:rgba(248,113,113,.3)}
+.ex-tag.type-cardio{background:rgba(52,211,153,.1);color:var(--green);border-color:rgba(52,211,153,.25)}
+.ex-tag.type-isometric{background:rgba(96,165,250,.1);color:var(--blue);border-color:rgba(96,165,250,.25)}
+.group-header{font-size:10px;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:.5px;padding:8px 16px 0;opacity:.7}
+/* modal cardio fields */
+.cardio-fields{display:none}
+.cardio-fields.show{display:block}
 
 /* STATS */
 .stat-row{display:flex;gap:10px;padding:0 16px 10px}
@@ -273,13 +285,31 @@ input:focus{outline:none;border-color:var(--accent)}
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-title" id="modal-ex-name">Ejercicio</div>
     <div class="modal-sub" id="modal-ex-meta"></div>
-    <div class="input-row">
-      <div class="input-group"><label>Series realizadas</label><input type="number" id="m-sets" min="1" max="10"></div>
-      <div class="input-group"><label>Repeticiones</label><input type="number" id="m-reps" min="1" max="50"></div>
+    <!-- Campos strength / isometric -->
+    <div id="m-strength-fields">
+      <div class="input-row">
+        <div class="input-group"><label>Series realizadas</label><input type="number" id="m-sets" min="1" max="10"></div>
+        <div class="input-group"><label id="m-reps-label">Repeticiones</label><input type="number" id="m-reps" min="1" max="50"></div>
+      </div>
+      <div class="input-row">
+        <div class="input-group"><label>Peso (kg)</label><input type="number" id="m-weight" min="0" step="2.5" value="0"></div>
+        <div class="input-group"><label>RPE (1–10)</label><input type="number" id="m-rpe" min="1" max="10" step="0.5"></div>
+      </div>
+      <div id="m-pyramid-fields" style="display:none;margin-bottom:12px">
+        <div style="font-size:12px;color:var(--text2);font-weight:600;margin-bottom:6px">Series piramidales</div>
+        <div id="m-pyramid-rows"></div>
+      </div>
     </div>
-    <div class="input-row">
-      <div class="input-group"><label>Peso (kg)</label><input type="number" id="m-weight" min="0" step="2.5" value="0"></div>
-      <div class="input-group"><label>RPE (1–10)</label><input type="number" id="m-rpe" min="1" max="10" step="0.5"></div>
+    <!-- Campos cardio -->
+    <div id="m-cardio-fields" style="display:none">
+      <div class="input-row">
+        <div class="input-group"><label>Duración (min)</label><input type="number" id="m-duration" min="1" max="120" value="15"></div>
+        <div class="input-group"><label>Inclinación (%)</label><input type="number" id="m-incline" min="0" max="30" step="0.5" value="0"></div>
+      </div>
+      <div class="input-row">
+        <div class="input-group"><label>Velocidad (km/h)</label><input type="number" id="m-speed" min="0" max="30" step="0.1" value="0"></div>
+        <div class="input-group"><label>FC real (bpm)</label><input type="number" id="m-hr" min="0" max="220" value="0"></div>
+      </div>
     </div>
     <div id="m-safety-warn" style="display:none;font-size:12px;color:var(--amber);background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:8px;padding:8px 12px;margin-bottom:12px"></div>
     <div class="input-group" style="margin-bottom:20px">
@@ -313,55 +343,63 @@ const DEFAULT_EXERCISES = {
     {
       "day_number": 1, "session_name": "Upper Body Power",
       "exercises": [
-        {"exercise_name":"barbell_bench_press","sets":4,"reps":6,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"explosive","special_notes":"focus_on_explosive_concentric"},
-        {"exercise_name":"pendlay_row","sets":4,"reps":6,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"controlled"},
-        {"exercise_name":"dumbbell_military_press","sets":3,"reps":8,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"normal"},
-        {"exercise_name":"lat_pulldown","sets":3,"reps":8,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"normal"},
-        {"exercise_name":"bicep_curl","sets":3,"reps":10,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":true,"tempo":"normal","special_notes":"superset_with_tricep_pushdown"},
-        {"exercise_name":"tricep_pushdown","sets":3,"reps":10,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":true,"tempo":"normal","special_notes":"superset_with_bicep_curl"},
-        {"exercise_name":"incline_treadmill_walk","duration_min":15,"incline_pct":10,"intensity_notes":"target_hr_65_pct"}
+        {"exercise_name":"barbell_bench_press","exercise_type":"strength","sets":4,"reps":6,"current_weight_kg":0,"max_safety_limit_kg":null,"tempo":"explosive","special_notes":"focus_on_explosive_concentric"},
+        {"exercise_name":"pendlay_row","exercise_type":"strength","sets":4,"reps":6,"current_weight_kg":0,"max_safety_limit_kg":null,"tempo":"controlled"},
+        {"exercise_name":"dumbbell_military_press","exercise_type":"strength","sets":3,"reps":8,"current_weight_kg":0,"max_safety_limit_kg":null,"tempo":"normal"},
+        {"exercise_name":"lat_pulldown","exercise_type":"strength","sets":3,"reps":8,"current_weight_kg":0,"max_safety_limit_kg":null,"tempo":"normal"},
+        {"exercise_name":"bicep_curl","exercise_type":"strength","sets":3,"reps":10,"current_weight_kg":0,"group_id":"A","group_type":"superset","special_notes":"superset_with_tricep_pushdown"},
+        {"exercise_name":"tricep_pushdown","exercise_type":"strength","sets":3,"reps":10,"current_weight_kg":0,"group_id":"A","group_type":"superset","special_notes":"superset_with_bicep_curl"},
+        {"exercise_name":"incline_treadmill_walk","exercise_type":"cardio","intensity_mode":"LISS","duration_min":15,"incline_pct":10,"speed_kmh":5.0,"special_notes":"post_weight_fat_burn"}
       ]
     },
     {
       "day_number": 2, "session_name": "Lower Body Density",
       "exercises": [
-        {"exercise_name":"barbell_squat_tempo_3210","sets":4,"reps":10,"current_weight_kg":50,"max_safety_limit_kg":60,"is_superset":false,"tempo":"3210","special_notes":"3sec_down_2sec_pause_1sec_up"},
-        {"exercise_name":"leg_press","sets":3,"reps":12,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"normal"},
-        {"exercise_name":"leg_extension_isometric","sets":3,"reps":15,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"isometric"},
-        {"exercise_name":"lying_leg_curl","sets":4,"reps":12,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"controlled"},
-        {"exercise_name":"incline_treadmill_walk","duration_min":15,"incline_pct":10,"intensity_notes":"target_hr_65_pct"}
+        {"exercise_name":"barbell_squat_tempo_3210","exercise_type":"strength","sets":4,"reps":10,"current_weight_kg":50,"max_safety_limit_kg":60,"tempo":"3210","special_notes":"3sec_down_2sec_pause_1sec_up"},
+        {"exercise_name":"leg_press","exercise_type":"strength","sets":3,"reps":12,"current_weight_kg":0,"tempo":"normal"},
+        {"exercise_name":"leg_extension_isometric","exercise_type":"strength","sets":3,"reps":15,"current_weight_kg":0,"tempo":"isometric"},
+        {"exercise_name":"lying_leg_curl","exercise_type":"strength","sets":4,"reps":12,"current_weight_kg":0,"tempo":"controlled"},
+        {"exercise_name":"incline_treadmill_walk","exercise_type":"cardio","intensity_mode":"LISS","duration_min":15,"incline_pct":10,"speed_kmh":5.0,"target_heart_rate_bpm":130}
+      ]
+    },
+    {
+      "day_number": 3, "session_name": "Active Recovery / LISS",
+      "exercises": [
+        {"exercise_name":"incline_treadmill_walk","exercise_type":"cardio","intensity_mode":"LISS","duration_min":30,"incline_pct":10,"speed_kmh":5.5,"target_heart_rate_bpm":130,"special_notes":"maintain_steady_pace_for_fat_oxidation"}
       ]
     },
     {
       "day_number": 4, "session_name": "Push and Finisher",
       "exercises": [
-        {"exercise_name":"incline_dumbbell_press","sets":4,"reps":10,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"normal"},
-        {"exercise_name":"cable_flyes","sets":3,"reps":12,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"slow"},
-        {"exercise_name":"lateral_raises","sets":4,"reps":15,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"controlled"},
-        {"exercise_name":"bench_dips","sets":3,"reps":15,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"normal"},
-        {"exercise_name":"burpees_no_jump_finisher","sets":3,"reps":15,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"normal"},
-        {"exercise_name":"incline_treadmill_walk","duration_min":15,"incline_pct":10,"intensity_notes":"target_hr_65_pct"}
+        {"exercise_name":"incline_dumbbell_press","exercise_type":"strength","sets":4,"reps":10,"current_weight_kg":0,"tempo":"normal"},
+        {"exercise_name":"cable_flyes","exercise_type":"strength","sets":3,"reps":12,"current_weight_kg":0,"tempo":"slow"},
+        {"exercise_name":"lateral_raises","exercise_type":"strength","sets":3,"reps":12,"current_weight_kg":0,"group_id":"B","group_type":"triset"},
+        {"exercise_name":"front_raises","exercise_type":"strength","sets":3,"reps":12,"current_weight_kg":0,"group_id":"B","group_type":"triset"},
+        {"exercise_name":"rear_delt_flyes","exercise_type":"strength","sets":3,"reps":12,"current_weight_kg":0,"group_id":"B","group_type":"triset"},
+        {"exercise_name":"bench_dips","exercise_type":"strength","sets":3,"reps":15,"current_weight_kg":0,"tempo":"normal"},
+        {"exercise_name":"incline_treadmill_walk","exercise_type":"cardio","intensity_mode":"LISS","duration_min":15,"incline_pct":10,"speed_kmh":5.0}
       ]
     },
     {
       "day_number": 5, "session_name": "Pull and Core",
       "exercises": [
-        {"exercise_name":"low_row_cable","sets":4,"reps":10,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"controlled"},
-        {"exercise_name":"v_bar_lat_pulldown","sets":4,"reps":10,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"normal"},
-        {"exercise_name":"face_pulls","sets":3,"reps":15,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"slow","special_notes":"external_rotation_focus"},
-        {"exercise_name":"plank","sets":3,"duration_sec":60,"is_superset":false,"special_notes":"brace_core_neutral_spine"},
-        {"exercise_name":"ab_wheel","sets":3,"reps":10,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"controlled"},
-        {"exercise_name":"incline_treadmill_walk","duration_min":15,"incline_pct":10,"intensity_notes":"target_hr_65_pct"}
+        {"exercise_name":"low_row_cable","exercise_type":"strength","sets":4,"reps":10,"current_weight_kg":0,"tempo":"controlled"},
+        {"exercise_name":"v_bar_lat_pulldown","exercise_type":"strength","sets":4,"reps":10,"current_weight_kg":0,"tempo":"normal"},
+        {"exercise_name":"face_pulls","exercise_type":"strength","sets":3,"reps":15,"current_weight_kg":0,"tempo":"slow","special_notes":"external_rotation_focus"},
+        {"exercise_name":"plank","exercise_type":"isometric","sets":3,"duration_sec":60,"special_notes":"brace_core_neutral_spine"},
+        {"exercise_name":"ab_wheel","exercise_type":"strength","sets":3,"reps":10,"current_weight_kg":0,"tempo":"controlled"},
+        {"exercise_name":"incline_treadmill_walk","exercise_type":"cardio","intensity_mode":"LISS","duration_min":15,"incline_pct":10,"speed_kmh":5.0}
       ]
     },
     {
       "day_number": 6, "session_name": "Legs and Glutes Explosive",
       "exercises": [
-        {"exercise_name":"barbell_hip_thrust","sets":4,"reps":10,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"explosive","special_notes":"squeeze_glutes_at_top_2sec"},
-        {"exercise_name":"romanian_deadlift","sets":4,"reps":10,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"controlled","special_notes":"feel_hamstring_stretch"},
-        {"exercise_name":"walking_lunges","sets":3,"reps":12,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"normal"},
-        {"exercise_name":"hip_abduction_machine","sets":3,"reps":20,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"slow"},
-        {"exercise_name":"incline_treadmill_walk","duration_min":15,"incline_pct":10,"intensity_notes":"target_hr_65_pct"}
+        {"exercise_name":"barbell_squat","exercise_type":"strength","sets":5,"pyramid_reps":[12,10,8,6,4],"pyramid_weights_kg":[50,60,70,80,90],"max_safety_limit_kg":90,"group_id":"C","group_type":"pyramid","special_notes":"warm_up_first"},
+        {"exercise_name":"barbell_hip_thrust","exercise_type":"strength","sets":4,"reps":10,"current_weight_kg":0,"tempo":"explosive","special_notes":"squeeze_glutes_at_top_2sec"},
+        {"exercise_name":"romanian_deadlift","exercise_type":"strength","sets":4,"reps":10,"current_weight_kg":0,"tempo":"controlled","special_notes":"feel_hamstring_stretch"},
+        {"exercise_name":"walking_lunges","exercise_type":"strength","sets":3,"reps":12,"current_weight_kg":0,"tempo":"normal"},
+        {"exercise_name":"hip_abduction_machine","exercise_type":"strength","sets":3,"reps":20,"current_weight_kg":0,"tempo":"slow"},
+        {"exercise_name":"incline_treadmill_walk","exercise_type":"cardio","intensity_mode":"LISS","duration_min":15,"incline_pct":10,"speed_kmh":5.0}
       ]
     }
   ]
@@ -551,7 +589,8 @@ function calcTotalSets() {
   let t = 0;
   getDays().forEach(d => {
     (d.exercises || []).forEach(ex => {
-      t += ex.sets || (ex.duration_min || ex.duration_minutes || ex.duration_sec ? 1 : 0);
+      const etype = ex.exercise_type || (ex.duration_min||ex.duration_minutes ? 'cardio' : ex.duration_sec ? 'isometric' : 'strength');
+      t += etype === 'cardio' ? 1 : (ex.sets || (ex.duration_sec ? 1 : 0));
     });
   });
   return t;
@@ -603,7 +642,7 @@ function renderWorkout() {
         <svg class="day-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
       <div class="ex-list">
-        ${exList.map((ex, ei) => buildExRow(ex, dayLabel, info, di, ei)).join('')}
+        ${buildExList(exList, dayLabel, info, di)}
       </div>`;
     container.appendChild(card);
   });
@@ -655,32 +694,72 @@ function buildExRow(ex, dayLabel, info, di, ei) {
 // ═══════════════════════════════════════════════════════════════
 //  MODAL
 // ═══════════════════════════════════════════════════════════════
-function openModal(dayLabel, exName, sets, reps, logId, unit='reps', preWeight=0, safetyLimit=0) {
+function openModalFromData(encoded) {
+  const d = JSON.parse(decodeURIComponent(encoded));
   const info = getWeekInfo(currentWeek);
-  modalData = { dayLabel, exName, logId, safetyLimit: parseFloat(safetyLimit) || 0 };
-  document.getElementById('modal-ex-name').textContent = exName;
-  const unitLabel = unit === 'sec' ? 'seg' : 'reps';
-  document.getElementById('modal-ex-meta').textContent =
-    `${sets} series × ${reps} ${unitLabel} · RPE meta: ${info.rpe_target || '?'}`;
-  document.getElementById('m-sets').value = sets;
-  document.getElementById('m-reps').value = reps;
-  // Label dinámico reps/seg
-  document.getElementById('m-reps').closest('.input-group').querySelector('label').textContent =
-    unit === 'sec' ? 'Segundos' : 'Repeticiones';
-  // Pre-llenar peso desde current_weight_kg
-  document.getElementById('m-weight').value = preWeight || 0;
-  document.getElementById('m-rpe').value = info.rpe_target || 7;
-  document.getElementById('m-notes').value = '';
-  // Safety warning
-  const warn = document.getElementById('m-safety-warn');
-  if (modalData.safetyLimit > 0) {
-    warn.textContent = `⚠ Límite de seguridad: ${modalData.safetyLimit} kg`;
-    warn.style.display = 'block';
+  modalData = { dayLabel: d.dayLabel, exName: d.name, logId: d.logId,
+    safetyLimit: d.safetyLimit||0, exType: d.exType };
+
+  document.getElementById('modal-ex-name').textContent = d.name;
+  const isCardio = d.exType === 'cardio';
+  const isIso = d.exType === 'isometric';
+  const isPyramid = !!(d.pyramid_reps && d.pyramid_reps.length);
+
+  // Mostrar/ocultar secciones del modal
+  document.getElementById('m-strength-fields').style.display = isCardio ? 'none' : 'block';
+  document.getElementById('m-cardio-fields').style.display = isCardio ? 'block' : 'none';
+
+  if (isCardio) {
+    document.getElementById('modal-ex-meta').textContent =
+      `${d.duration_min} min · ${d.incline_pct}% · ${d.speed_kmh} km/h`;
+    document.getElementById('m-duration').value = d.duration_min || 15;
+    document.getElementById('m-incline').value = d.incline_pct || 0;
+    document.getElementById('m-speed').value = d.speed_kmh || 0;
+    document.getElementById('m-hr').value = d.target_hr || 0;
   } else {
-    warn.style.display = 'none';
+    document.getElementById('modal-ex-meta').textContent =
+      `${d.sets} series · RPE meta: ${info.rpe_target || '?'}`;
+    document.getElementById('m-sets').value = d.sets || 1;
+    document.getElementById('m-reps-label').textContent = isIso ? 'Segundos' : 'Repeticiones';
+    document.getElementById('m-reps').value = d.reps || 0;
+    document.getElementById('m-weight').value = d.preWeight || 0;
+    document.getElementById('m-rpe').value = info.rpe_target || 7;
+
+    // Pirámide: mostrar fila por serie
+    const pyrDiv = document.getElementById('m-pyramid-fields');
+    if (isPyramid) {
+      pyrDiv.style.display = 'block';
+      document.getElementById('m-pyramid-rows').innerHTML = d.pyramid_reps.map((r,i) =>
+        `<div class="input-row" style="margin-bottom:6px">
+          <div class="input-group"><label>Serie ${i+1} kg</label>
+            <input type="number" id="m-pyr-w-${i}" min="0" step="2.5" value="${d.pyramid_weights?.[i]||0}">
+          </div>
+          <div class="input-group"><label>Reps</label>
+            <input type="number" id="m-pyr-r-${i}" min="1" value="${r}">
+          </div>
+        </div>`
+      ).join('');
+      modalData.pyramid_count = d.pyramid_reps.length;
+    } else {
+      pyrDiv.style.display = 'none';
+    }
   }
+
+  // Safety limit warning
+  const warn = document.getElementById('m-safety-warn');
+  if (d.safetyLimit > 0) {
+    warn.textContent = `⚠ Límite de seguridad: ${d.safetyLimit} kg`;
+    warn.style.display = 'block';
+  } else { warn.style.display = 'none'; }
+
+  document.getElementById('m-notes').value = '';
   document.getElementById('log-modal').classList.add('open');
-  setTimeout(() => document.getElementById('m-weight').focus(), 300);
+  setTimeout(() => {
+    const first = isCardio
+      ? document.getElementById('m-duration')
+      : document.getElementById('m-weight');
+    first && first.focus();
+  }, 300);
 }
 
 function closeModal(e) {
@@ -690,20 +769,46 @@ function closeModal(e) {
 }
 
 function saveLog() {
-  const sets   = parseInt(document.getElementById('m-sets').value)   || 0;
-  const reps   = parseInt(document.getElementById('m-reps').value)   || 0;
-  const weight = parseFloat(document.getElementById('m-weight').value) || 0;
-  const rpe    = parseFloat(document.getElementById('m-rpe').value)   || 0;
-  const notes  = document.getElementById('m-notes').value.trim();
+  const notes = document.getElementById('m-notes').value.trim();
+  const isCardio = modalData.exType === 'cardio';
 
-  // Advertencia de safety limit — no bloquea, solo confirma
-  if (modalData.safetyLimit > 0 && weight > modalData.safetyLimit) {
-    if (!confirm(`⚠ ${weight}kg supera el límite de seguridad de ${modalData.safetyLimit}kg. ¿Continuar?`)) return;
+  if (isCardio) {
+    // Log cardio: duration como sets, hr como rpe
+    const duration = parseInt(document.getElementById('m-duration').value) || 0;
+    const incline  = parseFloat(document.getElementById('m-incline').value) || 0;
+    const speed    = parseFloat(document.getElementById('m-speed').value) || 0;
+    const hr       = parseInt(document.getElementById('m-hr').value) || 0;
+    const cardioNotes = `incline:${incline}% speed:${speed}km/h hr:${hr}bpm${notes?' '+notes:''}`;
+    run(`INSERT INTO workout_log (week,day_label,exercise,sets,reps,weight_kg,rpe,notes)
+         VALUES (?,?,?,?,?,?,?,?)`,
+      [currentWeek, modalData.dayLabel, modalData.exName, 1, duration, speed, hr, cardioNotes]);
+
+  } else if (modalData.pyramid_count) {
+    // Log pirámide: una fila por serie
+    for (let i = 0; i < modalData.pyramid_count; i++) {
+      const w = parseFloat(document.getElementById(`m-pyr-w-${i}`)?.value) || 0;
+      const r = parseInt(document.getElementById(`m-pyr-r-${i}`)?.value) || 0;
+      const rpe = parseFloat(document.getElementById('m-rpe').value) || 0;
+      if (w > modalData.safetyLimit && modalData.safetyLimit > 0) {
+        if (!confirm(`⚠ Serie ${i+1}: ${w}kg supera límite de ${modalData.safetyLimit}kg. ¿Continuar?`)) return;
+      }
+      run(`INSERT INTO workout_log (week,day_label,exercise,sets,reps,weight_kg,rpe,notes)
+           VALUES (?,?,?,?,?,?,?,?)`,
+        [currentWeek, modalData.dayLabel, modalData.exName+'_s'+(i+1), 1, r, w, rpe, notes]);
+    }
+  } else {
+    // Log normal (strength / isometric)
+    const sets   = parseInt(document.getElementById('m-sets').value) || 0;
+    const reps   = parseInt(document.getElementById('m-reps').value) || 0;
+    const weight = parseFloat(document.getElementById('m-weight').value) || 0;
+    const rpe    = parseFloat(document.getElementById('m-rpe').value) || 0;
+    if (modalData.safetyLimit > 0 && weight > modalData.safetyLimit) {
+      if (!confirm(`⚠ ${weight}kg supera el límite de seguridad de ${modalData.safetyLimit}kg. ¿Continuar?`)) return;
+    }
+    run(`INSERT INTO workout_log (week,day_label,exercise,sets,reps,weight_kg,rpe,notes)
+         VALUES (?,?,?,?,?,?,?,?)`,
+      [currentWeek, modalData.dayLabel, modalData.exName, sets, reps, weight, rpe, notes]);
   }
-
-  run(`INSERT INTO workout_log (week,day_label,exercise,sets,reps,weight_kg,rpe,notes)
-       VALUES (?,?,?,?,?,?,?,?)`,
-    [currentWeek, modalData.dayLabel, modalData.exName, sets, reps, weight, rpe, notes]);
 
   loggedThisSession.add(modalData.logId);
   closeModal();

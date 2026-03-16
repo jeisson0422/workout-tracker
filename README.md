@@ -79,8 +79,6 @@ Desde la app ve a **Config**, pega el nuevo JSON en el campo correspondiente y t
 
 ## Schema: JSON de ejercicios
 
-Este es el schema exacto que la app lee. Úsalo como base para construir nuevas rutinas.
-
 ```json
 {
   "routine_metadata": {
@@ -95,58 +93,66 @@ Este es el schema exacto que la app lee. Úsalo como base para construir nuevas 
     {
       "day_number": 1,
       "session_name": "Nombre de la sesión",
-      "exercises": [
-        {
-          "exercise_name": "nombre_en_snake_case",
-          "sets": 4,
-          "reps": 8,
-          "current_weight_kg": 0,
-          "max_safety_limit_kg": null,
-          "is_superset": false,
-          "tempo": "normal",
-          "special_notes": "string",
-          "duration_min": 15,
-          "incline_pct": 10,
-          "intensity_notes": "string",
-          "duration_sec": 60
-        }
-      ]
+      "exercises": [...]
     }
   ]
 }
 ```
 
-### Reglas del schema de ejercicios
+### Tipos de ejercicio (`exercise_type`)
 
-**`day_number`** — entero del 1 al 7 (día de la semana). Solo se usa como identificador; puedes tener día 1, 2, 4, 6 y saltar los días de descanso.
-
-**`session_name`** — nombre libre de la sesión, se muestra en la app.
-
-**Tipos de ejercicio — usar solo los campos que aplican:**
-
-| Tipo | Campos requeridos | Campos opcionales |
+| Valor | Campos requeridos | Campos opcionales |
 |---|---|---|
-| Fuerza / hipertrofia | `exercise_name`, `sets`, `reps` | `current_weight_kg`, `max_safety_limit_kg`, `tempo`, `special_notes`, `is_superset` |
-| Cardio (cinta, bike) | `exercise_name`, `duration_min`, `incline_pct` | `intensity_notes` |
-| Isométrico (plank, wall sit) | `exercise_name`, `sets`, `duration_sec` | `special_notes` |
+| `"strength"` | `exercise_name`, `sets`, `reps` | `current_weight_kg`, `max_safety_limit_kg`, `tempo`, `special_notes`, `group_id`, `group_type` |
+| `"cardio"` | `exercise_name`, `duration_min`, `incline_pct` | `speed_kmh`, `target_heart_rate_bpm`, `intensity_mode`, `special_notes` |
+| `"isometric"` | `exercise_name`, `sets`, `duration_sec` | `special_notes` |
 
-Los campos no usados se omiten — no poner `"reps": 0` en un ejercicio de cardio.
+### Agrupamiento (`group_id` + `group_type`)
 
-**Campos opcionales y su efecto en la UI:**
+Los ejercicios con el mismo `group_id` se muestran agrupados visualmente con un header y borde de color. Cada `group_type` tiene su propio color en la UI.
+
+| `group_type` | Color | Descripción |
+|---|---|---|
+| `"superset"` | Morado | 2 ejercicios sin descanso |
+| `"triset"` | Azul | 3 ejercicios sin descanso |
+| `"giant_set"` | Verde | 4+ ejercicios sin descanso |
+| `"pyramid"` | Amarillo | Reps/peso progresivos por serie |
+| `"drop_set"` | Rojo | Mismo ejercicio, peso baja cada serie |
+
+Ejercicios sin `group_id` se muestran solos, sin agrupamiento.
+
+### Pirámide (`pyramid_reps` + `pyramid_weights_kg`)
+
+Para pirámides, en lugar de `reps` y `current_weight_kg` se usan arrays paralelos. El modal muestra una fila de input por cada serie.
+
+```json
+{
+  "exercise_name": "barbell_squat",
+  "exercise_type": "strength",
+  "sets": 5,
+  "pyramid_reps": [12, 10, 8, 6, 4],
+  "pyramid_weights_kg": [50, 60, 70, 80, 90],
+  "max_safety_limit_kg": 90,
+  "group_id": "C",
+  "group_type": "pyramid"
+}
+```
+
+### Campos opcionales y su efecto en la UI
 
 | Campo | Tipo | Efecto |
 |---|---|---|
-| `current_weight_kg` | `number` | Pre-llena el campo de peso en el modal de log |
-| `max_safety_limit_kg` | `number \| null` | Muestra advertencia si el usuario loguea más kg |
-| `is_superset` | `boolean` | Borde lateral morado + tag "superset" |
-| `tempo` | `string` | Tag amarillo debajo del nombre (`3210`, `explosive`, `slow`, etc.) |
-| `special_notes` | `string` | Hint en cursiva debajo del nombre (snake_case → se convierte a espacios) |
-| `intensity_notes` | `string` | Hint en cardio (ej. `target_hr_65_pct`) |
+| `current_weight_kg` | `number` | Pre-llena el peso en el modal |
+| `max_safety_limit_kg` | `number\|null` | Aviso naranja + confirmación si se supera |
+| `is_superset` | — | **Deprecated** — usar `group_id` + `group_type` |
+| `tempo` | `string` | Tag amarillo: `normal`, `controlled`, `slow`, `explosive`, `3210`, etc. |
+| `special_notes` | `string` | Hint en cursiva (snake_case → espacios) |
+| `intensity_mode` | `string` | Tag verde en cardio: `LISS`, `HIIT`, etc. |
+| `intensity_notes` | `string` | Hint en cardio |
+| `target_heart_rate_bpm` | `number` | Se muestra en la meta del ejercicio |
+| `speed_kmh` | `number` | Se muestra en meta y se pre-llena en el modal |
 
-**`tempo` — valores recomendados:**
-`normal` · `controlled` · `slow` · `explosive` · `isometric` · `3210` · `4010` · cualquier string
-
-**Ejemplo completo con los tres tipos:**
+### Ejemplo completo
 
 ```json
 {
@@ -161,48 +167,51 @@ Los campos no usados se omiten — no poner `"reps": 0` en un ejercicio de cardi
   "training_days": [
     {
       "day_number": 1,
-      "session_name": "Upper Body Power",
+      "session_name": "Upper Body",
       "exercises": [
         {
           "exercise_name": "barbell_bench_press",
+          "exercise_type": "strength",
           "sets": 4, "reps": 6,
           "current_weight_kg": 80,
           "max_safety_limit_kg": 100,
-          "is_superset": false,
           "tempo": "explosive",
           "special_notes": "focus_on_explosive_concentric"
         },
         {
           "exercise_name": "bicep_curl",
+          "exercise_type": "strength",
           "sets": 3, "reps": 10,
           "current_weight_kg": 14,
-          "is_superset": true,
-          "special_notes": "superset_with_tricep_pushdown"
+          "group_id": "A", "group_type": "superset"
         },
         {
           "exercise_name": "tricep_pushdown",
+          "exercise_type": "strength",
           "sets": 3, "reps": 10,
           "current_weight_kg": 20,
-          "is_superset": true,
-          "special_notes": "superset_with_bicep_curl"
+          "group_id": "A", "group_type": "superset"
         },
         {
           "exercise_name": "plank",
+          "exercise_type": "isometric",
           "sets": 3, "duration_sec": 60,
           "special_notes": "brace_core_neutral_spine"
         },
         {
           "exercise_name": "incline_treadmill_walk",
+          "exercise_type": "cardio",
+          "intensity_mode": "LISS",
           "duration_min": 15, "incline_pct": 10,
-          "intensity_notes": "target_hr_65_pct"
+          "speed_kmh": 5.0,
+          "target_heart_rate_bpm": 130,
+          "special_notes": "post_weight_fat_burn"
         }
       ]
     }
   ]
 }
 ```
-
----
 
 ## Schema: JSON de progresión
 
