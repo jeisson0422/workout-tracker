@@ -84,6 +84,7 @@ body{background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 .ex-log-btn.logged{background:var(--accent);border-color:var(--accent);color:#fff}
 .ex-hint{font-size:11px;color:var(--accent2);margin-top:3px;font-style:italic;opacity:.8}
 .ex-rest{font-size:11px;color:var(--text3);margin-top:2px}
+.ex-suggested{font-size:11px;color:var(--green);margin-top:2px;font-weight:600}
 .modal-rest{font-size:12px;color:var(--text2);background:var(--bg3);border-radius:8px;padding:8px 12px;margin-bottom:12px;text-align:center}
 .ex-tags{display:flex;gap:5px;margin-top:4px;flex-wrap:wrap}
 .ex-tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:var(--bg4);color:var(--text2);border:1px solid var(--border)}
@@ -666,20 +667,39 @@ function isDayComplete(dayLabel) {
   return r.length && r[0].values.length ? (r[0].values[0][0]||0) > 0 : false;
 }
 
+// Verifica si todos los días de una semana están completos
+function isWeekComplete(week) {
+  const days = getDays();
+  const savedWeek = currentWeek;
+  currentWeek = week;
+  const allDone = days.every((d, di) => isDayComplete(d.session_name || 'Día '+(di+1)));
+  currentWeek = savedWeek;
+  return allDone;
+}
+
 // Determina el índice del día actual (el siguiente sin completar)
+// Si todos los días de la semana actual están completos, avanza a la siguiente semana
 function getCurrentDayIndex() {
   const days = getDays();
   for (let di = 0; di < days.length; di++) {
     const label = days[di].session_name || 'Día '+(di+1);
     if (!isDayComplete(label)) return di;
   }
-  return 0; // todos completos, volver al primero
+  // Todos los días completos — avanzar a la siguiente semana automáticamente
+  const totalWeeks = (progression.progression_data || []).length || 14;
+  if (currentWeek < totalWeeks) {
+    currentWeek += 1;
+    setConfig('current_week', currentWeek);
+    renderHome();
+    showToast('🎉 Semana ' + (currentWeek-1) + ' completa → Semana ' + currentWeek);
+  }
+  return 0; // primer día de la nueva semana
 }
 
 function renderToday() {
-  const info = getWeekInfo(currentWeek);
   const days = getDays();
-  const di = getCurrentDayIndex();
+  const di = getCurrentDayIndex(); // puede actualizar currentWeek si la semana se completó
+  const info = getWeekInfo(currentWeek); // leer DESPUÉS del posible avance de semana
   const dayObj = days[di];
   if (!dayObj) return;
   const dayLabel = dayObj.session_name || 'Día '+(di+1);
@@ -759,6 +779,34 @@ function renderWorkout() {
       </div>`;
     container.appendChild(card);
   });
+}
+
+// ── peso sugerido ─────────────────────────────────────────────
+function getSuggestedWeight(exName, weekInfo) {
+  // No aplica a cardio ni isométricos
+  // Buscar el último log del ejercicio en cualquier semana anterior
+  const r = q(
+    `SELECT weight_kg, week FROM workout_log
+     WHERE exercise=? AND week < ? AND weight_kg > 0
+     ORDER BY week DESC, id DESC LIMIT 1`,
+    [exName, currentWeek]
+  );
+  if (!r.length || !r[0].values.length) return null;
+  const lastWeight = parseFloat(r[0].values[0][0]);
+  const lastWeek   = parseInt(r[0].values[0][1]);
+  if (!lastWeight) return null;
+
+  const pct = weekInfo.weight_change_pct || '0%';
+  if (pct === 'maintain' || pct === '0%') return { kg: lastWeight, change: '=' };
+
+  const match = pct.match(/([+-]?[\d.]+)%/);
+  if (!match) return { kg: lastWeight, change: '=' };
+
+  const delta = parseFloat(match[1]) / 100;
+  // Redondear al 2.5kg más cercano
+  const raw = lastWeight * (1 + delta);
+  const rounded = Math.round(raw / 2.5) * 2.5;
+  return { kg: rounded, change: pct, from: lastWeight, fromWeek: lastWeek };
 }
 
 // ── rest defaults by type ─────────────────────────────────────
@@ -859,17 +907,36 @@ function buildExRow(ex, dayLabel, info, di, ei) {
   const restHtml = restSec > 0
     ? `<div class="ex-rest">⏱ descanso: ${fmtRest(restSec)}</div>` : '';
 
+  // ── peso sugerido (solo strength con historial) ───────────────
+  let suggestedHtml = '';
+  if (exType === 'strength' && ex.group_type !== 'pyramid') {
+    const sug = getSuggestedWeight(name, info);
+    if (sug) {
+      const arrow = sug.change === '=' ? '→' : (sug.change.startsWith('+') ? '↑' : '↓');
+      suggestedHtml = `<div class="ex-suggested">${arrow} Peso sugerido: ${sug.kg}kg
+        <span style="opacity:.6;font-weight:400">(${sug.change} vs sem. ${sug.fromWeek||'ant.'})</span>
+      </div>`;
+    }
+  }
+
   // ── modal data ───────────────────────────────────────────────
+  // Peso para pre-llenar: sugerido por progresión > current_weight_kg > 0
+  const sugForModal = (exType === 'strength' && ex.group_type !== 'pyramid')
+    ? getSuggestedWeight(name, info) : null;
+  const preWeightFinal = sugForModal ? sugForModal.kg : (ex.current_weight_kg || 0);
+
   const modalExData = encodeURIComponent(JSON.stringify({
     dayLabel, name, sets: ex.sets||1, reps: ex.reps||ex.duration_sec||0,
-    logId, exType, preWeight: ex.current_weight_kg||0,
+    logId, exType, preWeight: preWeightFinal,
     safetyLimit: ex.max_safety_limit_kg||0,
     duration_min: ex.duration_min||ex.duration_minutes||0,
     incline_pct: ex.incline_pct||0, speed_kmh: ex.speed_kmh||0,
     target_hr: ex.target_heart_rate_bpm||0,
     pyramid_reps: ex.pyramid_reps||null,
     pyramid_weights: ex.pyramid_weights_kg||null,
-    restSec: getRestSeconds(ex)
+    restSec: getRestSeconds(ex),
+    suggestedKg: sugForModal ? sugForModal.kg : null,
+    suggestedChange: sugForModal ? sugForModal.change : null
   }));
 
   return `<div class="ex-row${isGrouped?' is-grouped':''}" id="exrow-${logId}">
@@ -877,7 +944,7 @@ function buildExRow(ex, dayLabel, info, di, ei) {
     <div class="ex-info">
       <div class="ex-name">${name}</div>
       <div class="ex-meta">${meta}</div>
-      ${tagsHtml}${hint}${restHtml}
+      ${tagsHtml}${hint}${suggestedHtml}${restHtml}
     </div>
     <button class="ex-log-btn ${isLogged?'logged':''}" onclick="openModalFromData('${modalExData}')">
       ${isLogged ? '\u2713' : 'Log'}
@@ -912,8 +979,10 @@ function openModalFromData(encoded) {
     document.getElementById('m-speed').value = d.speed_kmh || 0;
     document.getElementById('m-hr').value = d.target_hr || 0;
   } else {
-    document.getElementById('modal-ex-meta').textContent =
-      `${d.sets} series · RPE meta: ${info.rpe_target || '?'}`;
+    const sugLabel = d.suggestedKg
+    ? ` · sugerido: ${d.suggestedKg}kg (${d.suggestedChange})`  : '';
+  document.getElementById('modal-ex-meta').textContent =
+      `${d.sets} series · RPE meta: ${info.rpe_target || '?'}${sugLabel}`;
     document.getElementById('m-sets').value = d.sets || 1;
     document.getElementById('m-reps-label').textContent = isIso ? 'Segundos' : 'Repeticiones';
     document.getElementById('m-reps').value = d.reps || 0;
