@@ -1016,7 +1016,29 @@ function openModalFromData(encoded) {
     warn.style.display = 'block';
   } else { warn.style.display = 'none'; }
 
-  document.getElementById('m-notes').value = '';
+  // Pre-llenar con último log de esta semana si existe
+  const prevLog = q(
+    `SELECT sets, reps, weight_kg, rpe, notes FROM workout_log
+     WHERE week=? AND day_label=? AND exercise=? AND exercise != '_day_complete'
+     ORDER BY id DESC LIMIT 1`,
+    [currentWeek, d.dayLabel, d.name]
+  );
+  const prev = prevLog.length && prevLog[0].values.length ? prevLog[0].values[0] : null;
+
+  if (prev && !isCardio) {
+    document.getElementById('m-sets').value   = prev[0] || d.sets || 1;
+    document.getElementById('m-reps').value   = prev[1] || d.reps || 0;
+    document.getElementById('m-weight').value = prev[2] || d.preWeight || 0;
+    document.getElementById('m-rpe').value    = prev[3] || info.rpe_target || 7;
+    document.getElementById('m-notes').value  = prev[4] || '';
+  } else if (prev && isCardio) {
+    document.getElementById('m-duration').value = prev[1] || d.duration_min || 15;
+    document.getElementById('m-speed').value    = prev[2] || d.speed_kmh || 0;
+    document.getElementById('m-hr').value       = prev[3] || d.target_hr || 0;
+    document.getElementById('m-notes').value    = (prev[4]||'').replace(/incline:[^\s]+ speed:[^\s]+ hr:[^\s]+\s?/,'');
+  } else {
+    document.getElementById('m-notes').value = '';
+  }
   // Mostrar descanso recomendado
   const restEl = document.getElementById('m-rest-info');
   if (d.restSec > 0) {
@@ -1051,9 +1073,18 @@ function saveLog() {
     const speed    = parseFloat(document.getElementById('m-speed').value) || 0;
     const hr       = parseInt(document.getElementById('m-hr').value) || 0;
     const cardioNotes = `incline:${incline}% speed:${speed}km/h hr:${hr}bpm${notes?' '+notes:''}`;
-    run(`INSERT INTO workout_log (week,day_label,exercise,sets,reps,weight_kg,rpe,notes)
-         VALUES (?,?,?,?,?,?,?,?)`,
-      [currentWeek, modalData.dayLabel, modalData.exName, 1, duration, speed, hr, cardioNotes]);
+    const existingCardio = q(
+      "SELECT id FROM workout_log WHERE week=? AND day_label=? AND exercise=? ORDER BY id DESC LIMIT 1",
+      [currentWeek, modalData.dayLabel, modalData.exName]
+    );
+    if (existingCardio.length && existingCardio[0].values.length) {
+      run(`UPDATE workout_log SET reps=?,weight_kg=?,rpe=?,notes=? WHERE id=?`,
+        [duration, speed, hr, cardioNotes, existingCardio[0].values[0][0]]);
+    } else {
+      run(`INSERT INTO workout_log (week,day_label,exercise,sets,reps,weight_kg,rpe,notes)
+           VALUES (?,?,?,?,?,?,?,?)`,
+        [currentWeek, modalData.dayLabel, modalData.exName, 1, duration, speed, hr, cardioNotes]);
+    }
 
   } else if (modalData.pyramid_count) {
     // Log pirámide: una fila por serie
@@ -1077,9 +1108,20 @@ function saveLog() {
     if (modalData.safetyLimit > 0 && weight > modalData.safetyLimit) {
       if (!confirm(`⚠ ${weight}kg supera el límite de seguridad de ${modalData.safetyLimit}kg. ¿Continuar?`)) return;
     }
-    run(`INSERT INTO workout_log (week,day_label,exercise,sets,reps,weight_kg,rpe,notes)
-         VALUES (?,?,?,?,?,?,?,?)`,
-      [currentWeek, modalData.dayLabel, modalData.exName, sets, reps, weight, rpe, notes]);
+    // Si ya existe un log para este ejercicio esta semana, actualizarlo
+    const existingLog = q(
+      "SELECT id FROM workout_log WHERE week=? AND day_label=? AND exercise=? ORDER BY id DESC LIMIT 1",
+      [currentWeek, modalData.dayLabel, modalData.exName]
+    );
+    if (existingLog.length && existingLog[0].values.length) {
+      const existingId = existingLog[0].values[0][0];
+      run(`UPDATE workout_log SET sets=?,reps=?,weight_kg=?,rpe=?,notes=? WHERE id=?`,
+        [sets, reps, weight, rpe, notes, existingId]);
+    } else {
+      run(`INSERT INTO workout_log (week,day_label,exercise,sets,reps,weight_kg,rpe,notes)
+           VALUES (?,?,?,?,?,?,?,?)`,
+        [currentWeek, modalData.dayLabel, modalData.exName, sets, reps, weight, rpe, notes]);
+    }
   }
 
   loggedThisSession.add(modalData.logId);
