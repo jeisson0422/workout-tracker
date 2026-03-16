@@ -9,7 +9,7 @@ PWA de seguimiento de entrenamiento con base de datos SQLite embebida. Un solo a
 - **SQLite en el navegador** via [sql.js](https://sql.js.org) (WebAssembly) + `localStorage` para persistencia
 - **PWA lista para iPhone** — añadir a pantalla de inicio desde Safari funciona como app nativa
 - **Macrociclo de 14 semanas** con fases de adaptación, densidad, intensidad, descarga y pico
-- **4 días de entrenamiento** configurables: Upper Body Power, Lower Body Density, Push & Finisher, Legs & Glutes
+- **5 días de entrenamiento** configurables: Upper Body Power, Lower Body Density, Push & Finisher, Pull & Core, Legs & Glutes
 - **Progresión automática** por semana: ajuste de peso, reps y RPE según la fase
 - **Log por ejercicio** — registra series, repeticiones, peso (kg), RPE y notas
 - **Estadísticas** — sets totales, semanas activas, max squat, RPE promedio, historial
@@ -73,31 +73,138 @@ El deploy toma ~2 minutos. Cada `git push` a `main` redespliega automáticamente
 
 ## Personalización
 
-### Cambiar la rutina de ejercicios
+Desde la app ve a **Config**, pega el nuevo JSON en el campo correspondiente y toca Guardar. Los cambios son inmediatos y persisten en SQLite.
 
-Desde la app: pantalla **Config → JSON de ejercicios**, pega el nuevo JSON y guarda.
+---
 
-O directamente en el código, edita la constante `DEFAULT_EXERCISES` en el `<script>`:
+## Schema: JSON de ejercicios
+
+Este es el schema exacto que la app lee. Úsalo como base para construir nuevas rutinas.
 
 ```json
 {
-  "days": [
+  "routine_metadata": {
+    "goal": "string",
+    "protein_target_grams": 200,
+    "daily_water_liters": 3.5,
+    "rest_between_sets_seconds": 60,
+    "cardio_type": "string",
+    "cardio_parameters": "string"
+  },
+  "training_days": [
     {
-      "day_1": "Nombre del día",
+      "day_number": 1,
+      "session_name": "Nombre de la sesión",
       "exercises": [
-        { "exercise_name": "nombre_ejercicio", "sets": 4, "reps": 8 },
-        { "exercise_name": "cardio_ejemplo", "duration_minutes": 20, "incline_percentage": 8 }
+        {
+          "exercise_name": "nombre_en_snake_case",
+          "sets": 4,
+          "reps": 8,
+          "current_weight_kg": 0,
+          "max_safety_limit_kg": null,
+          "is_superset": false,
+          "tempo": "normal",
+          "special_notes": "string",
+          "duration_min": 15,
+          "incline_pct": 10,
+          "intensity_notes": "string",
+          "duration_sec": 60
+        }
       ]
     }
   ]
 }
 ```
 
-### Cambiar la progresión semanal
+### Reglas del schema de ejercicios
 
-Desde la app: pantalla **Config → JSON de progresión**, pega el nuevo JSON y guarda.
+**`day_number`** — entero del 1 al 7 (día de la semana). Solo se usa como identificador; puedes tener día 1, 2, 4, 6 y saltar los días de descanso.
 
-O edita `DEFAULT_PROGRESSION` en el código:
+**`session_name`** — nombre libre de la sesión, se muestra en la app.
+
+**Tipos de ejercicio — usar solo los campos que aplican:**
+
+| Tipo | Campos requeridos | Campos opcionales |
+|---|---|---|
+| Fuerza / hipertrofia | `exercise_name`, `sets`, `reps` | `current_weight_kg`, `max_safety_limit_kg`, `tempo`, `special_notes`, `is_superset` |
+| Cardio (cinta, bike) | `exercise_name`, `duration_min`, `incline_pct` | `intensity_notes` |
+| Isométrico (plank, wall sit) | `exercise_name`, `sets`, `duration_sec` | `special_notes` |
+
+Los campos no usados se omiten — no poner `"reps": 0` en un ejercicio de cardio.
+
+**Campos opcionales y su efecto en la UI:**
+
+| Campo | Tipo | Efecto |
+|---|---|---|
+| `current_weight_kg` | `number` | Pre-llena el campo de peso en el modal de log |
+| `max_safety_limit_kg` | `number \| null` | Muestra advertencia si el usuario loguea más kg |
+| `is_superset` | `boolean` | Borde lateral morado + tag "superset" |
+| `tempo` | `string` | Tag amarillo debajo del nombre (`3210`, `explosive`, `slow`, etc.) |
+| `special_notes` | `string` | Hint en cursiva debajo del nombre (snake_case → se convierte a espacios) |
+| `intensity_notes` | `string` | Hint en cardio (ej. `target_hr_65_pct`) |
+
+**`tempo` — valores recomendados:**
+`normal` · `controlled` · `slow` · `explosive` · `isometric` · `3210` · `4010` · cualquier string
+
+**Ejemplo completo con los tres tipos:**
+
+```json
+{
+  "routine_metadata": {
+    "goal": "fat_loss_88kg_target",
+    "protein_target_grams": 200,
+    "daily_water_liters": 3.5,
+    "rest_between_sets_seconds": 60,
+    "cardio_type": "incline_treadmill_walk",
+    "cardio_parameters": "15_min_at_10_incline"
+  },
+  "training_days": [
+    {
+      "day_number": 1,
+      "session_name": "Upper Body Power",
+      "exercises": [
+        {
+          "exercise_name": "barbell_bench_press",
+          "sets": 4, "reps": 6,
+          "current_weight_kg": 80,
+          "max_safety_limit_kg": 100,
+          "is_superset": false,
+          "tempo": "explosive",
+          "special_notes": "focus_on_explosive_concentric"
+        },
+        {
+          "exercise_name": "bicep_curl",
+          "sets": 3, "reps": 10,
+          "current_weight_kg": 14,
+          "is_superset": true,
+          "special_notes": "superset_with_tricep_pushdown"
+        },
+        {
+          "exercise_name": "tricep_pushdown",
+          "sets": 3, "reps": 10,
+          "current_weight_kg": 20,
+          "is_superset": true,
+          "special_notes": "superset_with_bicep_curl"
+        },
+        {
+          "exercise_name": "plank",
+          "sets": 3, "duration_sec": 60,
+          "special_notes": "brace_core_neutral_spine"
+        },
+        {
+          "exercise_name": "incline_treadmill_walk",
+          "duration_min": 15, "incline_pct": 10,
+          "intensity_notes": "target_hr_65_pct"
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+## Schema: JSON de progresión
 
 ```json
 {
@@ -107,14 +214,61 @@ O edita `DEFAULT_PROGRESSION` en el código:
       "phase": "adaptation",
       "weight_change_pct": "0%",
       "reps_change": "baseline",
-      "rpe_target": 7,
+      "rpe_target": 7.0,
       "system_focus": "technique_re-entry"
     }
   ]
 }
 ```
 
-Fases disponibles: `adaptation`, `density`, `intensity`, `deload`, `peaking`.
+### Reglas del schema de progresión
+
+**`week_number`** — entero, empieza en 1. El macrociclo actual es de 14 semanas.
+
+**`phase`** — uno de estos valores exactos:
+
+| Valor | Descripción |
+|---|---|
+| `adaptation` | Semanas de entrada, técnica y volumen inicial |
+| `density` | Acumulación metabólica, más reps |
+| `intensity` | Carga alta, reps base, retención muscular |
+| `deload` | Descarga activa, 50% volumen |
+| `peaking` | Semanas finales, esfuerzo máximo |
+
+La fase `deload` se detecta por este campo — no hay booleano separado.
+
+**`weight_change_pct`** — siempre string con signo explícito:
+`"0%"` · `"+2.5%"` · `"+5%"` · `"-20%"` · `"maintain"`
+
+**`reps_change`** — valores que la app interpreta automáticamente:
+
+| Valor | Efecto en la UI |
+|---|---|
+| `baseline` | Muestra reps base del ejercicio |
+| `maintain` | Sin cambio |
+| `+2 reps` | Suma 2 a los reps base |
+| `+1 rep` | Suma 1 a los reps base |
+| `max effort` | Indicador visual de esfuerzo máximo |
+| `reduce to baseline` | Vuelve a reps base |
+| `maintain high reps` | Mantiene reps aumentados |
+| `-50% sets` | Divide sets a la mitad (deload) |
+
+**`rpe_target`** — float entre 1.0 y 10.0.
+
+**`system_focus`** — string libre en snake_case, se muestra en la pantalla de inicio como contexto de la semana. Ejemplos: `technique_re-entry`, `fat_loss_peak`, `hormonal_reset`.
+
+**Ejemplo de macrociclo completo (4 semanas):**
+
+```json
+{
+  "progression_data": [
+    { "week_number": 1, "phase": "adaptation",  "weight_change_pct": "0%",   "reps_change": "baseline",         "rpe_target": 7.0, "system_focus": "technique_re-entry" },
+    { "week_number": 2, "phase": "adaptation",  "weight_change_pct": "+2.5%","reps_change": "maintain",          "rpe_target": 7.5, "system_focus": "progressive_overload" },
+    { "week_number": 3, "phase": "density",     "weight_change_pct": "0%",   "reps_change": "+2 reps",           "rpe_target": 8.0, "system_focus": "metabolic_stress" },
+    { "week_number": 4, "phase": "deload",      "weight_change_pct": "-20%", "reps_change": "-50% sets",         "rpe_target": 5.0, "system_focus": "nervous_system_recovery" }
+  ]
+}
+```
 
 ---
 

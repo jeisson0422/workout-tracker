@@ -68,6 +68,12 @@ body{background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 .ex-meta{font-size:12px;color:var(--text2);margin-top:2px}
 .ex-log-btn{background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .ex-log-btn.logged{background:var(--accent);border-color:var(--accent);color:#fff}
+.ex-hint{font-size:11px;color:var(--accent2);margin-top:3px;font-style:italic;opacity:.8}
+.ex-tags{display:flex;gap:5px;margin-top:4px;flex-wrap:wrap}
+.ex-tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:var(--bg4);color:var(--text2);border:1px solid var(--border)}
+.ex-tag.superset{background:rgba(167,139,250,.12);color:var(--accent2);border-color:rgba(167,139,250,.3)}
+.ex-tag.tempo{background:rgba(251,191,36,.1);color:var(--amber);border-color:rgba(251,191,36,.25)}
+.ex-row.is-superset{border-left:2px solid var(--accent2)}
 
 /* STATS */
 .stat-row{display:flex;gap:10px;padding:0 16px 10px}
@@ -275,6 +281,7 @@ input:focus{outline:none;border-color:var(--accent)}
       <div class="input-group"><label>Peso (kg)</label><input type="number" id="m-weight" min="0" step="2.5" value="0"></div>
       <div class="input-group"><label>RPE (1–10)</label><input type="number" id="m-rpe" min="1" max="10" step="0.5"></div>
     </div>
+    <div id="m-safety-warn" style="display:none;font-size:12px;color:var(--amber);background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:8px;padding:8px 12px;margin-bottom:12px"></div>
     <div class="input-group" style="margin-bottom:20px">
       <label>Notas (opcional)</label>
       <input type="text" id="m-notes" placeholder="Ej: bajé el peso, buena forma...">
@@ -294,34 +301,69 @@ input:focus{outline:none;border-color:var(--accent)}
 //  DEFAULT DATA
 // ═══════════════════════════════════════════════════════════════
 const DEFAULT_EXERCISES = {
-  "days": [
-    {"day_1": "Upper Body Power","exercises": [
-      {"exercise_name":"barbell_bench_press","sets":4,"reps":6},
-      {"exercise_name":"pendlay_row","sets":4,"reps":6},
-      {"exercise_name":"dumbbell_military_press","sets":3,"reps":8},
-      {"exercise_name":"lat_pulldown","sets":3,"reps":8},
-      {"exercise_name":"bicep_tricep_superset","sets":3,"reps":10}
-    ]},
-    {"day_2": "Lower Body Density","exercises": [
-      {"exercise_name":"barbell_squat_tempo_3210","sets":4,"reps":10,"max_weight_kg":60},
-      {"exercise_name":"leg_press","sets":3,"reps":12},
-      {"exercise_name":"leg_extension_isometric","sets":3,"reps":15},
-      {"exercise_name":"lying_leg_curl","sets":4,"reps":12},
-      {"exercise_name":"incline_treadmill_walk","duration_minutes":15,"incline_percentage":10}
-    ]},
-    {"day_4": "Push and Finisher","exercises": [
-      {"exercise_name":"incline_dumbbell_press","sets":4,"reps":10},
-      {"exercise_name":"cable_flyes","sets":3,"reps":12},
-      {"exercise_name":"lateral_raises","sets":4,"reps":15},
-      {"exercise_name":"bench_dips","sets":3,"reps":15},
-      {"exercise_name":"burpees_no_jump_finisher","sets":3,"reps":15}
-    ]},
-    {"day_6": "Legs and Glutes Explosive","exercises": [
-      {"exercise_name":"barbell_hip_thrust","sets":4,"reps":10},
-      {"exercise_name":"romanian_deadlift","sets":4,"reps":10},
-      {"exercise_name":"walking_lunges","sets":3,"reps":12},
-      {"exercise_name":"hip_abduction_machine","sets":3,"reps":20}
-    ]}
+  "routine_metadata": {
+    "goal": "fat_loss_88kg_target",
+    "protein_target_grams": 200,
+    "daily_water_liters": 3.5,
+    "rest_between_sets_seconds": 60,
+    "cardio_type": "incline_treadmill_walk",
+    "cardio_parameters": "15_20_min_at_10_12_incline"
+  },
+  "training_days": [
+    {
+      "day_number": 1, "session_name": "Upper Body Power",
+      "exercises": [
+        {"exercise_name":"barbell_bench_press","sets":4,"reps":6,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"explosive","special_notes":"focus_on_explosive_concentric"},
+        {"exercise_name":"pendlay_row","sets":4,"reps":6,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"controlled"},
+        {"exercise_name":"dumbbell_military_press","sets":3,"reps":8,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"normal"},
+        {"exercise_name":"lat_pulldown","sets":3,"reps":8,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"normal"},
+        {"exercise_name":"bicep_curl","sets":3,"reps":10,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":true,"tempo":"normal","special_notes":"superset_with_tricep_pushdown"},
+        {"exercise_name":"tricep_pushdown","sets":3,"reps":10,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":true,"tempo":"normal","special_notes":"superset_with_bicep_curl"},
+        {"exercise_name":"incline_treadmill_walk","duration_min":15,"incline_pct":10,"intensity_notes":"target_hr_65_pct"}
+      ]
+    },
+    {
+      "day_number": 2, "session_name": "Lower Body Density",
+      "exercises": [
+        {"exercise_name":"barbell_squat_tempo_3210","sets":4,"reps":10,"current_weight_kg":50,"max_safety_limit_kg":60,"is_superset":false,"tempo":"3210","special_notes":"3sec_down_2sec_pause_1sec_up"},
+        {"exercise_name":"leg_press","sets":3,"reps":12,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"normal"},
+        {"exercise_name":"leg_extension_isometric","sets":3,"reps":15,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"isometric"},
+        {"exercise_name":"lying_leg_curl","sets":4,"reps":12,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"controlled"},
+        {"exercise_name":"incline_treadmill_walk","duration_min":15,"incline_pct":10,"intensity_notes":"target_hr_65_pct"}
+      ]
+    },
+    {
+      "day_number": 4, "session_name": "Push and Finisher",
+      "exercises": [
+        {"exercise_name":"incline_dumbbell_press","sets":4,"reps":10,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"normal"},
+        {"exercise_name":"cable_flyes","sets":3,"reps":12,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"slow"},
+        {"exercise_name":"lateral_raises","sets":4,"reps":15,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"controlled"},
+        {"exercise_name":"bench_dips","sets":3,"reps":15,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"normal"},
+        {"exercise_name":"burpees_no_jump_finisher","sets":3,"reps":15,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"normal"},
+        {"exercise_name":"incline_treadmill_walk","duration_min":15,"incline_pct":10,"intensity_notes":"target_hr_65_pct"}
+      ]
+    },
+    {
+      "day_number": 5, "session_name": "Pull and Core",
+      "exercises": [
+        {"exercise_name":"low_row_cable","sets":4,"reps":10,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"controlled"},
+        {"exercise_name":"v_bar_lat_pulldown","sets":4,"reps":10,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"normal"},
+        {"exercise_name":"face_pulls","sets":3,"reps":15,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"slow","special_notes":"external_rotation_focus"},
+        {"exercise_name":"plank","sets":3,"duration_sec":60,"is_superset":false,"special_notes":"brace_core_neutral_spine"},
+        {"exercise_name":"ab_wheel","sets":3,"reps":10,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"controlled"},
+        {"exercise_name":"incline_treadmill_walk","duration_min":15,"incline_pct":10,"intensity_notes":"target_hr_65_pct"}
+      ]
+    },
+    {
+      "day_number": 6, "session_name": "Legs and Glutes Explosive",
+      "exercises": [
+        {"exercise_name":"barbell_hip_thrust","sets":4,"reps":10,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"explosive","special_notes":"squeeze_glutes_at_top_2sec"},
+        {"exercise_name":"romanian_deadlift","sets":4,"reps":10,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"controlled","special_notes":"feel_hamstring_stretch"},
+        {"exercise_name":"walking_lunges","sets":3,"reps":12,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"normal"},
+        {"exercise_name":"hip_abduction_machine","sets":3,"reps":20,"current_weight_kg":0,"max_safety_limit_kg":null,"is_superset":false,"tempo":"slow"},
+        {"exercise_name":"incline_treadmill_walk","duration_min":15,"incline_pct":10,"intensity_notes":"target_hr_65_pct"}
+      ]
+    }
   ]
 };
 
@@ -507,11 +549,22 @@ function renderHome() {
 
 function calcTotalSets() {
   let t = 0;
-  (exercises.days || []).forEach(d => {
-    const exList = Object.values(d).find(v => Array.isArray(v)) || [];
-    exList.forEach(ex => { t += ex.sets || (ex.duration_minutes ? 1 : 0); });
+  getDays().forEach(d => {
+    (d.exercises || []).forEach(ex => {
+      t += ex.sets || (ex.duration_min || ex.duration_minutes || ex.duration_sec ? 1 : 0);
+    });
   });
   return t;
+}
+
+// Normaliza ambos schemas: training_days (nuevo) y days (legacy)
+function getDays() {
+  if (exercises.training_days) return exercises.training_days;
+  // legacy: days array con objetos {day_N: "name", exercises:[]}
+  return (exercises.days || []).map((d, i) => {
+    const dayKey = Object.keys(d).find(k => k.startsWith('day_'));
+    return { day_number: i+1, session_name: dayKey ? d[dayKey] : 'Day '+(i+1), exercises: d.exercises || [] };
+  });
 }
 
 function getLoggedSets(week) {
@@ -532,12 +585,11 @@ function renderWorkout() {
 
   const container = document.getElementById('workout-list');
   container.innerHTML = '';
-  const days = exercises.days || [];
+  const days = getDays();
 
   days.forEach((dayObj, di) => {
-    const dayKey = Object.keys(dayObj).find(k => k.startsWith('day_'));
-    const dayLabel = dayObj[dayKey] || 'Día ' + (di+1);
-    const exList = dayObj.exercises || Object.values(dayObj).find(v => Array.isArray(v)) || [];
+    const dayLabel = dayObj.session_name || 'Día ' + (di+1);
+    const exList = dayObj.exercises || [];
 
     const card = document.createElement('div');
     card.className = 'day-card';
@@ -565,8 +617,17 @@ function buildExRow(ex, dayLabel, info, di, ei) {
   const icon = ICONS[(di * 5 + ei) % ICONS.length];
 
   let meta = '';
-  if (ex.duration_minutes) {
-    meta = `${ex.duration_minutes} min · ${ex.incline_percentage || 0}% incline`;
+  // cardio con duración en minutos (soporta duration_min y duration_minutes)
+  const durMin = ex.duration_min || ex.duration_minutes;
+  const incline = ex.incline_pct || ex.incline_percentage;
+  if (durMin) {
+    meta = `${durMin} min · ${incline || 0}% incline`;
+  } else if (ex.duration_sec) {
+    // ejercicio isométrico con duración en segundos (ej. plank)
+    let sets = ex.sets || '?';
+    const deload = info.phase === 'deload';
+    if (deload && ex.sets) sets = Math.max(1, Math.ceil(ex.sets / 2));
+    meta = `${sets} series × ${ex.duration_sec}s`;
   } else {
     let sets = ex.sets || '?';
     let reps = ex.reps || '?';
@@ -585,7 +646,7 @@ function buildExRow(ex, dayLabel, info, di, ei) {
       <div class="ex-meta">${meta}</div>
     </div>
     <button class="ex-log-btn ${isLogged ? 'logged' : ''}"
-      onclick="openModal('${dayLabel.replace(/'/g,"\\'")}','${name.replace(/'/g,"\\'")}','${ex.sets||1}','${ex.reps||0}','${logId}')">
+      onclick="openModal('${dayLabel.replace(/'/g,"\\'")}','${name.replace(/'/g,"\\'")}','${ex.sets||1}','${ex.reps || ex.duration_sec || 0}','${logId}','${ex.duration_sec ? 'sec' : 'reps'}')">
       ${isLogged ? '✓' : 'Log'}
     </button>
   </div>`;
@@ -594,17 +655,30 @@ function buildExRow(ex, dayLabel, info, di, ei) {
 // ═══════════════════════════════════════════════════════════════
 //  MODAL
 // ═══════════════════════════════════════════════════════════════
-function openModal(dayLabel, exName, sets, reps, logId) {
+function openModal(dayLabel, exName, sets, reps, logId, unit='reps', preWeight=0, safetyLimit=0) {
   const info = getWeekInfo(currentWeek);
-  modalData = { dayLabel, exName, logId };
+  modalData = { dayLabel, exName, logId, safetyLimit: parseFloat(safetyLimit) || 0 };
   document.getElementById('modal-ex-name').textContent = exName;
+  const unitLabel = unit === 'sec' ? 'seg' : 'reps';
   document.getElementById('modal-ex-meta').textContent =
-    `${sets} series × ${reps} reps · RPE meta: ${info.rpe_target || '?'}`;
+    `${sets} series × ${reps} ${unitLabel} · RPE meta: ${info.rpe_target || '?'}`;
   document.getElementById('m-sets').value = sets;
   document.getElementById('m-reps').value = reps;
-  document.getElementById('m-weight').value = 0;
+  // Label dinámico reps/seg
+  document.getElementById('m-reps').closest('.input-group').querySelector('label').textContent =
+    unit === 'sec' ? 'Segundos' : 'Repeticiones';
+  // Pre-llenar peso desde current_weight_kg
+  document.getElementById('m-weight').value = preWeight || 0;
   document.getElementById('m-rpe').value = info.rpe_target || 7;
   document.getElementById('m-notes').value = '';
+  // Safety warning
+  const warn = document.getElementById('m-safety-warn');
+  if (modalData.safetyLimit > 0) {
+    warn.textContent = `⚠ Límite de seguridad: ${modalData.safetyLimit} kg`;
+    warn.style.display = 'block';
+  } else {
+    warn.style.display = 'none';
+  }
   document.getElementById('log-modal').classList.add('open');
   setTimeout(() => document.getElementById('m-weight').focus(), 300);
 }
@@ -621,6 +695,11 @@ function saveLog() {
   const weight = parseFloat(document.getElementById('m-weight').value) || 0;
   const rpe    = parseFloat(document.getElementById('m-rpe').value)   || 0;
   const notes  = document.getElementById('m-notes').value.trim();
+
+  // Advertencia de safety limit — no bloquea, solo confirma
+  if (modalData.safetyLimit > 0 && weight > modalData.safetyLimit) {
+    if (!confirm(`⚠ ${weight}kg supera el límite de seguridad de ${modalData.safetyLimit}kg. ¿Continuar?`)) return;
+  }
 
   run(`INSERT INTO workout_log (week,day_label,exercise,sets,reps,weight_kg,rpe,notes)
        VALUES (?,?,?,?,?,?,?,?)`,
