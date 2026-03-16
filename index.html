@@ -39,11 +39,25 @@ body{background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 /* WEEK GRID */
 .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:16px 16px 0}
 .week-cell{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--border);background:var(--bg2);cursor:pointer;transition:all .2s;font-size:12px;font-weight:600;color:var(--text2)}
-.week-cell.current{border-color:var(--accent);color:var(--accent2);box-shadow:0 0 0 2px rgba(108,99,255,.2)}
-.week-cell.done-adapt{background:var(--accent);border-color:var(--accent);color:#fff}
-.week-cell.done-deload{background:var(--green);border-color:var(--green);color:#fff}
-.week-cell.done-peak{background:var(--amber);border-color:var(--amber);color:#000}
-.week-cell.done-density,.week-cell.done-intensity{background:var(--bg4);border-color:var(--border2);color:var(--text)}
+/* fase base — todas las semanas muestran color */
+.week-cell.phase-adaptation{background:rgba(108,99,255,.15);border-color:rgba(108,99,255,.35);color:var(--accent2)}
+.week-cell.phase-density{background:rgba(96,165,250,.1);border-color:rgba(96,165,250,.3);color:var(--blue)}
+.week-cell.phase-intensity{background:rgba(251,146,60,.1);border-color:rgba(251,146,60,.3);color:#fb923c}
+.week-cell.phase-deload{background:rgba(52,211,153,.15);border-color:rgba(52,211,153,.4);color:var(--green)}
+.week-cell.phase-peaking{background:rgba(251,191,36,.15);border-color:rgba(251,191,36,.4);color:var(--amber)}
+/* semana pasada: más sólida */
+.week-cell.past.phase-adaptation{background:var(--accent);border-color:var(--accent);color:#fff}
+.week-cell.past.phase-density{background:rgba(96,165,250,.3);border-color:var(--blue);color:var(--blue)}
+.week-cell.past.phase-intensity{background:rgba(251,146,60,.25);border-color:#fb923c;color:#fb923c}
+.week-cell.past.phase-deload{background:var(--green);border-color:var(--green);color:#fff}
+.week-cell.past.phase-peaking{background:var(--amber);border-color:var(--amber);color:#000}
+/* semana actual: borde fuerte + glow */
+.week-cell.current{border-width:2px;box-shadow:0 0 0 2px rgba(108,99,255,.25)}
+.week-cell.current.phase-adaptation{border-color:var(--accent2)}
+.week-cell.current.phase-density{border-color:var(--blue)}
+.week-cell.current.phase-intensity{border-color:#fb923c}
+.week-cell.current.phase-deload{border-color:var(--green)}
+.week-cell.current.phase-peaking{border-color:var(--amber)}
 
 /* PROGRESS */
 .prog-bar{height:8px;border-radius:4px;background:var(--bg3);overflow:hidden;margin-top:8px}
@@ -62,13 +76,15 @@ body{background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 .day-card.open .ex-list{display:block}
 .ex-row{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);gap:10px}
 .ex-row:last-child{border-bottom:none}
-.ex-icon{width:36px;height:36px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
+.ex-icon{width:36px;height:36px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .ex-info{flex:1;min-width:0}
 .ex-name{font-size:14px;font-weight:500;text-transform:capitalize;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ex-meta{font-size:12px;color:var(--text2);margin-top:2px}
 .ex-log-btn{background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .ex-log-btn.logged{background:var(--accent);border-color:var(--accent);color:#fff}
 .ex-hint{font-size:11px;color:var(--accent2);margin-top:3px;font-style:italic;opacity:.8}
+.ex-rest{font-size:11px;color:var(--text3);margin-top:2px}
+.modal-rest{font-size:12px;color:var(--text2);background:var(--bg3);border-radius:8px;padding:8px 12px;margin-bottom:12px;text-align:center}
 .ex-tags{display:flex;gap:5px;margin-top:4px;flex-wrap:wrap}
 .ex-tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:var(--bg4);color:var(--text2);border:1px solid var(--border)}
 .ex-tag.superset{background:rgba(167,139,250,.12);color:var(--accent2);border-color:rgba(167,139,250,.3)}
@@ -80,6 +96,7 @@ body{background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 .ex-tag.group-giant{background:rgba(52,211,153,.12);color:var(--green);border-color:rgba(52,211,153,.3)}
 .ex-tag.group-pyramid{background:rgba(251,191,36,.12);color:var(--amber);border-color:rgba(251,191,36,.3)}
 .ex-tag.group-dropset{background:rgba(248,113,113,.12);color:var(--red);border-color:rgba(248,113,113,.3)}
+.ex-tag.group-finisher{background:rgba(251,146,60,.12);color:#fb923c;border-color:rgba(251,146,60,.3)}
 .ex-tag.type-cardio{background:rgba(52,211,153,.1);color:var(--green);border-color:rgba(52,211,153,.25)}
 .ex-tag.type-isometric{background:rgba(96,165,250,.1);color:var(--blue);border-color:rgba(96,165,250,.25)}
 .group-header{font-size:10px;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:.5px;padding:8px 16px 0;opacity:.7}
@@ -171,7 +188,8 @@ input:focus{outline:none;border-color:var(--accent)}
     <div class="leg-item"><div class="leg-dot" style="background:var(--accent)"></div>Adaptación</div>
     <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Descarga</div>
     <div class="leg-item"><div class="leg-dot" style="background:var(--amber)"></div>Pico</div>
-    <div class="leg-item"><div class="leg-dot" style="background:var(--bg4)"></div>Densidad/Intensidad</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div>Densidad</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#fb923c"></div>Intensidad</div>
   </div>
 
   <div class="card">
@@ -179,12 +197,17 @@ input:focus{outline:none;border-color:var(--accent)}
     <div id="h-week-info" style="font-size:13px;color:var(--text2);line-height:2"></div>
   </div>
 
-  <div class="stat-row">
-    <div class="stat-box"><div class="stat-val">200g</div><div class="stat-lbl">Proteína</div></div>
-    <div class="stat-box"><div class="stat-val">3.5L</div><div class="stat-lbl">Agua</div></div>
-    <div class="stat-box"><div class="stat-val">60s</div><div class="stat-lbl">Descanso</div></div>
-  </div>
   <div class="spacer"></div>
+</div>
+
+<!-- ── SCREEN: TODAY ────────────────────────────────────── -->
+<div class="screen" id="s-today">
+  <div style="padding:calc(24px + env(safe-area-inset-top,0px)) 20px 10px">
+    <div style="font-size:12px;color:var(--text2);font-weight:600;letter-spacing:.5px">HOY</div>
+    <div style="font-size:28px;font-weight:800;letter-spacing:-.5px;margin-top:4px" id="t-day-name">—</div>
+    <div id="t-phase-tag" style="font-size:12px;color:var(--accent2);margin-top:3px;font-weight:600"></div>
+  </div>
+  <div class="scroll-content" id="today-list" style="padding-bottom:8px"></div>
 </div>
 
 <!-- ── SCREEN: WORKOUT ──────────────────────────────────── -->
@@ -266,9 +289,13 @@ input:focus{outline:none;border-color:var(--accent)}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     Inicio
   </button>
-  <button class="nav-btn" onclick="showScreen('workout',this)" id="nav-workout">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="6" y1="19" x2="18" y2="19"/></svg>
+  <button class="nav-btn" onclick="showScreen('today',this)" id="nav-today">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
     Hoy
+  </button>
+  <button class="nav-btn" onclick="showScreen('workout',this)" id="nav-workout">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Semana
   </button>
   <button class="nav-btn" onclick="showScreen('stats',this)" id="nav-stats">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -316,6 +343,7 @@ input:focus{outline:none;border-color:var(--accent)}
       <label>Notas (opcional)</label>
       <input type="text" id="m-notes" placeholder="Ej: bajé el peso, buena forma...">
     </div>
+    <div id="m-rest-info" class="modal-rest" style="display:none"></div>
     <button class="btn btn-primary" onclick="saveLog()">✓ Registrar</button>
     <button class="btn btn-secondary" style="margin:0" onclick="closeModal()">Cancelar</button>
   </div>
@@ -332,76 +360,56 @@ input:focus{outline:none;border-color:var(--accent)}
 // ═══════════════════════════════════════════════════════════════
 const DEFAULT_EXERCISES = {
   "routine_metadata": {
-    "goal": "fat_loss_88kg_target",
+    "goal": "weight_loss_to_88kg",
     "protein_target_grams": 200,
     "daily_water_liters": 3.5,
     "rest_between_sets_seconds": 60,
     "cardio_type": "incline_treadmill_walk",
-    "cardio_parameters": "15_20_min_at_10_12_incline"
+    "cardio_parameters": "15_min_10_pct_incline_post_workout"
   },
   "training_days": [
-    {
-      "day_number": 1, "session_name": "Upper Body Power",
-      "exercises": [
-        {"exercise_name":"barbell_bench_press","exercise_type":"strength","sets":4,"reps":6,"current_weight_kg":0,"max_safety_limit_kg":null,"tempo":"explosive","special_notes":"focus_on_explosive_concentric"},
-        {"exercise_name":"pendlay_row","exercise_type":"strength","sets":4,"reps":6,"current_weight_kg":0,"max_safety_limit_kg":null,"tempo":"controlled"},
-        {"exercise_name":"dumbbell_military_press","exercise_type":"strength","sets":3,"reps":8,"current_weight_kg":0,"max_safety_limit_kg":null,"tempo":"normal"},
-        {"exercise_name":"lat_pulldown","exercise_type":"strength","sets":3,"reps":8,"current_weight_kg":0,"max_safety_limit_kg":null,"tempo":"normal"},
-        {"exercise_name":"bicep_curl","exercise_type":"strength","sets":3,"reps":10,"current_weight_kg":0,"group_id":"A","group_type":"superset","special_notes":"superset_with_tricep_pushdown"},
-        {"exercise_name":"tricep_pushdown","exercise_type":"strength","sets":3,"reps":10,"current_weight_kg":0,"group_id":"A","group_type":"superset","special_notes":"superset_with_bicep_curl"},
-        {"exercise_name":"incline_treadmill_walk","exercise_type":"cardio","intensity_mode":"LISS","duration_min":15,"incline_pct":10,"speed_kmh":5.0,"special_notes":"post_weight_fat_burn"}
-      ]
-    },
-    {
-      "day_number": 2, "session_name": "Lower Body Density",
-      "exercises": [
-        {"exercise_name":"barbell_squat_tempo_3210","exercise_type":"strength","sets":4,"reps":10,"current_weight_kg":50,"max_safety_limit_kg":60,"tempo":"3210","special_notes":"3sec_down_2sec_pause_1sec_up"},
-        {"exercise_name":"leg_press","exercise_type":"strength","sets":3,"reps":12,"current_weight_kg":0,"tempo":"normal"},
-        {"exercise_name":"leg_extension_isometric","exercise_type":"strength","sets":3,"reps":15,"current_weight_kg":0,"tempo":"isometric"},
-        {"exercise_name":"lying_leg_curl","exercise_type":"strength","sets":4,"reps":12,"current_weight_kg":0,"tempo":"controlled"},
-        {"exercise_name":"incline_treadmill_walk","exercise_type":"cardio","intensity_mode":"LISS","duration_min":15,"incline_pct":10,"speed_kmh":5.0,"target_heart_rate_bpm":130}
-      ]
-    },
-    {
-      "day_number": 3, "session_name": "Active Recovery / LISS",
-      "exercises": [
-        {"exercise_name":"incline_treadmill_walk","exercise_type":"cardio","intensity_mode":"LISS","duration_min":30,"incline_pct":10,"speed_kmh":5.5,"target_heart_rate_bpm":130,"special_notes":"maintain_steady_pace_for_fat_oxidation"}
-      ]
-    },
-    {
-      "day_number": 4, "session_name": "Push and Finisher",
-      "exercises": [
-        {"exercise_name":"incline_dumbbell_press","exercise_type":"strength","sets":4,"reps":10,"current_weight_kg":0,"tempo":"normal"},
-        {"exercise_name":"cable_flyes","exercise_type":"strength","sets":3,"reps":12,"current_weight_kg":0,"tempo":"slow"},
-        {"exercise_name":"lateral_raises","exercise_type":"strength","sets":3,"reps":12,"current_weight_kg":0,"group_id":"B","group_type":"triset"},
-        {"exercise_name":"front_raises","exercise_type":"strength","sets":3,"reps":12,"current_weight_kg":0,"group_id":"B","group_type":"triset"},
-        {"exercise_name":"rear_delt_flyes","exercise_type":"strength","sets":3,"reps":12,"current_weight_kg":0,"group_id":"B","group_type":"triset"},
-        {"exercise_name":"bench_dips","exercise_type":"strength","sets":3,"reps":15,"current_weight_kg":0,"tempo":"normal"},
-        {"exercise_name":"incline_treadmill_walk","exercise_type":"cardio","intensity_mode":"LISS","duration_min":15,"incline_pct":10,"speed_kmh":5.0}
-      ]
-    },
-    {
-      "day_number": 5, "session_name": "Pull and Core",
-      "exercises": [
-        {"exercise_name":"low_row_cable","exercise_type":"strength","sets":4,"reps":10,"current_weight_kg":0,"tempo":"controlled"},
-        {"exercise_name":"v_bar_lat_pulldown","exercise_type":"strength","sets":4,"reps":10,"current_weight_kg":0,"tempo":"normal"},
-        {"exercise_name":"face_pulls","exercise_type":"strength","sets":3,"reps":15,"current_weight_kg":0,"tempo":"slow","special_notes":"external_rotation_focus"},
-        {"exercise_name":"plank","exercise_type":"isometric","sets":3,"duration_sec":60,"special_notes":"brace_core_neutral_spine"},
-        {"exercise_name":"ab_wheel","exercise_type":"strength","sets":3,"reps":10,"current_weight_kg":0,"tempo":"controlled"},
-        {"exercise_name":"incline_treadmill_walk","exercise_type":"cardio","intensity_mode":"LISS","duration_min":15,"incline_pct":10,"speed_kmh":5.0}
-      ]
-    },
-    {
-      "day_number": 6, "session_name": "Legs and Glutes Explosive",
-      "exercises": [
-        {"exercise_name":"barbell_squat","exercise_type":"strength","sets":5,"pyramid_reps":[12,10,8,6,4],"pyramid_weights_kg":[50,60,70,80,90],"max_safety_limit_kg":90,"group_id":"C","group_type":"pyramid","special_notes":"warm_up_first"},
-        {"exercise_name":"barbell_hip_thrust","exercise_type":"strength","sets":4,"reps":10,"current_weight_kg":0,"tempo":"explosive","special_notes":"squeeze_glutes_at_top_2sec"},
-        {"exercise_name":"romanian_deadlift","exercise_type":"strength","sets":4,"reps":10,"current_weight_kg":0,"tempo":"controlled","special_notes":"feel_hamstring_stretch"},
-        {"exercise_name":"walking_lunges","exercise_type":"strength","sets":3,"reps":12,"current_weight_kg":0,"tempo":"normal"},
-        {"exercise_name":"hip_abduction_machine","exercise_type":"strength","sets":3,"reps":20,"current_weight_kg":0,"tempo":"slow"},
-        {"exercise_name":"incline_treadmill_walk","exercise_type":"cardio","intensity_mode":"LISS","duration_min":15,"incline_pct":10,"speed_kmh":5.0}
-      ]
-    }
+    {"day_number":1,"session_name":"Upper Body Power","exercises":[
+      {"exercise_name":"barbell_bench_press","exercise_type":"strength","sets":4,"reps":6,"current_weight_kg":0,"rest_seconds":90,"special_notes":"focus_on_explosive_concentric"},
+      {"exercise_name":"pendlay_row","exercise_type":"strength","sets":4,"reps":6,"current_weight_kg":0,"rest_seconds":90,"special_notes":"torso_parallel_to_floor"},
+      {"exercise_name":"dumbbell_military_press","exercise_type":"strength","sets":3,"reps":8,"current_weight_kg":0,"rest_seconds":60},
+      {"exercise_name":"lat_pulldown","exercise_type":"strength","sets":3,"reps":8,"current_weight_kg":0,"rest_seconds":60},
+      {"exercise_name":"bicep_curls","exercise_type":"strength","sets":3,"reps":10,"current_weight_kg":0,"group_id":"A1","group_type":"superset","rest_seconds":30},
+      {"exercise_name":"tricep_pushdowns","exercise_type":"strength","sets":3,"reps":10,"current_weight_kg":0,"group_id":"A1","group_type":"superset","rest_seconds":30},
+      {"exercise_name":"incline_treadmill_walk","exercise_type":"cardio","intensity_mode":"LISS","duration_min":15,"incline_pct":10,"speed_kmh":5.0}
+    ]},
+    {"day_number":2,"session_name":"Lower Body Density","exercises":[
+      {"exercise_name":"barbell_squat","exercise_type":"strength","sets":4,"reps":10,"current_weight_kg":0,"max_safety_limit_kg":60,"tempo":"3210","rest_seconds":60,"special_notes":"protect_quadriceps_tendon"},
+      {"exercise_name":"leg_press","exercise_type":"strength","sets":3,"reps":12,"current_weight_kg":0,"rest_seconds":60},
+      {"exercise_name":"leg_extension_hold","exercise_type":"isometric","sets":3,"duration_sec":15,"rest_seconds":45,"special_notes":"max_contraction_at_top"},
+      {"exercise_name":"lying_leg_curl","exercise_type":"strength","sets":4,"reps":12,"current_weight_kg":0,"rest_seconds":60},
+      {"exercise_name":"incline_treadmill_walk","exercise_type":"cardio","intensity_mode":"LISS","duration_min":15,"incline_pct":10,"speed_kmh":5.0}
+    ]},
+    {"day_number":3,"session_name":"Active Recovery LISS","exercises":[
+      {"exercise_name":"incline_treadmill_walk","exercise_type":"cardio","intensity_mode":"LISS","duration_min":35,"incline_pct":12,"speed_kmh":5.5,"target_heart_rate_bpm":130}
+    ]},
+    {"day_number":4,"session_name":"Push + Finisher","exercises":[
+      {"exercise_name":"incline_dumbbell_press","exercise_type":"strength","sets":4,"reps":10,"current_weight_kg":0,"rest_seconds":60},
+      {"exercise_name":"cable_flyes","exercise_type":"strength","sets":3,"reps":12,"current_weight_kg":0,"rest_seconds":60},
+      {"exercise_name":"dumbbell_lateral_raises","exercise_type":"strength","sets":4,"reps":15,"current_weight_kg":0,"rest_seconds":60},
+      {"exercise_name":"bench_dips","exercise_type":"strength","sets":3,"reps":15,"current_weight_kg":0,"rest_seconds":60},
+      {"exercise_name":"burpees_no_jump","exercise_type":"strength","sets":3,"reps":15,"group_id":"F1","group_type":"finisher","rest_seconds":20,"special_notes":"no_impact_on_knees"},
+      {"exercise_name":"incline_treadmill_walk","exercise_type":"cardio","intensity_mode":"LISS","duration_min":15,"incline_pct":10,"speed_kmh":5.0}
+    ]},
+    {"day_number":5,"session_name":"Pull + Core","exercises":[
+      {"exercise_name":"low_row_cable","exercise_type":"strength","sets":4,"reps":10,"current_weight_kg":0,"rest_seconds":60},
+      {"exercise_name":"v_bar_lat_pulldown","exercise_type":"strength","sets":4,"reps":10,"current_weight_kg":0,"rest_seconds":60},
+      {"exercise_name":"face_pulls","exercise_type":"strength","sets":3,"reps":15,"current_weight_kg":0,"rest_seconds":60},
+      {"exercise_name":"weighted_plank","exercise_type":"isometric","sets":3,"duration_sec":60,"rest_seconds":45,"special_notes":"keep_glutes_engaged"},
+      {"exercise_name":"ab_wheel_rollout","exercise_type":"strength","sets":3,"reps":10,"rest_seconds":60},
+      {"exercise_name":"incline_treadmill_walk","exercise_type":"cardio","intensity_mode":"LISS","duration_min":15,"incline_pct":10,"speed_kmh":5.0}
+    ]},
+    {"day_number":6,"session_name":"Legs & Glutes Explosive","exercises":[
+      {"exercise_name":"barbell_hip_thrust","exercise_type":"strength","sets":4,"reps":10,"current_weight_kg":0,"rest_seconds":60,"special_notes":"pause_1s_at_top"},
+      {"exercise_name":"romanian_deadlift","exercise_type":"strength","sets":4,"reps":10,"current_weight_kg":0,"rest_seconds":60,"special_notes":"focus_on_hamstring_stretch"},
+      {"exercise_name":"walking_lunges","exercise_type":"strength","sets":3,"reps":12,"current_weight_kg":0,"rest_seconds":60,"special_notes":"long_steps_for_glute_bias"},
+      {"exercise_name":"hip_abduction_machine","exercise_type":"strength","sets":3,"reps":20,"current_weight_kg":0,"rest_seconds":60},
+      {"exercise_name":"incline_treadmill_walk","exercise_type":"cardio","intensity_mode":"LISS","duration_min":15,"incline_pct":10,"speed_kmh":5.0}
+    ]}
   ]
 };
 
@@ -530,6 +538,7 @@ function showScreen(name, btn) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('s-' + name).classList.add('active');
   if (btn) btn.classList.add('active');
+  if (name === 'today') renderToday();
   if (name === 'workout') renderWorkout();
   if (name === 'stats') renderStats();
   if (name === 'config') renderConfigUI();
@@ -567,15 +576,14 @@ function renderHome() {
      <span><b style="color:var(--text)">RPE:</b> ${info.rpe_target||'—'}</span>&nbsp;&nbsp;
      <span><b style="color:var(--text)">Enfoque:</b> ${(info.system_focus||'—').replace(/_/g,' ')}</span>`;
 
-  // Grid
+  // Grid — todas las semanas muestran color de fase
   const grid = document.getElementById('week-grid');
   grid.innerHTML = '';
   for (let w = 1; w <= 14; w++) {
     const wi = getWeekInfo(w);
-    const past = w < currentWeek;
-    let cls = 'week-cell';
+    let cls = 'week-cell phase-' + (wi.phase || 'density');
     if (w === currentWeek) cls += ' current';
-    else if (past) cls += ' done-' + (wi.phase || 'density');
+    if (w < currentWeek) cls += ' past';
     const cell = document.createElement('div');
     cell.className = cls;
     cell.textContent = w;
@@ -614,7 +622,107 @@ function getLoggedSets(week) {
 // ═══════════════════════════════════════════════════════════════
 //  WORKOUT
 // ═══════════════════════════════════════════════════════════════
-const ICONS = ['🏋','💪','🔄','⚡','🦵','🍑','🏃','🔥','🎯','⬆'];
+// SVG icons por tipo/nombre de ejercicio
+function getExIcon(name, exType) {
+  const n = name.toLowerCase();
+  // cardio
+  if (exType === 'cardio') return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`;
+  // isométrico
+  if (exType === 'isometric') return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`;
+  // pecho
+  if (n.includes('bench') || n.includes('press') || n.includes('flye') || n.includes('dip'))
+    return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 12h12M8 8l-4 4 4 4M16 8l4 4-4 4"/></svg>`;
+  // espalda / jalón / remo
+  if (n.includes('row') || n.includes('pulldown') || n.includes('pull') || n.includes('lat'))
+    return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 12H6M10 8l-4 4 4 4"/></svg>`;
+  // hombro
+  if (n.includes('shoulder') || n.includes('military') || n.includes('lateral') || n.includes('raise') || n.includes('face_pull'))
+    return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="5" r="2"/><path d="M12 7v5m-4 5h8M8 17l-2 4M16 17l2 4"/></svg>`;
+  // bícep / trícep / brazo
+  if (n.includes('bicep') || n.includes('curl') || n.includes('tricep') || n.includes('pushdown'))
+    return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 17c0-4 2-7 5-8s5 0 5 3-2 5-5 5H7"/><path d="M7 17l-1 3"/></svg>`;
+  // squat / pierna
+  if (n.includes('squat') || n.includes('leg') || n.includes('lunge') || n.includes('curl') && n.includes('leg'))
+    return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="4" r="2"/><path d="M12 6v6l-3 5M12 12l3 5M9 21h6"/></svg>`;
+  // glúteo / hip thrust / abducción
+  if (n.includes('hip') || n.includes('glute') || n.includes('abduction') || n.includes('rdl') || n.includes('romanian') || n.includes('deadlift'))
+    return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 17c0-4 3-7 7-7s7 3 7 7"/><path d="M5 17l-1 3M19 17l1 3"/></svg>`;
+  // core / plank / ab
+  if (n.includes('plank') || n.includes('ab') || n.includes('core') || n.includes('wheel'))
+    return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="10" width="18" height="4" rx="2"/><path d="M7 10V7M17 10V7M7 14v3M17 14v3"/></svg>`;
+  // burpees / finisher / functional
+  if (n.includes('burpee') || n.includes('jump') || n.includes('sprint'))
+    return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`;
+  // default strength
+  return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="6" y1="19" x2="18" y2="19"/></svg>`;
+}
+
+// Determina el índice del día actual (el siguiente sin completar)
+function getCurrentDayIndex() {
+  const days = getDays();
+  for (let di = 0; di < days.length; di++) {
+    const d = days[di];
+    const label = d.session_name || 'Día '+(di+1);
+    const logged = q(
+      "SELECT COUNT(*) FROM workout_log WHERE week=? AND day_label=?",
+      [currentWeek, label]
+    );
+    const count = logged.length && logged[0].values.length ? (logged[0].values[0][0]||0) : 0;
+    if (count === 0) return di;
+  }
+  return 0; // si todos están hechos, volver al primero
+}
+
+function renderToday() {
+  const info = getWeekInfo(currentWeek);
+  const days = getDays();
+  const di = getCurrentDayIndex();
+  const dayObj = days[di];
+  if (!dayObj) return;
+  const dayLabel = dayObj.session_name || 'Día '+(di+1);
+  const exList = dayObj.exercises || [];
+
+  document.getElementById('t-day-name').textContent = dayLabel;
+  document.getElementById('t-phase-tag').textContent =
+    'Semana ' + currentWeek + ' · ' + (info.phase||'').toUpperCase() + ' · RPE ' + (info.rpe_target||'?');
+
+  const container = document.getElementById('today-list');
+  container.innerHTML = '';
+
+  // Card único sin header colapsable — día de hoy abierto directo
+  const card = document.createElement('div');
+  card.className = 'day-card open';
+  card.innerHTML = `
+    <div style="border-bottom:1px solid var(--border)">
+      ${buildExList(exList, dayLabel, info, di)}
+    </div>`;
+  container.appendChild(card);
+
+  // Botón para avanzar al siguiente día manualmente
+  const nextDi = (di + 1) % days.length;
+  const nextDay = days[nextDi];
+  const btn = document.createElement('div');
+  btn.style.cssText = 'padding:12px 16px';
+  btn.innerHTML = `<button class="btn btn-secondary" onclick="advanceDay()" style="margin:0">
+    Marcar día completo → ${nextDay?.session_name||'Día '+(nextDi+1)}
+  </button>`;
+  container.appendChild(btn);
+}
+
+function advanceDay() {
+  const days = getDays();
+  const di = getCurrentDayIndex();
+  const dayObj = days[di];
+  const dayLabel = dayObj?.session_name || 'Día '+(di+1);
+  // Insertar un registro de "completado" para que pase al siguiente
+  run(`INSERT INTO workout_log (week,day_label,exercise,sets,reps,weight_kg,rpe,notes)
+       VALUES (?,?,'_day_complete',1,0,0,0,'')`,
+    [currentWeek, dayLabel]);
+  loggedThisSession.add('_complete_'+di);
+  renderToday();
+  renderHome();
+  showToast('✓ ' + dayLabel + ' completado');
+}
 
 function renderWorkout() {
   const info = getWeekInfo(currentWeek);
@@ -629,15 +737,19 @@ function renderWorkout() {
   days.forEach((dayObj, di) => {
     const dayLabel = dayObj.session_name || 'Día ' + (di+1);
     const exList = dayObj.exercises || [];
+    // Saber si este día ya tiene logs
+    const logged = q("SELECT COUNT(*) FROM workout_log WHERE week=? AND day_label=?",
+      [currentWeek, dayLabel]);
+    const isDone = (logged.length && logged[0].values.length ? logged[0].values[0][0] : 0) > 0;
 
     const card = document.createElement('div');
     card.className = 'day-card';
     card.innerHTML = `
       <div class="day-header" onclick="this.closest('.day-card').classList.toggle('open')">
-        <div class="day-num">D${di+1}</div>
+        <div class="day-num" style="${isDone?'background:var(--green)':''}">D${di+1}</div>
         <div class="day-info">
           <div class="day-name">${dayLabel}</div>
-          <div class="day-count">${exList.length} ejercicios</div>
+          <div class="day-count">${isDone ? '✓ completado' : exList.length+' ejercicios'}</div>
         </div>
         <svg class="day-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
@@ -648,48 +760,130 @@ function renderWorkout() {
   });
 }
 
+// ── rest defaults by type ─────────────────────────────────────
+const REST_DEFAULTS = {
+  strength: 60, isometric: 45, cardio: 0,
+  superset: 30, triset: 30, giant_set: 30,
+  finisher: 20, pyramid: 90, drop_set: 90
+};
+
+function getRestSeconds(ex) {
+  // override explícito en el ejercicio
+  if (ex.rest_seconds != null) return ex.rest_seconds;
+  // por group_type si está agrupado
+  if (ex.group_id && ex.group_type && REST_DEFAULTS[ex.group_type] != null)
+    return REST_DEFAULTS[ex.group_type];
+  // por exercise_type
+  const etype = ex.exercise_type || 'strength';
+  return REST_DEFAULTS[etype] ?? 60;
+}
+
+function fmtRest(sec) {
+  if (!sec) return null;
+  return sec >= 60 ? `${Math.floor(sec/60)}min ${sec%60>0?sec%60+'s':''}`.trim() : `${sec}s`;
+}
+
+// ── group helpers ─────────────────────────────────────────────
+const GROUP_LABELS = {
+  superset:'superset', triset:'triset',
+  giant_set:'giant set', pyramid:'pirámide', drop_set:'drop set', finisher:'finisher'
+};
+const GROUP_CSS = {
+  superset:'group-superset', triset:'group-triset',
+  giant_set:'group-giant', pyramid:'group-pyramid', drop_set:'group-dropset', finisher:'group-finisher'
+};
+
+// Renders ex-list with group headers injected
+function buildExList(exList, dayLabel, info, di) {
+  let out = '';
+  let lastGroup = null;
+  exList.forEach((ex, ei) => {
+    const grp = ex.group_id || null;
+    if (grp && grp !== lastGroup) {
+      const gt = ex.group_type || 'superset';
+      out += `<div class="group-header">${GROUP_LABELS[gt]||gt} ${grp}</div>`;
+    }
+    lastGroup = grp;
+    out += buildExRow(ex, dayLabel, info, di, ei);
+  });
+  return out;
+}
+
 function buildExRow(ex, dayLabel, info, di, ei) {
   const rawName = ex.exercise_name || ex.node || 'exercise';
   const name = rawName.replace(/_/g,' ');
   const logId = `${di}-${ei}`;
   const isLogged = loggedThisSession.has(logId);
-  const icon = ICONS[(di * 5 + ei) % ICONS.length];
+  const exType = ex.exercise_type || (ex.duration_min||ex.duration_minutes ? 'cardio' : ex.duration_sec ? 'isometric' : 'strength');
+  const icon = getExIcon(rawName, exType);
+  const isGrouped = !!ex.group_id;
 
+  // ── meta ─────────────────────────────────────────────────────
   let meta = '';
-  // cardio con duración en minutos (soporta duration_min y duration_minutes)
-  const durMin = ex.duration_min || ex.duration_minutes;
-  const incline = ex.incline_pct || ex.incline_percentage;
-  if (durMin) {
-    meta = `${durMin} min · ${incline || 0}% incline`;
-  } else if (ex.duration_sec) {
-    // ejercicio isométrico con duración en segundos (ej. plank)
+  if (exType === 'cardio') {
+    const durMin = ex.duration_min || ex.duration_minutes || '?';
+    const incline = ex.incline_pct || ex.incline_percentage || 0;
+    meta = `${durMin} min · ${incline}% · ${ex.speed_kmh||'—'} km/h`;
+    if (ex.target_heart_rate_bpm) meta += ` · ♥ ${ex.target_heart_rate_bpm}bpm`;
+  } else if (exType === 'isometric') {
     let sets = ex.sets || '?';
-    const deload = info.phase === 'deload';
-    if (deload && ex.sets) sets = Math.max(1, Math.ceil(ex.sets / 2));
-    meta = `${sets} series × ${ex.duration_sec}s`;
+    if (info.phase === 'deload' && ex.sets) sets = Math.max(1, Math.ceil(ex.sets/2));
+    meta = `${sets} × ${ex.duration_sec}s`;
+  } else if (ex.group_type === 'pyramid' && ex.pyramid_reps) {
+    meta = ex.pyramid_reps.map((r,i) => `${ex.pyramid_weights_kg?.[i]||'?'}kg×${r}`).join(' → ');
   } else {
     let sets = ex.sets || '?';
     let reps = ex.reps || '?';
-    if (info.reps_change && info.reps_change.includes('+2')) reps = (parseInt(reps)||0) + 2;
-    if (info.reps_change === '+1_rep' || info.reps_change === '+1 rep') reps = (parseInt(reps)||0) + 1;
-    const deload = info.phase === 'deload';
-    if (deload && ex.sets) sets = Math.max(1, Math.ceil(ex.sets / 2));
-    meta = `${sets} series × ${reps} reps`;
-    if (ex.max_weight_kg) meta += ` · máx ${ex.max_weight_kg}kg`;
+    if (info.reps_change && info.reps_change.includes('+2')) reps = (parseInt(reps)||0)+2;
+    if (info.reps_change === '+1 rep') reps = (parseInt(reps)||0)+1;
+    if (info.phase === 'deload' && ex.sets) sets = Math.max(1, Math.ceil(ex.sets/2));
+    meta = `${sets} × ${reps}`;
+    if (ex.current_weight_kg) meta += ` · ${ex.current_weight_kg}kg`;
+    if (ex.max_safety_limit_kg) meta += ` ⚠${ex.max_safety_limit_kg}kg`;
   }
 
-  return `<div class="ex-row" id="exrow-${logId}">
-    <div class="ex-icon">${icon}</div>
+  // ── tags ─────────────────────────────────────────────────────
+  const tags = [];
+  if (exType === 'cardio') tags.push(`<span class="ex-tag type-cardio">${ex.intensity_mode||'cardio'}</span>`);
+  if (exType === 'isometric') tags.push(`<span class="ex-tag type-isometric">isométrico</span>`);
+  if (isGrouped) tags.push(`<span class="ex-tag ${GROUP_CSS[ex.group_type]||'group-superset'}">${GROUP_LABELS[ex.group_type]||ex.group_type} ${ex.group_id}</span>`);
+  if (ex.tempo && ex.tempo !== 'normal') tags.push(`<span class="ex-tag tempo">${ex.tempo}</span>`);
+  const tagsHtml = tags.length ? `<div class="ex-tags">${tags.join('')}</div>` : '';
+
+  // ── hint ─────────────────────────────────────────────────────
+  const hint = ex.special_notes
+    ? `<div class="ex-hint">${ex.special_notes.replace(/_/g,' ')}</div>` : '';
+  // ── rest ─────────────────────────────────────────────────────
+  const restSec = getRestSeconds(ex);
+  const restHtml = restSec > 0
+    ? `<div class="ex-rest">⏱ descanso: ${fmtRest(restSec)}</div>` : '';
+
+  // ── modal data ───────────────────────────────────────────────
+  const modalExData = encodeURIComponent(JSON.stringify({
+    dayLabel, name, sets: ex.sets||1, reps: ex.reps||ex.duration_sec||0,
+    logId, exType, preWeight: ex.current_weight_kg||0,
+    safetyLimit: ex.max_safety_limit_kg||0,
+    duration_min: ex.duration_min||ex.duration_minutes||0,
+    incline_pct: ex.incline_pct||0, speed_kmh: ex.speed_kmh||0,
+    target_hr: ex.target_heart_rate_bpm||0,
+    pyramid_reps: ex.pyramid_reps||null,
+    pyramid_weights: ex.pyramid_weights_kg||null,
+    restSec: getRestSeconds(ex)
+  }));
+
+  return `<div class="ex-row${isGrouped?' is-grouped':''}" id="exrow-${logId}">
+    <div class="ex-icon" style="color:var(--text2)">${icon}</div>
     <div class="ex-info">
       <div class="ex-name">${name}</div>
       <div class="ex-meta">${meta}</div>
+      ${tagsHtml}${hint}${restHtml}
     </div>
-    <button class="ex-log-btn ${isLogged ? 'logged' : ''}"
-      onclick="openModal('${dayLabel.replace(/'/g,"\\'")}','${name.replace(/'/g,"\\'")}','${ex.sets||1}','${ex.reps || ex.duration_sec || 0}','${logId}','${ex.duration_sec ? 'sec' : 'reps'}')">
-      ${isLogged ? '✓' : 'Log'}
+    <button class="ex-log-btn ${isLogged?'logged':''}" onclick="openModalFromData('${modalExData}')">
+      ${isLogged ? '\u2713' : 'Log'}
     </button>
   </div>`;
 }
+
 
 // ═══════════════════════════════════════════════════════════════
 //  MODAL
@@ -753,6 +947,14 @@ function openModalFromData(encoded) {
   } else { warn.style.display = 'none'; }
 
   document.getElementById('m-notes').value = '';
+  // Mostrar descanso recomendado
+  const restEl = document.getElementById('m-rest-info');
+  if (d.restSec > 0) {
+    restEl.textContent = `⏱ Descanso recomendado: ${fmtRest(d.restSec)}`;
+    restEl.style.display = 'block';
+  } else {
+    restEl.style.display = 'none';
+  }
   document.getElementById('log-modal').classList.add('open');
   setTimeout(() => {
     const first = isCardio
