@@ -86,6 +86,9 @@ body{background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 .ex-rest{font-size:11px;color:var(--text3);margin-top:2px}
 .ex-suggested{font-size:11px;color:var(--green);margin-top:2px;font-weight:600}
 .modal-rest{font-size:12px;color:var(--text2);background:var(--bg3);border-radius:8px;padding:8px 12px;margin-bottom:12px;text-align:center}
+.unit-toggle{display:flex;border:1px solid var(--border2);border-radius:8px;overflow:hidden;flex-shrink:0}
+.unit-btn{padding:0 12px;height:100%;border:none;background:transparent;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.unit-btn.active{background:var(--accent);color:#fff}
 .ex-tags{display:flex;gap:5px;margin-top:4px;flex-wrap:wrap}
 .ex-tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:var(--bg4);color:var(--text2);border:1px solid var(--border)}
 .ex-tag.superset{background:rgba(167,139,250,.12);color:var(--accent2);border-color:rgba(167,139,250,.3)}
@@ -320,7 +323,19 @@ input:focus{outline:none;border-color:var(--accent)}
         <div class="input-group"><label id="m-reps-label">Repeticiones</label><input type="number" id="m-reps" min="1" max="50"></div>
       </div>
       <div class="input-row">
-        <div class="input-group"><label>Peso (kg)</label><input type="number" id="m-weight" min="0" step="2.5" value="0"></div>
+        <div class="input-group">
+          <label>Peso</label>
+          <div style="display:flex;gap:8px;align-items:stretch">
+            <input type="number" id="m-weight" min="0" step="0.5" value="0" style="flex:1" oninput="syncWeightDisplay()">
+            <div class="unit-toggle">
+              <button class="unit-btn active" id="btn-kg" onclick="setWeightUnit('kg')">kg</button>
+              <button class="unit-btn" id="btn-lbs" onclick="setWeightUnit('lbs')">lbs</button>
+            </div>
+          </div>
+          <div id="m-weight-converted" style="font-size:11px;color:var(--text3);margin-top:4px;min-height:16px"></div>
+          <div id="m-suggested-unit" style="font-size:11px;color:var(--green);margin-top:2px;font-weight:600;min-height:16px"></div>
+          <div style="font-size:10px;color:var(--text3);margin-top:3px">📌 Registra el peso <b>por mancuerna</b>, no el total</div>
+        </div>
         <div class="input-group"><label>RPE (1–10)</label><input type="number" id="m-rpe" min="1" max="10" step="0.5"></div>
       </div>
       <div id="m-pyramid-fields" style="display:none;margin-bottom:12px">
@@ -959,6 +974,13 @@ function buildExRow(ex, dayLabel, info, di, ei) {
 function openModalFromData(encoded) {
   const d = JSON.parse(decodeURIComponent(encoded));
   const info = getWeekInfo(currentWeek);
+  // Resetear toggle a kg al abrir cada modal
+  weightUnit = 'kg';
+  document.getElementById('btn-kg').classList.add('active');
+  document.getElementById('btn-lbs').classList.remove('active');
+  document.getElementById('m-weight').step = '0.5';
+  document.getElementById('m-weight-converted').textContent = '';
+  document.getElementById('m-suggested-unit').textContent = '';
   modalData = { dayLabel: d.dayLabel, exName: d.name, logId: d.logId,
     safetyLimit: d.safetyLimit||0, exType: d.exType };
 
@@ -979,10 +1001,11 @@ function openModalFromData(encoded) {
     document.getElementById('m-speed').value = d.speed_kmh || 0;
     document.getElementById('m-hr').value = d.target_hr || 0;
   } else {
-    const sugLabel = d.suggestedKg
-    ? ` · sugerido: ${d.suggestedKg}kg (${d.suggestedChange})`  : '';
+    // Guardar sugerido en modalData para convertir cuando cambia unidad
+  modalData._suggestedKg = d.suggestedKg || null;
+  modalData._suggestedChange = d.suggestedChange || null;
   document.getElementById('modal-ex-meta').textContent =
-      `${d.sets} series · RPE meta: ${info.rpe_target || '?'}${sugLabel}`;
+      `${d.sets} series · RPE meta: ${info.rpe_target || '?'}`;
     document.getElementById('m-sets').value = d.sets || 1;
     document.getElementById('m-reps-label').textContent = isIso ? 'Segundos' : 'Repeticiones';
     document.getElementById('m-reps').value = d.reps || 0;
@@ -1048,17 +1071,77 @@ function openModalFromData(encoded) {
     restEl.style.display = 'none';
   }
   document.getElementById('log-modal').classList.add('open');
+  // Mostrar sugerido en la unidad activa después de abrir
   setTimeout(() => {
+    updateSuggestedInUnit();
     const first = isCardio
       ? document.getElementById('m-duration')
       : document.getElementById('m-weight');
     first && first.focus();
-  }, 300);
+  }, 50);
+}
+
+// ── weight unit toggle ────────────────────────────────────────
+let weightUnit = 'kg'; // estado de sesión
+
+function setWeightUnit(unit) {
+  const input = document.getElementById('m-weight');
+  const current = parseFloat(input.value) || 0;
+  if (unit === weightUnit) return;
+
+  // Convertir el valor actual a la nueva unidad
+  if (unit === 'lbs' && current > 0) {
+    input.value = Math.round(current * 2.2046 * 4) / 4; // redondear a 0.25
+    input.step = '0.25';
+  } else if (unit === 'kg' && current > 0) {
+    input.value = Math.round(current / 2.2046 * 4) / 4;
+    input.step = '0.5';
+  }
+  weightUnit = unit;
+  document.getElementById('btn-kg').classList.toggle('active', unit === 'kg');
+  document.getElementById('btn-lbs').classList.toggle('active', unit === 'lbs');
+  syncWeightDisplay();
+  updateSuggestedInUnit();
+}
+
+function syncWeightDisplay() {
+  const val = parseFloat(document.getElementById('m-weight').value) || 0;
+  const conv = document.getElementById('m-weight-converted');
+  if (!val) { conv.textContent = ''; return; }
+  if (weightUnit === 'lbs') {
+    const kg = Math.round(val / 2.2046 * 100) / 100;
+    conv.textContent = `= ${kg} kg guardado`;
+  } else {
+    const lbs = Math.round(val * 2.2046 * 10) / 10;
+    conv.textContent = `= ${lbs} lbs`;
+  }
+  // Actualizar sugerido en la unidad activa
+  updateSuggestedInUnit();
+}
+
+function updateSuggestedInUnit() {
+  const el = document.getElementById('m-suggested-unit');
+  if (!el || !modalData._suggestedKg) return;
+  const sug = modalData._suggestedKg;
+  if (weightUnit === 'lbs') {
+    const lbs = Math.round(sug * 2.2046 * 4) / 4;
+    el.textContent = `↑ Sugerido: ${lbs} lbs (${modalData._suggestedChange}) — peso por mancuerna`;
+  } else {
+    el.textContent = `↑ Sugerido: ${sug} kg (${modalData._suggestedChange}) — peso por mancuerna`;
+  }
+}
+
+function getWeightKg() {
+  const val = parseFloat(document.getElementById('m-weight').value) || 0;
+  if (weightUnit === 'lbs') return Math.round(val / 2.2046 * 100) / 100;
+  return val;
 }
 
 function closeModal(e) {
   if (!e || e.target.id === 'log-modal') {
     document.getElementById('log-modal').classList.remove('open');
+    // Resetear a kg al cerrar
+    if (weightUnit !== 'kg') setWeightUnit('kg');
   }
 }
 
@@ -1103,7 +1186,7 @@ function saveLog() {
     // Log normal (strength / isometric)
     const sets   = parseInt(document.getElementById('m-sets').value) || 0;
     const reps   = parseInt(document.getElementById('m-reps').value) || 0;
-    const weight = parseFloat(document.getElementById('m-weight').value) || 0;
+    const weight = getWeightKg(); // siempre en kg, sin importar la unidad del toggle
     const rpe    = parseFloat(document.getElementById('m-rpe').value) || 0;
     if (modalData.safetyLimit > 0 && weight > modalData.safetyLimit) {
       if (!confirm(`⚠ ${weight}kg supera el límite de seguridad de ${modalData.safetyLimit}kg. ¿Continuar?`)) return;
