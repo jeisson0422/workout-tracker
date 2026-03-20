@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useWorkoutStore } from '../stores/workout'
+import { useAuthStore } from '../stores/auth'
 import { dbService } from '../services/localDb'
 
 const store = useWorkoutStore()
+const authStore = useAuthStore()
+const router = useRouter()
 const msg = ref({ text: '', type: '' })
 
 const weekInput = ref(store.currentWeek)
@@ -36,6 +40,11 @@ function resetAll() {
   store.setWeek(1)
   showMsg('✓ Datos borrados', 'ok')
 }
+
+async function handleSignOut() {
+  await authStore.signOut()
+  router.push('/login')
+}
 </script>
 
 <template>
@@ -47,6 +56,14 @@ function resetAll() {
     
     <div style="padding:12px 16px">
       <div v-if="msg.text" :class="['msg', msg.type]">{{ msg.text }}</div>
+
+      <div class="cfg-lbl">Cuenta</div>
+      <div style="background:var(--bg2); padding: 16px; border-radius: var(--r2); border: 1px solid var(--border); margin-bottom: 20px;">
+        <div style="font-size: 14px; margin-bottom: 12px; word-break: break-all;">
+          Sesión iniciada como:<br><strong style="color:var(--accent2)">{{ authStore.user?.email }}</strong>
+        </div>
+        <button class="btn btn-secondary" style="margin:0; padding:10px" @click="handleSignOut">Cerrar Sesión</button>
+      </div>
 
       <div class="cfg-lbl">Semana actual</div>
       <div style="display:flex;gap:10px;margin-bottom:20px">
@@ -65,7 +82,7 @@ function resetAll() {
       <div class="cfg-lbl" style="margin-top:12px">JSON de progresión</div>
       <textarea v-model="progInput" rows="5" spellcheck="false"></textarea>
 
-      <button class="btn btn-danger mt-6" @click="resetAll">Borrar todos los datos</button>
+      <button class="btn btn-danger mt-6" @click="resetAll">Borrar todos los datos locales</button>
     </div>
   </div>
 </template>
@@ -80,6 +97,7 @@ input[type=number] { background: var(--bg3); border: 1px solid var(--border); bo
 input:focus { outline: none; border-color: var(--accent); }
 .btn { display: block; width: 100%; padding: 14px; border-radius: var(--r2); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: all .2s; text-align: center; }
 .btn-primary { background: var(--accent); color: #fff; }
+.btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border2); }
 .btn-danger { background: #2a1a1a; color: var(--red); border: 1px solid #3a2222; }
 .msg { padding: 10px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 10px; }
 .msg.ok { background: #0d2a1f; color: var(--green); border: 1px solid #1a4a35; }

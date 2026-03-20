@@ -180,8 +180,8 @@ function formatRest(sec: number) {
         <div v-if="data?.pyramid_reps" style="margin-bottom:12px">
           <div style="font-size:12px;color:var(--text2);font-weight:600;margin-bottom:6px">Series piramidales</div>
           <div v-for="(_, i) in data.pyramid_reps" :key="i" class="input-row" style="margin-bottom:6px">
-            <div class="input-group"><label>Serie {{i+1}} kg</label><input type="number" v-model="mPyrW[i]" min="0" step="2.5"></div>
-            <div class="input-group"><label>Reps</label><input type="number" v-model="mPyrR[i]" min="1"></div>
+            <div class="input-group"><label>Serie {{Number(i)+1}} kg</label><input type="number" v-model="mPyrW[Number(i)]" min="0" step="2.5"></div>
+            <div class="input-group"><label>Reps</label><input type="number" v-model="mPyrR[Number(i)]" min="1"></div>
           </div>
         </div>
       </div>

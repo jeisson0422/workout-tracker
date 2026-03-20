@@ -35,10 +35,10 @@ function openModal(data: any) {
       <DayCard 
         v-for="(day, di) in days" 
         :key="di"
-        :day-index="di"
-        :day-label="day.session_name || `Día ${di+1}`"
+        :day-index="Number(di)"
+        :day-label="day.session_name || `Día ${Number(di)+1}`"
         :exercises="day.exercises || []"
-        :is-done="(store.dbUpdateTrigger || true) && store.isDayComplete(day.session_name || `Día ${di+1}`)"
+        :is-done="Boolean((store.dbUpdateTrigger || true) && store.isDayComplete(day.session_name || `Día ${Number(di)+1}`))"
         @open-modal="openModal"
       />
     </div>

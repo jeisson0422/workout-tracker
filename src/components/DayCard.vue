@@ -20,7 +20,7 @@ const isOpen = ref(props.startOpen || false)
 
 const groupedExercises = computed(() => {
   const result: any[] = []
-  let lastGroup = null
+  let lastGroup: string | number | null = null
 
   props.exercises.forEach((ex, index) => {
     const grp = ex.group_id || null
@@ -37,10 +37,6 @@ const groupedExercises = computed(() => {
 function getGroupLabel(type: string) {
   const labels: Record<string, string> = { superset: 'superset', triset: 'triset', giant_set: 'giant set', pyramid: 'pirámide', drop_set: 'drop set', finisher: 'finisher' }
   return labels[type] || type
-}
-
-function isLogged(exIndex: number) {
-  return false // Will connect to store in a moment
 }
 </script>
 

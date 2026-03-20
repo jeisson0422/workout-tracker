@@ -39,14 +39,14 @@ export const useWorkoutStore = defineStore('workout', {
       dbService.setConfig('current_week', w);
     },
 
-    getWeekInfo(weekNum: number) {
+    getWeekInfo(weekNum: number): Record<string, any> {
       const pd = this.progression.progression_data || [];
       return pd.find((x: any) => x.week_number === weekNum) || {};
     },
 
     getDays() {
       if (this.exercises.training_days) return this.exercises.training_days;
-      return (this.exercises.days || []).map((d: any, i: number) => {
+      return ((this.exercises as any).days || []).map((d: any, i: number) => {
         const dayKey = Object.keys(d).find(k => k.startsWith('day_'));
         return { day_number: i+1, session_name: dayKey ? d[dayKey] : 'Day '+(i+1), exercises: d.exercises || [] };
       });

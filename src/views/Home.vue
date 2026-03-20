@@ -15,17 +15,6 @@ function setWeek(w: number) {
   store.setWeek(w)
 }
 
-function getPhaseColor(phase: string) {
-  switch (phase) {
-    case 'adaptation': return { bg: 'rgba(108,99,255,.15)', border: 'rgba(108,99,255,.35)', color: 'var(--accent2)' }
-    case 'density': return { bg: 'rgba(96,165,250,.1)', border: 'rgba(96,165,250,.3)', color: 'var(--blue)' }
-    case 'intensity': return { bg: 'rgba(251,146,60,.1)', border: 'rgba(251,146,60,.3)', color: '#fb923c' }
-    case 'deload': return { bg: 'rgba(52,211,153,.15)', border: 'rgba(52,211,153,.4)', color: 'var(--green)' }
-    case 'peaking': return { bg: 'rgba(251,191,36,.15)', border: 'rgba(251,191,36,.4)', color: 'var(--amber)' }
-    default: return { bg: 'var(--bg2)', border: 'var(--border)', color: 'var(--text2)' }
-  }
-}
-
 function getCellClass(w: number, phase: string) {
   let base = `week-cell phase-${phase || 'density'}`
   if (w === currentWeek.value) base += ' current'

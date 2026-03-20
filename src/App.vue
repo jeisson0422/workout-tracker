@@ -1,24 +1,32 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useWorkoutStore } from './stores/workout'
+import { useAuthStore } from './stores/auth'
 import BottomNav from './components/BottomNav.vue'
 
 const store = useWorkoutStore()
+const authStore = useAuthStore()
+const route = useRoute()
 
 onMounted(async () => {
+  await authStore.initialize()
   await store.initialize()
 })
+
+const isAppReady = computed(() => store.isLoaded && authStore.isInitialized)
+const showBottomNav = computed(() => !route.meta.hideNav)
 </script>
 
 <template>
   <div class="app-container bg-[#0a0a0f] text-[#f0f0ff]">
-    <div v-if="!store.isLoaded" class="flex flex-1 items-center justify-center">
+    <div v-if="!isAppReady" class="flex flex-1 items-center justify-center">
       Cargando...
     </div>
     <div v-else class="main-content">
       <router-view />
     </div>
-    <BottomNav />
+    <BottomNav v-if="isAppReady && showBottomNav" />
   </div>
 </template>
 
