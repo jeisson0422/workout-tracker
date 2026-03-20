@@ -8,6 +8,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isInitialized = ref(false)
 
   async function initialize() {
+    if (isInitialized.value) return
     const { data: { session } } = await supabase.auth.getSession()
     user.value = session?.user || null
     isInitialized.value = true

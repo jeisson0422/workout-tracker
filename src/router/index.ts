@@ -37,13 +37,12 @@ const router = createRouter({
   ]
 })
 
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
   
   // Wait until auth is initialized
   if (!authStore.isInitialized) {
-    // If not initialized, it shouldn't happen if we await it in App.vue before mounting router
-    // but just in case
+    await authStore.initialize()
   }
 
   const requiresAuth = to.meta.requiresAuth !== false

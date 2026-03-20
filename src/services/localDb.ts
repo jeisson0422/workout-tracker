@@ -66,13 +66,16 @@ class LocalDbService {
   }
 
   runMigrations() {
+    // Migrar workout_log
     const colsLog = this.q("PRAGMA table_info(workout_log)");
     if (colsLog.length && colsLog[0].values) {
       const hasSyncId = colsLog[0].values.some((col: any) => col[1] === 'sync_id');
+      const hasSynced = colsLog[0].values.some((col: any) => col[1] === 'synced');
+      
       if (!hasSyncId) {
-        this.run("ALTER TABLE workout_log ADD COLUMN sync_id TEXT UNIQUE");
-        this.run("ALTER TABLE workout_log ADD COLUMN synced INTEGER DEFAULT 0");
+        this.run("ALTER TABLE workout_log ADD COLUMN sync_id TEXT");
         
+        // Popular UUIDs
         const rows = this.q("SELECT id FROM workout_log WHERE sync_id IS NULL");
         if (rows.length && rows[0].values) {
           rows[0].values.forEach((row: any) => {
@@ -81,12 +84,19 @@ class LocalDbService {
           });
         }
       }
+      
+      this.run("CREATE UNIQUE INDEX IF NOT EXISTS idx_workout_log_sync_id ON workout_log(sync_id)");
+      
+      if (!hasSynced) {
+        this.run("ALTER TABLE workout_log ADD COLUMN synced INTEGER DEFAULT 0");
+      }
     }
 
+    // Migrar config
     const colsConfig = this.q("PRAGMA table_info(config)");
     if (colsConfig.length && colsConfig[0].values) {
-      const hasSynced = colsConfig[0].values.some((col: any) => col[1] === 'synced');
-      if (!hasSynced) {
+      const hasSyncedConfig = colsConfig[0].values.some((col: any) => col[1] === 'synced');
+      if (!hasSyncedConfig) {
         this.run("ALTER TABLE config ADD COLUMN synced INTEGER DEFAULT 0");
       }
     }
