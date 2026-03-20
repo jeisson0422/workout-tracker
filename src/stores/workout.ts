@@ -91,10 +91,11 @@ export const useWorkoutStore = defineStore('workout', {
     },
 
     markDayComplete(dayLabel: string, di: number) {
+      const syncId = crypto.randomUUID();
       dbService.run(
-        `INSERT INTO workout_log (week,day_label,exercise,sets,reps,weight_kg,rpe,notes)
-         VALUES (?,?,'_day_complete',1,0,0,0,'')`,
-        [this.currentWeek, dayLabel]
+        `INSERT INTO workout_log (sync_id,week,day_label,exercise,sets,reps,weight_kg,rpe,notes,synced)
+         VALUES (?,?,?,'_day_complete',1,0,0,0,'',0)`,
+        [syncId, this.currentWeek, dayLabel]
       );
       this.loggedThisSession.add('_complete_'+di);
       this.dbUpdateTrigger++;

@@ -43,6 +43,7 @@ class LocalDbService {
   createSchema() {
     this.run(`CREATE TABLE IF NOT EXISTS workout_log (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      sync_id TEXT UNIQUE,
       week INTEGER NOT NULL,
       day_label TEXT NOT NULL,
       exercise TEXT NOT NULL,
@@ -51,13 +52,44 @@ class LocalDbService {
       weight_kg REAL DEFAULT 0,
       rpe REAL DEFAULT 0,
       notes TEXT DEFAULT '',
-      logged_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M','now','localtime'))
+      logged_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M','now','localtime')),
+      synced INTEGER DEFAULT 0
     )`);
     this.run(`CREATE TABLE IF NOT EXISTS config (
       key TEXT PRIMARY KEY,
-      value TEXT NOT NULL
+      value TEXT NOT NULL,
+      synced INTEGER DEFAULT 0
     )`);
+    
+    this.runMigrations();
     this.persistDB();
+  }
+
+  runMigrations() {
+    const colsLog = this.q("PRAGMA table_info(workout_log)");
+    if (colsLog.length && colsLog[0].values) {
+      const hasSyncId = colsLog[0].values.some((col: any) => col[1] === 'sync_id');
+      if (!hasSyncId) {
+        this.run("ALTER TABLE workout_log ADD COLUMN sync_id TEXT UNIQUE");
+        this.run("ALTER TABLE workout_log ADD COLUMN synced INTEGER DEFAULT 0");
+        
+        const rows = this.q("SELECT id FROM workout_log WHERE sync_id IS NULL");
+        if (rows.length && rows[0].values) {
+          rows[0].values.forEach((row: any) => {
+            const uuid = crypto.randomUUID();
+            this.run("UPDATE workout_log SET sync_id = ? WHERE id = ?", [uuid, row[0]]);
+          });
+        }
+      }
+    }
+
+    const colsConfig = this.q("PRAGMA table_info(config)");
+    if (colsConfig.length && colsConfig[0].values) {
+      const hasSynced = colsConfig[0].values.some((col: any) => col[1] === 'synced');
+      if (!hasSynced) {
+        this.run("ALTER TABLE config ADD COLUMN synced INTEGER DEFAULT 0");
+      }
+    }
   }
 
   q(sql: string, params: any[] = []) {
@@ -77,7 +109,7 @@ class LocalDbService {
 
   setConfig(key: string, value: any) {
     const v = typeof value === 'string' ? value : JSON.stringify(value);
-    this.run("INSERT OR REPLACE INTO config (key,value) VALUES (?,?)", [key, v]);
+    this.run("INSERT OR REPLACE INTO config (key,value,synced) VALUES (?,?,0)", [key, v]);
   }
 
   getConfig(key: string): any {

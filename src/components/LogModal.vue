@@ -99,11 +99,12 @@ function saveLog() {
       [store.currentWeek, d.dayLabel, d.name]
     )
     if (existing.length && existing[0].values.length) {
-      dbService.run(`UPDATE workout_log SET reps=?,weight_kg=?,rpe=?,notes=? WHERE id=?`,
+      dbService.run(`UPDATE workout_log SET reps=?,weight_kg=?,rpe=?,notes=?,synced=0 WHERE id=?`,
         [mDuration.value, mSpeed.value, mHr.value, cardioNotes, existing[0].values[0][0]])
     } else {
-      dbService.run(`INSERT INTO workout_log (week,day_label,exercise,sets,reps,weight_kg,rpe,notes) VALUES (?,?,?,?,?,?,?,?)`,
-        [store.currentWeek, d.dayLabel, d.name, 1, mDuration.value, mSpeed.value, mHr.value, cardioNotes])
+      const syncId = crypto.randomUUID()
+      dbService.run(`INSERT INTO workout_log (sync_id,week,day_label,exercise,sets,reps,weight_kg,rpe,notes,synced) VALUES (?,?,?,?,?,?,?,?,?,0)`,
+        [syncId, store.currentWeek, d.dayLabel, d.name, 1, mDuration.value, mSpeed.value, mHr.value, cardioNotes])
     }
   } else if (d.pyramid_reps) {
     for (let i = 0; i < d.pyramid_reps.length; i++) {
@@ -112,8 +113,9 @@ function saveLog() {
       if (w > d.safetyLimit && d.safetyLimit > 0) {
         if (!confirm(`⚠ Serie ${i+1}: ${w}kg supera límite de ${d.safetyLimit}kg. ¿Continuar?`)) return
       }
-      dbService.run(`INSERT INTO workout_log (week,day_label,exercise,sets,reps,weight_kg,rpe,notes) VALUES (?,?,?,?,?,?,?,?)`,
-        [store.currentWeek, d.dayLabel, d.name+'_s'+(i+1), 1, r, w, mRpe.value, mNotes.value])
+      const syncId = crypto.randomUUID()
+      dbService.run(`INSERT INTO workout_log (sync_id,week,day_label,exercise,sets,reps,weight_kg,rpe,notes,synced) VALUES (?,?,?,?,?,?,?,?,?,0)`,
+        [syncId, store.currentWeek, d.dayLabel, d.name+'_s'+(i+1), 1, r, w, mRpe.value, mNotes.value])
     }
   } else {
     const weight = getWeightKg()
@@ -125,11 +127,12 @@ function saveLog() {
       [store.currentWeek, d.dayLabel, d.name]
     )
     if (existing.length && existing[0].values.length) {
-      dbService.run(`UPDATE workout_log SET sets=?,reps=?,weight_kg=?,rpe=?,notes=? WHERE id=?`,
+      dbService.run(`UPDATE workout_log SET sets=?,reps=?,weight_kg=?,rpe=?,notes=?,synced=0 WHERE id=?`,
         [mSets.value, mReps.value, weight, mRpe.value, mNotes.value, existing[0].values[0][0]])
     } else {
-      dbService.run(`INSERT INTO workout_log (week,day_label,exercise,sets,reps,weight_kg,rpe,notes) VALUES (?,?,?,?,?,?,?,?)`,
-        [store.currentWeek, d.dayLabel, d.name, mSets.value, mReps.value, weight, mRpe.value, mNotes.value])
+      const syncId = crypto.randomUUID()
+      dbService.run(`INSERT INTO workout_log (sync_id,week,day_label,exercise,sets,reps,weight_kg,rpe,notes,synced) VALUES (?,?,?,?,?,?,?,?,?,0)`,
+        [syncId, store.currentWeek, d.dayLabel, d.name, mSets.value, mReps.value, weight, mRpe.value, mNotes.value])
     }
   }
 

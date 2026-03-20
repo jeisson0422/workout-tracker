@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onMounted, computed } from 'vue'
+import { onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useWorkoutStore } from './stores/workout'
 import { useAuthStore } from './stores/auth'
+import { syncService } from './services/syncService'
 import BottomNav from './components/BottomNav.vue'
 
 const store = useWorkoutStore()
@@ -12,6 +13,18 @@ const route = useRoute()
 onMounted(async () => {
   await authStore.initialize()
   await store.initialize()
+  
+  if (authStore.user) {
+    syncService.startAutoSync()
+  }
+})
+
+watch(() => authStore.user, (user) => {
+  if (user) {
+    syncService.startAutoSync()
+  } else {
+    syncService.stopAutoSync()
+  }
 })
 
 const isAppReady = computed(() => store.isLoaded && authStore.isInitialized)
