@@ -47,29 +47,49 @@ class SyncService {
     const unsyncedLogs = dbService.q("SELECT id, sync_id, week, day_label, exercise, sets, reps, weight_kg, rpe, notes, logged_at FROM workout_log WHERE synced = 0");
     if (!unsyncedLogs.length || !unsyncedLogs[0].values.length) return;
 
-    const rowsToPush = unsyncedLogs[0].values.map((row: any) => ({
-      id: row[1], // sync_id
-      user_id: userId,
-      week: row[2],
-      day_label: row[3],
-      exercise: row[4],
-      sets: row[5],
-      reps: row[6],
-      weight_kg: row[7],
-      rpe: row[8],
-      notes: row[9],
-      logged_at: row[10] + 'Z', // Convertir asumiendo que SQLite guardó local, lo ideal es enviar ISO
-    }));
-
-    const { error } = await supabase.from('workout_logs').upsert(rowsToPush, { onConflict: 'id' });
+    // Procesar en lotes pequeños por si hay muchos registros (ej. 100)
+    const BATCH_SIZE = 100;
+    const allRows = unsyncedLogs[0].values;
     
-    if (!error) {
-      // Marcar como sincronizados en SQLite
-      const ids = unsyncedLogs[0].values.map((row: any) => row[0]); // ids locales
-      const placeholders = ids.map(() => '?').join(',');
-      dbService.run(`UPDATE workout_log SET synced = 1 WHERE id IN (${placeholders})`, ids);
-    } else {
-      console.error('Error pushing logs:', error);
+    for (let i = 0; i < allRows.length; i += BATCH_SIZE) {
+      const batch = allRows.slice(i, i + BATCH_SIZE);
+      
+      const rowsToPush = batch.map((row: any) => {
+        // Asegurarse de que date sea un string válido para timestamp
+        let validDate = row[10];
+        if (!validDate || typeof validDate !== 'string') {
+          validDate = new Date().toISOString();
+        } else if (validDate.length === 16) { // Ej: '2023-10-25T10:30' (formato de strftime '%Y-%m-%dT%H:%M')
+          validDate = validDate + ':00Z';
+        } else if (!validDate.endsWith('Z')) {
+          validDate = validDate + 'Z';
+        }
+
+        return {
+          id: row[1], // sync_id
+          user_id: userId,
+          week: row[2],
+          day_label: row[3] || 'Día ?',
+          exercise: row[4] || 'Unknown',
+          sets: Number(row[5]) || 0,
+          reps: Number(row[6]) || 0,
+          weight_kg: Number(row[7]) || 0,
+          rpe: Number(row[8]) || 0,
+          notes: row[9] || '',
+          logged_at: validDate,
+        };
+      });
+
+      const { error } = await supabase.from('workout_logs').upsert(rowsToPush, { onConflict: 'id' });
+      
+      if (!error) {
+        // Marcar solo los de este lote como sincronizados en SQLite
+        const ids = batch.map((row: any) => row[0]); // ids locales
+        const placeholders = ids.map(() => '?').join(',');
+        dbService.run(`UPDATE workout_log SET synced = 1 WHERE id IN (${placeholders})`, ids);
+      } else {
+        console.error('Error pushing logs batch:', error);
+      }
     }
   }
 
