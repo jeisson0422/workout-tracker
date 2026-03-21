@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia'
 import { dbService } from '../services/localDb'
 import { DEFAULT_EXERCISES, DEFAULT_PROGRESSION } from './defaultData'
+import { usePlansStore } from './plans'
 
 export const useWorkoutStore = defineStore('workout', {
   state: () => ({
     currentWeek: 1,
-    exercises: DEFAULT_EXERCISES,
+    exercises: DEFAULT_EXERCISES, // Fallback if no active plan
     progression: DEFAULT_PROGRESSION,
     isLoaded: false,
     loggedThisSession: new Set<string>(),
@@ -15,6 +16,8 @@ export const useWorkoutStore = defineStore('workout', {
   actions: {
     async initialize() {
       await dbService.init();
+      const plansStore = usePlansStore();
+      plansStore.loadData();
       this.loadConfig();
       this.isLoaded = true;
     },
@@ -22,11 +25,6 @@ export const useWorkoutStore = defineStore('workout', {
     loadConfig() {
       const w = dbService.getConfig('current_week');
       if (w) this.currentWeek = parseInt(w) || 1;
-
-      const ex = dbService.getConfig('exercises');
-      if (ex) {
-        try { this.exercises = JSON.parse(ex); } catch(e) {}
-      }
 
       const pg = dbService.getConfig('progression');
       if (pg) {
@@ -40,11 +38,33 @@ export const useWorkoutStore = defineStore('workout', {
     },
 
     getWeekInfo(weekNum: number): Record<string, any> {
+      const plansStore = usePlansStore();
+      const activePlan = plansStore.activePlan;
+      if (activePlan) {
+        const progs = plansStore.progressionsForPlan(activePlan.id);
+        const weekInfo = progs.find(p => p.week_number === weekNum);
+        if (weekInfo) return weekInfo;
+      }
+      
+      // Fallback
       const pd = this.progression.progression_data || [];
       return pd.find((x: any) => x.week_number === weekNum) || {};
     },
 
     getDays() {
+      const plansStore = usePlansStore();
+      const activeDays = plansStore.activePlanDays;
+      if (activeDays.length > 0) {
+        return activeDays.map(d => {
+          return {
+            id: d.id,
+            day_number: d.day_number,
+            session_name: d.session_name,
+            exercises: plansStore.exercisesForDay(d.id)
+          };
+        });
+      }
+      // Fallback
       if (this.exercises.training_days) return this.exercises.training_days;
       return ((this.exercises as any).days || []).map((d: any, i: number) => {
         const dayKey = Object.keys(d).find(k => k.startsWith('day_'));

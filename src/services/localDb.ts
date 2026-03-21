@@ -60,6 +60,46 @@ class LocalDbService {
       value TEXT NOT NULL,
       synced INTEGER DEFAULT 0
     )`);
+    this.run(`CREATE TABLE IF NOT EXISTS plans (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      is_active INTEGER DEFAULT 0,
+      synced INTEGER DEFAULT 0,
+      deleted INTEGER DEFAULT 0
+    )`);
+    this.run(`CREATE TABLE IF NOT EXISTS training_days (
+      id TEXT PRIMARY KEY,
+      plan_id TEXT NOT NULL,
+      day_number INTEGER NOT NULL,
+      session_name TEXT NOT NULL,
+      synced INTEGER DEFAULT 0,
+      deleted INTEGER DEFAULT 0
+    )`);
+    this.run(`CREATE TABLE IF NOT EXISTS plan_exercises (
+      id TEXT PRIMARY KEY,
+      training_day_id TEXT NOT NULL,
+      exercise_name TEXT NOT NULL,
+      exercise_type TEXT DEFAULT 'strength',
+      sets INTEGER DEFAULT 0,
+      reps INTEGER DEFAULT 0,
+      rest_seconds INTEGER DEFAULT 60,
+      order_index INTEGER DEFAULT 0,
+      special_notes TEXT,
+      synced INTEGER DEFAULT 0,
+      deleted INTEGER DEFAULT 0
+    )`);
+    this.run(`CREATE TABLE IF NOT EXISTS plan_progressions (
+      id TEXT PRIMARY KEY,
+      plan_id TEXT NOT NULL,
+      week_number INTEGER NOT NULL,
+      phase TEXT,
+      weight_change_pct TEXT,
+      reps_change TEXT,
+      rpe_target REAL,
+      system_focus TEXT,
+      synced INTEGER DEFAULT 0,
+      deleted INTEGER DEFAULT 0
+    )`);
     
     this.runMigrations();
     this.persistDB();

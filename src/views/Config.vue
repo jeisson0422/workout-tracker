@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useWorkoutStore } from '../stores/workout'
 import { useAuthStore } from '../stores/auth'
 import { dbService } from '../services/localDb'
+import Swal from 'sweetalert2'
 
 const store = useWorkoutStore()
 const authStore = useAuthStore()
@@ -11,12 +12,8 @@ const router = useRouter()
 const msg = ref({ text: '', type: '' })
 
 const weekInput = ref(store.currentWeek)
-const exInput = ref('')
-const progInput = ref('')
 
 onMounted(() => {
-  exInput.value = JSON.stringify(store.exercises, null, 2)
-  progInput.value = JSON.stringify(store.progression, null, 2)
 })
 
 function showMsg(text: string, type: string) {
@@ -33,12 +30,45 @@ function saveWeek() {
   }
 }
 
-function resetAll() {
-  if (!confirm('¿Borrar TODOS los registros de entrenamiento?')) return
+async function resetAll() {
+  const result = await Swal.fire({
+    title: '¿Estás seguro?',
+    text: "Se borrarán todos los registros de entrenamiento y caché de planes locales.",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#ff4444',
+    cancelButtonColor: '#333333',
+    confirmButtonText: 'Sí, borrar todo',
+    cancelButtonText: 'Cancelar',
+    background: '#1a1a1a',
+    color: '#ffffff'
+  })
+
+  if (!result.isConfirmed) return
+
   dbService.run("DELETE FROM workout_log")
   dbService.run("DELETE FROM config WHERE key='current_week'")
+  
+  // Limpiar caché de planes locales para forzar descarga o re-inicialización
+  dbService.run("DELETE FROM plans")
+  dbService.run("DELETE FROM training_days")
+  dbService.run("DELETE FROM plan_exercises")
+  dbService.run("DELETE FROM plan_progressions")
+  
   store.setWeek(1)
-  showMsg('✓ Datos borrados', 'ok')
+  
+  await Swal.fire({
+    title: '¡Borrado!',
+    text: 'Datos locales borrados. La app se recargará.',
+    icon: 'success',
+    background: '#1a1a1a',
+    color: '#ffffff',
+    confirmButtonColor: '#ccff00',
+    timer: 1500,
+    showConfirmButton: false
+  })
+  
+  window.location.reload()
 }
 
 async function handleSignOut() {
@@ -51,7 +81,7 @@ async function handleSignOut() {
   <div class="pb-6">
     <div style="padding:calc(24px + env(safe-area-inset-top,0px)) 20px 10px">
       <div style="font-size:12px;color:var(--text2);font-weight:600;letter-spacing:.5px">CONFIGURACIÓN</div>
-      <div style="font-size:28px;font-weight:800;letter-spacing:-.5px;margin-top:4px">Programas</div>
+      <div style="font-size:28px;font-weight:800;letter-spacing:-.5px;margin-top:4px">Ajustes</div>
     </div>
     
     <div style="padding:12px 16px">
@@ -65,6 +95,9 @@ async function handleSignOut() {
         <button class="btn btn-secondary" style="margin:0; padding:10px" @click="handleSignOut">Cerrar Sesión</button>
       </div>
 
+      <div class="cfg-lbl">Mis Rutinas</div>
+      <button class="btn btn-primary" style="margin-bottom: 20px;" @click="router.push('/plans')">Gestionar mis planes</button>
+
       <div class="cfg-lbl">Semana actual</div>
       <div style="display:flex;gap:10px;margin-bottom:20px">
         <div class="input-group" style="flex:1">
@@ -75,12 +108,6 @@ async function handleSignOut() {
           <button class="btn btn-primary" style="margin:0;padding:12px 20px;width:auto" @click="saveWeek">Guardar</button>
         </div>
       </div>
-
-      <div class="cfg-lbl">JSON de ejercicios</div>
-      <textarea v-model="exInput" rows="5" spellcheck="false"></textarea>
-
-      <div class="cfg-lbl" style="margin-top:12px">JSON de progresión</div>
-      <textarea v-model="progInput" rows="5" spellcheck="false"></textarea>
 
       <button class="btn btn-danger mt-6" @click="resetAll">Borrar todos los datos locales</button>
     </div>

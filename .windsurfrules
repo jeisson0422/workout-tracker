@@ -1,0 +1,4 @@
+# Project Instructions / Agent Rules
+
+- For all alerts, confirmations, and prompts (e.g. `alert()\, `confirm()\, `prompt()`), ALWAYS use the `sweetalert2` library.
+- Style the SweetAlert2 dialogs to match the application's dark mode theme (e.g. `background: '#1a1a1a'`, `color: '#ffffff'`, `confirmButtonColor: '#ccff00'` or `#ff4444` for destructive actions).

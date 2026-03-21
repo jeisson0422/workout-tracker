@@ -34,6 +34,16 @@ const router = createRouter({
       component: () => import('../views/Config.vue'),
       meta: { requiresAuth: true }
     },
+    {
+      path: '/plans',
+      component: () => import('../views/PlansList.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/plans/:id',
+      component: () => import('../views/PlanEditor.vue'),
+      meta: { requiresAuth: true }
+    },
   ]
 })
 
