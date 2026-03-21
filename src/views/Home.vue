@@ -4,11 +4,23 @@ import { useWorkoutStore } from '../stores/workout'
 
 const store = useWorkoutStore()
 
-const currentWeek = computed(() => store.currentWeek)
-const info = computed(() => store.getWeekInfo(currentWeek.value))
+const currentWeek = computed(() => {
+  store.dbUpdateTrigger; // forzar reactividad
+  return store.currentWeek;
+})
+const info = computed(() => {
+  store.dbUpdateTrigger; // forzar reactividad
+  return store.getWeekInfo(currentWeek.value);
+})
 
-const totalSets = computed(() => store.calcTotalSets())
-const doneSets = computed(() => store.getLoggedSets(currentWeek.value))
+const totalSets = computed(() => {
+  store.dbUpdateTrigger; // forzar reactividad
+  return store.calcTotalSets();
+})
+const doneSets = computed(() => {
+  store.dbUpdateTrigger; // forzar reactividad
+  return store.getLoggedSets(currentWeek.value);
+})
 const pct = computed(() => totalSets.value > 0 ? Math.min(100, Math.round((doneSets.value / totalSets.value) * 100)) : 0)
 
 function setWeek(w: number) {
