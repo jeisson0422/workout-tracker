@@ -64,11 +64,13 @@ export const useWorkoutStore = defineStore('workout', {
     },
 
     getLoggedSets(week: number) {
+      this.dbUpdateTrigger; // trigger reactivity
       const r = dbService.q("SELECT COALESCE(SUM(sets),0) FROM workout_log WHERE week=?", [week]);
       return r.length && r[0].values.length ? (r[0].values[0][0] || 0) : 0;
     },
 
     isDayComplete(dayLabel: string) {
+      this.dbUpdateTrigger; // trigger reactivity
       const r = dbService.q(
         "SELECT COUNT(*) FROM workout_log WHERE week=? AND day_label=? AND exercise='_day_complete'",
         [this.currentWeek, dayLabel]
@@ -102,6 +104,7 @@ export const useWorkoutStore = defineStore('workout', {
     },
 
     getSuggestedWeight(exName: string, weekInfo: any, exType: string, groupType: string) {
+      this.dbUpdateTrigger; // trigger reactivity
       if (exType !== 'strength' || groupType === 'pyramid') return null;
 
       const r = dbService.q(
@@ -129,6 +132,7 @@ export const useWorkoutStore = defineStore('workout', {
     },
 
     getPrevLog(dayLabel: string, exName: string) {
+      this.dbUpdateTrigger; // trigger reactivity
       const prevLog = dbService.q(
         `SELECT sets, reps, weight_kg, rpe, notes FROM workout_log
          WHERE week=? AND day_label=? AND exercise=? AND exercise != '_day_complete'

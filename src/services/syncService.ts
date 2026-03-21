@@ -1,6 +1,7 @@
 import { supabase } from './supabase'
 import { dbService } from './localDb'
 import { useAuthStore } from '../stores/auth'
+import { useWorkoutStore } from '../stores/workout'
 
 class SyncService {
   private syncInterval: any = null;
@@ -106,6 +107,7 @@ class SyncService {
     if (error || !remoteLogs || remoteLogs.length === 0) return;
 
     let latestUpdated = lastSyncDate;
+    let didUpdate = false;
 
     // Guardar los logs remotos en SQLite
     remoteLogs.forEach((log) => {
@@ -126,6 +128,7 @@ class SyncService {
           [log.id, log.week, log.day_label, log.exercise, log.sets, log.reps, log.weight_kg, log.rpe, log.notes, localDate]
         );
       }
+      didUpdate = true;
       
       if (log.updated_at > latestUpdated) {
         latestUpdated = log.updated_at;
@@ -133,6 +136,10 @@ class SyncService {
     });
 
     dbService.setConfig('last_sync_date', latestUpdated);
+    if (didUpdate) {
+      const workoutStore = useWorkoutStore();
+      workoutStore.dbUpdateTrigger++;
+    }
   }
 
   private async pushConfig(userId: string) {
@@ -168,16 +175,23 @@ class SyncService {
     if (error || !remoteConfigs || remoteConfigs.length === 0) return;
 
     let latestUpdated = lastSyncDate;
+    let didUpdate = false;
 
     remoteConfigs.forEach((conf) => {
       // Guardar local pero marcarlo como sincronizado
       dbService.run("INSERT OR REPLACE INTO config (key, value, synced) VALUES (?, ?, 1)", [conf.key, conf.value]);
+      didUpdate = true;
       if (conf.updated_at > latestUpdated) {
         latestUpdated = conf.updated_at;
       }
     });
 
     dbService.setConfig('last_config_sync_date', latestUpdated);
+    if (didUpdate) {
+      const workoutStore = useWorkoutStore();
+      workoutStore.loadConfig();
+      workoutStore.dbUpdateTrigger++;
+    }
   }
 }
 
