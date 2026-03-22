@@ -1,26 +1,67 @@
 @import "tailwindcss";
 
-@theme {
-  --color-bg: #0a0a0f;
-  --color-bg2: #12121a;
-  --color-bg3: #1a1a26;
-  --color-bg4: #22223a;
-  --color-accent: #6c63ff;
-  --color-accent2: #a78bfa;
-  --color-text-main: #f0f0ff;
-  --color-text-dim: #9898b8;
-  --color-text-mut: #555577;
-  --color-border-main: #2a2a44;
-  --color-border2: #3a3a5a;
-}
-
 :root {
-  --bg:#0a0a0f;--bg2:#12121a;--bg3:#1a1a26;--bg4:#22223a;
-  --accent:#6c63ff;--accent2:#a78bfa;--green:#34d399;--amber:#fbbf24;--red:#f87171;--blue:#60a5fa;
-  --text:#f0f0ff;--text2:#9898b8;--text3:#555577;
-  --border:#2a2a44;--border2:#3a3a5a;
+  --bg:#ffffff;
+  --bg2:#f3f4f6;
+  --bg3:#e5e7eb;
+  --bg4:#d1d5db;
+  --accent:#6c63ff;
+  --accent2:#8b5cf6;
+  --accent-text:#ffffff;
+  --green:#10b981;
+  --amber:#f59e0b;
+  --red:#dc2626;
+  --blue:#3b82f6;
+  --text:#111827;
+  --text2:#4b5563;
+  --text3:#6b7280;
+  --border:#d1d5db;
+  --border2:#9ca3af;
+  --danger-bg: #fee2e2;
+  --danger-border: #fca5a5;
+  --success-bg: #d1fae5;
+  --success-border: #6ee7b7;
   --r:14px;--r2:10px;--r3:7px;
   font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',system-ui,sans-serif;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg:#0a0a0f;
+  --bg2:#12121a;
+  --bg3:#1a1a26;
+  --bg4:#22223a;
+  --accent:#6c63ff;
+  --accent2:#a78bfa;
+  --accent-text:#000000;
+  --green:#34d399;
+  --amber:#fbbf24;
+  --red:#f87171;
+  --blue:#60a5fa;
+  --text:#f0f0ff;
+  --text2:#9898b8;
+  --text3:#555577;
+  --border:#2a2a44;
+  --border2:#3a3a5a;
+  --danger-bg: #2a1a1a;
+  --danger-border: #3a2222;
+  --success-bg: #0d2a1f;
+  --success-border: #1a4a35;
+  color-scheme: dark;
+}
+
+@theme {
+  --color-bg: var(--bg);
+  --color-bg2: var(--bg2);
+  --color-bg3: var(--bg3);
+  --color-bg4: var(--bg4);
+  --color-accent: var(--accent);
+  --color-accent2: var(--accent2);
+  --color-text-main: var(--text);
+  --color-text-dim: var(--text2);
+  --color-text-mut: var(--text3);
+  --color-border-main: var(--border);
+  --color-border2: var(--border2);
 }
 
 body {

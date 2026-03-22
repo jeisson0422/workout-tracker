@@ -10,7 +10,8 @@ export const useWorkoutStore = defineStore('workout', {
     progression: DEFAULT_PROGRESSION,
     isLoaded: false,
     loggedThisSession: new Set<string>(),
-    dbUpdateTrigger: 0
+    dbUpdateTrigger: 0,
+    themeMode: 'system' // 'dark', 'light', or 'system'
   }),
 
   actions: {
@@ -19,6 +20,7 @@ export const useWorkoutStore = defineStore('workout', {
       const plansStore = usePlansStore();
       plansStore.loadData();
       this.loadConfig();
+      this.applyTheme(this.themeMode);
       this.isLoaded = true;
     },
 
@@ -29,6 +31,56 @@ export const useWorkoutStore = defineStore('workout', {
       const pg = dbService.getConfig('progression');
       if (pg) {
         try { this.progression = JSON.parse(pg); } catch(e) {}
+      }
+      
+      const theme = dbService.getConfig('theme_mode');
+      if (theme) this.themeMode = theme;
+    },
+
+    setThemeMode(mode: string) {
+      if (['dark', 'light', 'system'].includes(mode)) {
+        this.themeMode = mode;
+        dbService.setConfig('theme_mode', mode);
+        this.applyTheme(mode);
+      }
+    },
+    
+    applyTheme(mode: string) {
+      const html = document.documentElement;
+      
+      if (mode === 'dark') {
+        html.setAttribute('data-theme', 'dark');
+      } else if (mode === 'light') {
+        html.removeAttribute('data-theme');
+      } else {
+        // system
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (prefersDark) {
+          html.setAttribute('data-theme', 'dark');
+        } else {
+          html.removeAttribute('data-theme');
+        }
+      }
+      
+      // Also listen for system changes if mode is 'system'
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      
+      // Remove old listener if exists
+      const oldListener = (this as any)._themeListener;
+      if (oldListener) {
+        mediaQuery.removeEventListener('change', oldListener);
+      }
+      
+      if (mode === 'system') {
+        const listener = (e: MediaQueryListEvent) => {
+          if (e.matches) {
+            html.setAttribute('data-theme', 'dark');
+          } else {
+            html.removeAttribute('data-theme');
+          }
+        };
+        mediaQuery.addEventListener('change', listener);
+        (this as any)._themeListener = listener;
       }
     },
 

@@ -181,7 +181,7 @@ input:disabled {
 
 .btn-primary {
   background: var(--accent, #6c63ff);
-  color: #fff;
+  color: var(--accent-text, #ffffff);
 }
 
 .btn-primary:disabled {

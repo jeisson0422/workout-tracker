@@ -28,6 +28,19 @@ export interface PlanExercise {
   rest_seconds: number
   order_index: number
   special_notes: string
+  current_weight_kg?: number | null
+  max_safety_limit_kg?: number | null
+  tempo?: string | null
+  group_id?: string | null
+  group_type?: string | null
+  duration_min?: number | null
+  duration_sec?: number | null
+  incline_pct?: number | null
+  speed_kmh?: number | null
+  target_heart_rate_bpm?: number | null
+  intensity_mode?: string | null
+  pyramid_reps?: number[] | null
+  pyramid_weights_kg?: number[] | null
   synced: boolean
   deleted: boolean
 }
@@ -87,9 +100,13 @@ export const usePlansStore = defineStore('plans', {
         id: r[0], plan_id: r[1], day_number: r[2], session_name: r[3], synced: r[4] === 1, deleted: r[5] === 1
       })) : [];
 
-      const exRes = dbService.q("SELECT id, training_day_id, exercise_name, exercise_type, sets, reps, rest_seconds, order_index, special_notes, synced, deleted FROM plan_exercises WHERE deleted = 0");
+      const exRes = dbService.q("SELECT id, training_day_id, exercise_name, exercise_type, sets, reps, rest_seconds, order_index, special_notes, current_weight_kg, max_safety_limit_kg, tempo, group_id, group_type, duration_min, duration_sec, incline_pct, speed_kmh, target_heart_rate_bpm, intensity_mode, pyramid_reps, pyramid_weights_kg, synced, deleted FROM plan_exercises WHERE deleted = 0");
       this.planExercises = exRes.length && exRes[0].values ? exRes[0].values.map((r: any) => ({
-        id: r[0], training_day_id: r[1], exercise_name: r[2], exercise_type: r[3], sets: r[4], reps: r[5], rest_seconds: r[6], order_index: r[7], special_notes: r[8], synced: r[9] === 1, deleted: r[10] === 1
+        id: r[0], training_day_id: r[1], exercise_name: r[2], exercise_type: r[3], sets: r[4], reps: r[5], rest_seconds: r[6], order_index: r[7], special_notes: r[8],
+        current_weight_kg: r[9], max_safety_limit_kg: r[10], tempo: r[11], group_id: r[12], group_type: r[13], duration_min: r[14], duration_sec: r[15], incline_pct: r[16], speed_kmh: r[17], target_heart_rate_bpm: r[18], intensity_mode: r[19], 
+        pyramid_reps: r[20] ? JSON.parse(r[20]) : null, 
+        pyramid_weights_kg: r[21] ? JSON.parse(r[21]) : null,
+        synced: r[22] === 1, deleted: r[23] === 1
       })) : [];
 
       const progRes = dbService.q("SELECT id, plan_id, week_number, phase, weight_change_pct, reps_change, rpe_target, system_focus, synced, deleted FROM plan_progressions WHERE deleted = 0");
@@ -156,9 +173,14 @@ export const usePlansStore = defineStore('plans', {
       const nextOrder = dayExercises.length > 0 ? Math.max(...dayExercises.map(e => e.order_index)) + 1 : 1;
       
       dbService.run(
-        `INSERT INTO plan_exercises (id, training_day_id, exercise_name, exercise_type, sets, reps, rest_seconds, order_index, special_notes, synced, deleted) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)`,
-        [id, dayId, ex.exercise_name || 'Nuevo Ejercicio', ex.exercise_type || 'strength', ex.sets || 0, ex.reps || 0, ex.rest_seconds || 60, nextOrder, ex.special_notes || '']
+        `INSERT INTO plan_exercises (id, training_day_id, exercise_name, exercise_type, sets, reps, rest_seconds, order_index, special_notes, current_weight_kg, max_safety_limit_kg, tempo, group_id, group_type, duration_min, duration_sec, incline_pct, speed_kmh, target_heart_rate_bpm, intensity_mode, pyramid_reps, pyramid_weights_kg, synced, deleted) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)`,
+        [
+          id, dayId, ex.exercise_name || 'Nuevo Ejercicio', ex.exercise_type || 'strength', ex.sets || 0, ex.reps || 0, ex.rest_seconds || 60, nextOrder, ex.special_notes || '',
+          ex.current_weight_kg || null, ex.max_safety_limit_kg || null, ex.tempo || null, ex.group_id || null, ex.group_type || null, ex.duration_min || null, ex.duration_sec || null, ex.incline_pct || null, ex.speed_kmh || null, ex.target_heart_rate_bpm || null, ex.intensity_mode || null, 
+          ex.pyramid_reps ? JSON.stringify(ex.pyramid_reps) : null, 
+          ex.pyramid_weights_kg ? JSON.stringify(ex.pyramid_weights_kg) : null
+        ]
       );
       this.dbUpdateTrigger++;
       this.loadData();
@@ -167,7 +189,7 @@ export const usePlansStore = defineStore('plans', {
 
     updateExercise(id: string, ex: Partial<PlanExercise>) {
       // Fetch current
-      const current = dbService.q("SELECT exercise_name, exercise_type, sets, reps, rest_seconds, special_notes FROM plan_exercises WHERE id = ?", [id]);
+      const current = dbService.q("SELECT exercise_name, exercise_type, sets, reps, rest_seconds, special_notes, current_weight_kg, max_safety_limit_kg, tempo, group_id, group_type, duration_min, duration_sec, incline_pct, speed_kmh, target_heart_rate_bpm, intensity_mode, pyramid_reps, pyramid_weights_kg FROM plan_exercises WHERE id = ?", [id]);
       if (!current.length || !current[0].values) return;
       const c = current[0].values[0];
       
@@ -177,12 +199,25 @@ export const usePlansStore = defineStore('plans', {
       const reps = ex.reps !== undefined ? ex.reps : c[3];
       const rest = ex.rest_seconds !== undefined ? ex.rest_seconds : c[4];
       const notes = ex.special_notes !== undefined ? ex.special_notes : c[5];
+      const weight = ex.current_weight_kg !== undefined ? ex.current_weight_kg : c[6];
+      const maxLim = ex.max_safety_limit_kg !== undefined ? ex.max_safety_limit_kg : c[7];
+      const tempo = ex.tempo !== undefined ? ex.tempo : c[8];
+      const groupId = ex.group_id !== undefined ? ex.group_id : c[9];
+      const groupType = ex.group_type !== undefined ? ex.group_type : c[10];
+      const durMin = ex.duration_min !== undefined ? ex.duration_min : c[11];
+      const durSec = ex.duration_sec !== undefined ? ex.duration_sec : c[12];
+      const incl = ex.incline_pct !== undefined ? ex.incline_pct : c[13];
+      const speed = ex.speed_kmh !== undefined ? ex.speed_kmh : c[14];
+      const thr = ex.target_heart_rate_bpm !== undefined ? ex.target_heart_rate_bpm : c[15];
+      const intMode = ex.intensity_mode !== undefined ? ex.intensity_mode : c[16];
+      const pyrReps = ex.pyramid_reps !== undefined ? (ex.pyramid_reps ? JSON.stringify(ex.pyramid_reps) : null) : c[17];
+      const pyrWeights = ex.pyramid_weights_kg !== undefined ? (ex.pyramid_weights_kg ? JSON.stringify(ex.pyramid_weights_kg) : null) : c[18];
 
       dbService.run(
         `UPDATE plan_exercises 
-         SET exercise_name = ?, exercise_type = ?, sets = ?, reps = ?, rest_seconds = ?, special_notes = ?, synced = 0 
+         SET exercise_name = ?, exercise_type = ?, sets = ?, reps = ?, rest_seconds = ?, special_notes = ?, current_weight_kg = ?, max_safety_limit_kg = ?, tempo = ?, group_id = ?, group_type = ?, duration_min = ?, duration_sec = ?, incline_pct = ?, speed_kmh = ?, target_heart_rate_bpm = ?, intensity_mode = ?, pyramid_reps = ?, pyramid_weights_kg = ?, synced = 0 
          WHERE id = ?`,
-        [name, type, sets, reps, rest, notes, id]
+        [name, type, sets, reps, rest, notes, weight, maxLim, tempo, groupId, groupType, durMin, durSec, incl, speed, thr, intMode, pyrReps, pyrWeights, id]
       );
       this.dbUpdateTrigger++;
       this.loadData();

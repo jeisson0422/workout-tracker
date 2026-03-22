@@ -71,7 +71,7 @@ async function deletePlan(id: string) {
     </div>
 
     <!-- Modal Nuevo Plan -->
-    <div v-if="showNewPlanModal" class="modal-overlay" @click.self="showNewPlanModal = false">
+    <div v-if="showNewPlanModal" class="modal-overlay">
       <div class="modal-content">
         <h3>Nuevo Plan</h3>
         <input type="text" v-model="newPlanName" placeholder="Nombre del plan (ej. Volumen 2024)" class="modal-input" @keyup.enter="createPlan" />
@@ -90,12 +90,12 @@ async function deletePlan(id: string) {
 .plan-card.active { border-color: var(--accent); background: linear-gradient(180deg, rgba(200,255,0,0.05) 0%, rgba(200,255,0,0) 100%), var(--bg2); }
 .plan-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; cursor: pointer; }
 .plan-title { font-size: 18px; font-weight: 700; color: var(--text); }
-.plan-badge { background: var(--accent); color: #000; font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; }
+.plan-badge { background: var(--accent); color: var(--accent-text); font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; }
 .plan-actions { display: flex; gap: 8px; }
 .btn { width: 100%; padding: 14px; border-radius: var(--r2); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: all .2s; text-align: center; }
-.btn-primary { background: var(--accent); color: #000; }
+.btn-primary { background: var(--accent); color: var(--accent-text); }
 .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
-.btn-danger { background: #2a1a1a; color: var(--red); border: 1px solid #3a2222; }
+.btn-danger { background: var(--danger-bg); color: var(--red); border: 1px solid var(--danger-border); }
 .btn-sm { padding: 8px 12px; font-size: 13px; border-radius: 8px; }
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
 .modal-content { background: var(--bg); padding: 24px; border-radius: var(--r2); width: 100%; max-width: 400px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }

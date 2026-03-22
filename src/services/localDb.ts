@@ -85,6 +85,19 @@ class LocalDbService {
       rest_seconds INTEGER DEFAULT 60,
       order_index INTEGER DEFAULT 0,
       special_notes TEXT,
+      current_weight_kg REAL,
+      max_safety_limit_kg REAL,
+      tempo TEXT,
+      group_id TEXT,
+      group_type TEXT,
+      duration_min INTEGER,
+      duration_sec INTEGER,
+      incline_pct INTEGER,
+      speed_kmh REAL,
+      target_heart_rate_bpm INTEGER,
+      intensity_mode TEXT,
+      pyramid_reps TEXT,
+      pyramid_weights_kg TEXT,
       synced INTEGER DEFAULT 0,
       deleted INTEGER DEFAULT 0
     )`);
@@ -130,6 +143,33 @@ class LocalDbService {
       if (!hasSynced) {
         this.run("ALTER TABLE workout_log ADD COLUMN synced INTEGER DEFAULT 0");
       }
+    }
+
+    // Migrar plan_exercises para soportar los nuevos campos del README legacy
+    const colsPlanExercises = this.q("PRAGMA table_info(plan_exercises)");
+    if (colsPlanExercises.length && colsPlanExercises[0].values) {
+      const existingCols = colsPlanExercises[0].values.map((col: any) => col[1]);
+      const missingCols = [
+        { name: 'current_weight_kg', type: 'REAL' },
+        { name: 'max_safety_limit_kg', type: 'REAL' },
+        { name: 'tempo', type: 'TEXT' },
+        { name: 'group_id', type: 'TEXT' },
+        { name: 'group_type', type: 'TEXT' },
+        { name: 'duration_min', type: 'INTEGER' },
+        { name: 'duration_sec', type: 'INTEGER' },
+        { name: 'incline_pct', type: 'INTEGER' },
+        { name: 'speed_kmh', type: 'REAL' },
+        { name: 'target_heart_rate_bpm', type: 'INTEGER' },
+        { name: 'intensity_mode', type: 'TEXT' },
+        { name: 'pyramid_reps', type: 'TEXT' },
+        { name: 'pyramid_weights_kg', type: 'TEXT' }
+      ];
+
+      missingCols.forEach(col => {
+        if (!existingCols.includes(col.name)) {
+          this.run(`ALTER TABLE plan_exercises ADD COLUMN ${col.name} ${col.type}`);
+        }
+      });
     }
 
     // Migrar config

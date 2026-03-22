@@ -32,7 +32,7 @@ const showBottomNav = computed(() => !route.meta.hideNav)
 </script>
 
 <template>
-  <div class="app-container bg-[#0a0a0f] text-[#f0f0ff]">
+  <div class="app-container bg-bg text-text">
     <div v-if="!isAppReady" class="flex flex-1 items-center justify-center">
       Cargando...
     </div>

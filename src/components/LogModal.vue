@@ -149,7 +149,7 @@ function formatRest(sec: number) {
 </script>
 
 <template>
-  <div v-if="isOpen" class="overlay open" @click="emit('close')">
+  <div v-if="isOpen" class="overlay open">
     <div class="modal" @click.stop>
       <div class="modal-title">{{ data?.name }}</div>
       <div class="modal-sub">
@@ -234,6 +234,6 @@ input:focus { outline: none; border-color: var(--accent); }
 .unit-btn { padding: 0 12px; height: 100%; border: none; background: transparent; color: var(--text2); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
 .unit-btn.active { background: var(--accent); color: #fff; }
 .btn { display: block; width: 100%; padding: 14px; border-radius: var(--r2); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: all .2s; text-align: center; margin-bottom: 10px; }
-.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary { background: var(--accent); color: var(--accent-text); }
 .btn-secondary { background: var(--bg2); color: var(--text); border: 1px solid var(--border2); }
 </style>

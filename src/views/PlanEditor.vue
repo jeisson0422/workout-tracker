@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePlansStore } from '../stores/plans'
 import Swal from 'sweetalert2'
+import ExerciseIcon from '../components/ExerciseIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -72,27 +73,67 @@ async function deleteDay(id: string) {
 }
 
 // Exercise Modal
+const showTypeSelectModal = ref(false)
 const showExModal = ref(false)
 const targetDayId = ref('')
-const newEx = ref({ exercise_name: '', exercise_type: 'strength', sets: 3, reps: 10, rest_seconds: 60, special_notes: '' })
 const editingExId = ref('')
 
-function openAddExercise(dayId: string) {
+const defaultExProps = () => ({
+  exercise_name: '', exercise_type: 'strength', sets: 3, reps: 10, rest_seconds: 60, special_notes: '',
+  group_type: '', group_id: '', tempo: 'normal',
+  duration_min: 15, duration_sec: 45, incline_pct: 0, speed_kmh: 0, target_heart_rate_bpm: 130, intensity_mode: 'LISS'
+})
+const newEx = ref<any>(defaultExProps())
+
+function openAddExerciseFlow(dayId: string) {
   targetDayId.value = dayId
   editingExId.value = ''
-  newEx.value = { exercise_name: '', exercise_type: 'strength', sets: 3, reps: 10, rest_seconds: 60, special_notes: '' }
+  showTypeSelectModal.value = true
+}
+
+function selectExerciseType(type: string) {
+  newEx.value = defaultExProps()
+  newEx.value.exercise_type = type
+  
+  if (type === 'isometric') newEx.value.rest_seconds = 45;
+  if (type === 'cardio') newEx.value.rest_seconds = 0;
+
+  showTypeSelectModal.value = false
   showExModal.value = true
 }
 
 function openEditExercise(exId: string, ex: any) {
   targetDayId.value = ex.training_day_id
   editingExId.value = exId
-  newEx.value = { ...ex }
+  newEx.value = { ...defaultExProps(), ...ex }
   showExModal.value = true
+}
+
+function autoSetRestTime() {
+  if (newEx.value.group_type === 'superset' || newEx.value.group_type === 'triset' || newEx.value.group_type === 'giant_set') {
+    newEx.value.rest_seconds = 30
+  } else if (newEx.value.group_type === 'pyramid' || newEx.value.group_type === 'drop_set') {
+    newEx.value.rest_seconds = 90
+  } else if (newEx.value.group_type === 'finisher') {
+    newEx.value.rest_seconds = 20
+  } else if (newEx.value.exercise_type === 'strength') {
+    newEx.value.rest_seconds = 60
+  } else if (newEx.value.exercise_type === 'isometric') {
+    newEx.value.rest_seconds = 45
+  }
 }
 
 function saveExercise() {
   if (!newEx.value.exercise_name) return
+  
+  if (newEx.value.group_type && !newEx.value.group_id) {
+    // Generate a simple group_id if not present
+    newEx.value.group_id = String.fromCharCode(65 + Math.floor(Math.random() * 26)) + Math.floor(Math.random() * 100);
+  }
+  if (!newEx.value.group_type) {
+    newEx.value.group_id = ''
+  }
+
   if (editingExId.value) {
     plansStore.updateExercise(editingExId.value, newEx.value)
   } else {
@@ -125,6 +166,17 @@ function toggleDay(dayId: string) {
   if (el) {
     el.style.display = el.style.display === 'none' ? 'block' : 'none'
   }
+}
+
+function getGroupStyle(groupType?: string | null) {
+  if (!groupType) return {};
+  if (groupType === 'superset') return { borderLeft: '4px solid #b388ff', paddingLeft: '12px' };
+  if (groupType === 'triset') return { borderLeft: '4px solid #82b1ff', paddingLeft: '12px' };
+  if (groupType === 'giant_set') return { borderLeft: '4px solid #b9f6ca', paddingLeft: '12px' };
+  if (groupType === 'pyramid') return { borderLeft: '4px solid #ffe57f', paddingLeft: '12px' };
+  if (groupType === 'drop_set') return { borderLeft: '4px solid #ff8a80', paddingLeft: '12px' };
+  if (groupType === 'finisher') return { borderLeft: '4px solid #ffd180', paddingLeft: '12px' };
+  return {};
 }
 
 // Progression Modal
@@ -211,15 +263,24 @@ async function deleteProgression(id: string) {
         </div>
 
         <div :id="'day-content-' + day.id" class="day-content" style="display: none;">
-          <div v-for="ex in plansStore.exercisesForDay(day.id)" :key="ex.id" class="ex-row" @click="openEditExercise(ex.id, ex)">
+          <div v-for="ex in plansStore.exercisesForDay(day.id)" :key="ex.id" class="ex-row" :style="getGroupStyle(ex.group_type)" @click="openEditExercise(ex.id, ex)">
+            <div style="margin-right: 12px; display:flex; align-items:center;">
+              <ExerciseIcon :name="ex.exercise_name" :type="ex.exercise_type" />
+            </div>
             <div style="flex:1">
-              <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">{{ ex.exercise_name }}</div>
+              <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                {{ ex.exercise_name }}
+                <span v-if="ex.group_type" class="group-badge" :class="'badge-' + ex.group_type">{{ ex.group_type.replace('_', ' ') }}</span>
+              </div>
               <div style="font-size: 12px; color: var(--text2)">
-                {{ ex.sets }} sets x {{ ex.reps }} reps • {{ ex.rest_seconds }}s rest
+                <span v-if="ex.exercise_type === 'strength'">{{ ex.sets }} sets x {{ ex.reps }} reps</span>
+                <span v-else-if="ex.exercise_type === 'cardio'">{{ ex.duration_min }} min • Incline: {{ ex.incline_pct }}%</span>
+                <span v-else-if="ex.exercise_type === 'isometric'">{{ ex.sets }} sets x {{ ex.duration_sec }}s</span>
+                • {{ ex.rest_seconds }}s rest
               </div>
             </div>
           </div>
-          <button class="btn btn-secondary btn-sm" style="width:100%; margin-top: 12px;" @click="openAddExercise(day.id)">+ Añadir Ejercicio</button>
+          <button class="btn btn-secondary btn-sm" style="width:100%; margin-top: 12px;" @click="openAddExerciseFlow(day.id)">+ Añadir Ejercicio</button>
         </div>
       </div>
 
@@ -241,40 +302,133 @@ async function deleteProgression(id: string) {
       <button class="btn btn-primary" style="margin-top: 20px;" @click="addProgression">+ Añadir Semana</button>
     </div>
 
-    <!-- Modal Ejercicio -->
-    <div v-if="showExModal" class="modal-overlay" @click.self="showExModal = false">
+    <!-- Modal Seleccion de Tipo -->
+    <div v-if="showTypeSelectModal" class="modal-overlay">
       <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
-        <h3>{{ editingExId ? 'Editar Ejercicio' : 'Nuevo Ejercicio' }}</h3>
+        <h3 style="text-align: center; margin-bottom: 24px;">Tipo de Ejercicio</h3>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <button class="btn btn-secondary" style="display:flex; align-items:center; justify-content:center; gap:10px; padding:20px;" @click="selectExerciseType('strength')">
+            <span style="font-size: 24px;">🏋️‍♂️</span> Fuerza
+          </button>
+          <button class="btn btn-secondary" style="display:flex; align-items:center; justify-content:center; gap:10px; padding:20px;" @click="selectExerciseType('cardio')">
+            <span style="font-size: 24px;">🏃‍♂️</span> Cardio
+          </button>
+          <button class="btn btn-secondary" style="display:flex; align-items:center; justify-content:center; gap:10px; padding:20px;" @click="selectExerciseType('isometric')">
+            <span style="font-size: 24px;">⏱️</span> Isométrico
+          </button>
+        </div>
+        <button class="btn btn-secondary" style="margin-top: 24px; background: transparent; border: none;" @click="showTypeSelectModal = false">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- Modal Ejercicio -->
+    <div v-if="showExModal" class="modal-overlay">
+      <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+        <h3>
+          {{ editingExId ? 'Editar' : 'Nuevo' }} 
+          {{ newEx.exercise_type === 'strength' ? 'Fuerza' : newEx.exercise_type === 'cardio' ? 'Cardio' : 'Isométrico' }}
+        </h3>
         
         <div class="form-group">
           <label>Nombre del Ejercicio</label>
           <input type="text" v-model="newEx.exercise_name" class="modal-input" placeholder="ej. Press de Banca">
         </div>
 
-        <div style="display: flex; gap: 10px;">
-          <div class="form-group" style="flex: 1">
-            <label>Series</label>
-            <input type="number" v-model="newEx.sets" class="modal-input">
+        <!-- Campos para FUERZA -->
+        <template v-if="newEx.exercise_type === 'strength'">
+          <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1">
+              <label>Series</label>
+              <input type="number" v-model="newEx.sets" class="modal-input">
+            </div>
+            <div class="form-group" style="flex: 1">
+              <label>Reps</label>
+              <input type="number" v-model="newEx.reps" class="modal-input">
+            </div>
           </div>
-          <div class="form-group" style="flex: 1">
-            <label>Reps</label>
-            <input type="number" v-model="newEx.reps" class="modal-input">
-          </div>
-        </div>
-
-        <div style="display: flex; gap: 10px;">
-          <div class="form-group" style="flex: 1">
-            <label>Descanso (seg)</label>
-            <input type="number" v-model="newEx.rest_seconds" class="modal-input">
-          </div>
-          <div class="form-group" style="flex: 1">
-            <label>Tipo</label>
-            <select v-model="newEx.exercise_type" class="modal-input">
-              <option value="strength">Fuerza</option>
-              <option value="cardio">Cardio</option>
+          
+          <div class="form-group">
+            <label>Tempo (Opcional)</label>
+            <select v-model="newEx.tempo" class="modal-input">
+              <option value="normal">Normal</option>
+              <option value="controlled">Controlado</option>
+              <option value="slow">Lento</option>
+              <option value="explosive">Explosivo</option>
               <option value="isometric">Isométrico</option>
+              <option value="3210">3210</option>
+              <option value="4010">4010</option>
             </select>
           </div>
+
+          <div class="form-group">
+            <label>Agrupar / Vincular (Opcional)</label>
+            <select v-model="newEx.group_type" class="modal-input" @change="autoSetRestTime">
+              <option value="">Ninguno</option>
+              <option value="superset">Superset (Morado, 30s)</option>
+              <option value="triset">Triset (Azul, 30s)</option>
+              <option value="giant_set">Giant Set (Verde, 30s)</option>
+              <option value="pyramid">Pyramid (Amarillo, 90s)</option>
+              <option value="drop_set">Drop Set (Rojo, 90s)</option>
+              <option value="finisher">Finisher (Naranja, 20s)</option>
+            </select>
+          </div>
+          
+          <div class="form-group" v-if="newEx.group_type">
+            <label>Group ID (Mismo ID agrupa ejercicios)</label>
+            <input type="text" v-model="newEx.group_id" class="modal-input" placeholder="ej. A">
+          </div>
+        </template>
+
+        <!-- Campos para CARDIO -->
+        <template v-if="newEx.exercise_type === 'cardio'">
+          <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1">
+              <label>Duración (min)</label>
+              <input type="number" v-model="newEx.duration_min" class="modal-input">
+            </div>
+            <div class="form-group" style="flex: 1">
+              <label>Inclinación (%)</label>
+              <input type="number" v-model="newEx.incline_pct" class="modal-input">
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1">
+              <label>Velocidad (km/h)</label>
+              <input type="number" step="0.1" v-model="newEx.speed_kmh" class="modal-input">
+            </div>
+            <div class="form-group" style="flex: 1">
+              <label>FC Objetivo (bpm)</label>
+              <input type="number" v-model="newEx.target_heart_rate_bpm" class="modal-input">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Modo</label>
+            <select v-model="newEx.intensity_mode" class="modal-input">
+              <option value="LISS">LISS</option>
+              <option value="HIIT">HIIT</option>
+              <option value="MISS">MISS</option>
+            </select>
+          </div>
+        </template>
+
+        <!-- Campos para ISOMÉTRICO -->
+        <template v-if="newEx.exercise_type === 'isometric'">
+          <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1">
+              <label>Series</label>
+              <input type="number" v-model="newEx.sets" class="modal-input">
+            </div>
+            <div class="form-group" style="flex: 1">
+              <label>Duración (seg)</label>
+              <input type="number" v-model="newEx.duration_sec" class="modal-input">
+            </div>
+          </div>
+        </template>
+
+        <!-- Global para todos excepto cardio (descanso opcional) -->
+        <div class="form-group">
+          <label>Descanso (seg)</label>
+          <input type="number" v-model="newEx.rest_seconds" class="modal-input">
         </div>
 
         <div class="form-group">
@@ -291,7 +445,7 @@ async function deleteProgression(id: string) {
     </div>
 
     <!-- Modal Progresion -->
-    <div v-if="showProgModal" class="modal-overlay" @click.self="showProgModal = false">
+    <div v-if="showProgModal" class="modal-overlay">
       <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
         <h3>{{ editingProgId ? 'Editar Semana ' + newProg.week_number : 'Nueva Semana' }}</h3>
         
@@ -351,9 +505,9 @@ async function deleteProgression(id: string) {
 .ex-row { padding: 12px 0; border-bottom: 1px solid var(--border2); display: flex; align-items: center; cursor: pointer; }
 .ex-row:last-child { border-bottom: none; }
 .btn { width: 100%; padding: 14px; border-radius: var(--r2); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: all .2s; text-align: center; }
-.btn-primary { background: var(--accent); color: #000; }
+.btn-primary { background: var(--accent); color: var(--accent-text); }
 .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
-.btn-danger { background: #2a1a1a; color: var(--red); border: 1px solid #3a2222; }
+.btn-danger { background: var(--danger-bg); color: var(--red); border: 1px solid var(--danger-border); }
 .btn-sm { padding: 8px 12px; font-size: 13px; border-radius: 8px; }
 .btn-icon { background: transparent; border: none; color: var(--text2); cursor: pointer; padding: 4px; display: flex; }
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
@@ -364,4 +518,11 @@ async function deleteProgression(id: string) {
 .modal-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 12px; font-size: 16px; box-sizing: border-box; }
 .modal-input:focus { outline: none; border-color: var(--accent); }
 select.modal-input { appearance: none; }
+.group-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
+.badge-superset { background: #b388ff; color: #000; }
+.badge-triset { background: #82b1ff; color: #000; }
+.badge-giant_set { background: #b9f6ca; color: #000; }
+.badge-pyramid { background: #ffe57f; color: #000; }
+.badge-drop_set { background: #ff8a80; color: #000; }
+.badge-finisher { background: #ffd180; color: #000; }
 </style>

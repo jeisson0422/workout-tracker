@@ -12,6 +12,7 @@ const router = useRouter()
 const msg = ref({ text: '', type: '' })
 
 const weekInput = ref(store.currentWeek)
+const themeInput = ref(store.themeMode || 'system')
 
 onMounted(() => {
 })
@@ -28,6 +29,11 @@ function saveWeek() {
   } else {
     showMsg('La semana debe estar entre 1 y 14', 'err')
   }
+}
+
+function saveTheme() {
+  store.setThemeMode(themeInput.value)
+  showMsg('✓ Tema actualizado', 'ok')
 }
 
 async function resetAll() {
@@ -98,6 +104,17 @@ async function handleSignOut() {
       <div class="cfg-lbl">Mis Rutinas</div>
       <button class="btn btn-primary" style="margin-bottom: 20px;" @click="router.push('/plans')">Gestionar mis planes</button>
 
+      <div class="cfg-lbl">Tema</div>
+      <div style="display:flex;gap:10px;margin-bottom:20px">
+        <div class="input-group" style="flex:1">
+          <select v-model="themeInput" class="custom-select" @change="saveTheme">
+            <option value="system">Igual que el sistema</option>
+            <option value="light">Claro</option>
+            <option value="dark">Oscuro</option>
+          </select>
+        </div>
+      </div>
+
       <div class="cfg-lbl">Semana actual</div>
       <div style="display:flex;gap:10px;margin-bottom:20px">
         <div class="input-group" style="flex:1">
@@ -120,13 +137,13 @@ textarea { width: 100%; background: var(--bg2); border: 1px solid var(--border);
 textarea:focus { outline: none; border-color: var(--accent); }
 .input-group { display: flex; flex-direction: column; gap: 6px; }
 .input-group label { font-size: 12px; color: var(--text2); font-weight: 500; }
-input[type=number] { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 16px; padding: 12px; width: 100%; }
-input:focus { outline: none; border-color: var(--accent); }
+input[type=number], .custom-select { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 16px; padding: 12px; width: 100%; box-sizing: border-box; appearance: none; }
+input:focus, .custom-select:focus { outline: none; border-color: var(--accent); }
 .btn { display: block; width: 100%; padding: 14px; border-radius: var(--r2); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: all .2s; text-align: center; }
-.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary { background: var(--accent); color: var(--accent-text); }
 .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border2); }
-.btn-danger { background: #2a1a1a; color: var(--red); border: 1px solid #3a2222; }
+.btn-danger { background: var(--danger-bg); color: var(--red); border: 1px solid var(--danger-border); }
 .msg { padding: 10px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 10px; }
-.msg.ok { background: #0d2a1f; color: var(--green); border: 1px solid #1a4a35; }
-.msg.err { background: #2a0d0d; color: var(--red); border: 1px solid #4a1a1a; }
+.msg.ok { background: var(--success-bg); color: var(--green); border: 1px solid var(--success-border); }
+.msg.err { background: var(--danger-bg); color: var(--red); border: 1px solid var(--danger-border); }
 </style>
