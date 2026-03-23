@@ -37,12 +37,12 @@ import { HomeIcon, CalendarIcon, LayoutListIcon, BarChart2Icon, SettingsIcon } f
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px 0 4px;
-  gap: 3px;
+  padding: 14px 0 8px;
+  gap: 4px;
   border: none;
   background: transparent;
   color: var(--text2);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   transition: color 0.2s;
@@ -52,7 +52,7 @@ import { HomeIcon, CalendarIcon, LayoutListIcon, BarChart2Icon, SettingsIcon } f
   color: var(--accent2);
 }
 .nav-btn :deep(svg) {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
 }
 </style>
