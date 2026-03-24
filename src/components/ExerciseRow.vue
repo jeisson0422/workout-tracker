@@ -21,20 +21,47 @@ const name = computed(() => rawName.value.replace(/_/g, ' '))
 const exType = computed(() => props.exercise.exercise_type || (props.exercise.duration_min || props.exercise.duration_minutes ? 'cardio' : props.exercise.duration_sec ? 'isometric' : 'strength'))
 const isGrouped = computed(() => !!props.exercise.group_id)
 
+const prev = computed(() => store.getPrevLog(props.dayLabel, name.value))
+const isEffectivelyLogged = computed(() => props.isLogged || !!prev.value)
+
 const meta = computed(() => {
   const ex = props.exercise
+  const p = prev.value
+  
   if (exType.value === 'cardio') {
-    const durMin = ex.duration_min || ex.duration_minutes || '?'
-    const incline = ex.incline_pct || ex.incline_percentage || 0
-    let m = `${durMin} min · ${incline}% · ${ex.speed_kmh||'—'} km/h`
-    if (ex.target_heart_rate_bpm) m += ` · ♥ ${ex.target_heart_rate_bpm}bpm`
+    let durMin = ex.duration_min || ex.duration_minutes || 15
+    let incline = ex.incline_pct || ex.incline_percentage || 0
+    let speed = ex.speed_kmh || '—'
+    let hr = ex.target_heart_rate_bpm || null
+    
+    // Si ya fue completado, usar los datos reales del log
+    if (p && p.length > 0) {
+      durMin = p[1] || durMin // reps (duración)
+      speed = p[2] || speed // weight (velocidad)
+      hr = p[3] || hr // rpe (hr)
+      
+      const prevNotes = p[4] || ''
+      const inclineMatch = prevNotes.match(/incline:([\d.]+)%/)
+      if (inclineMatch) incline = parseFloat(inclineMatch[1])
+    }
+    
+    let m = `${durMin} min · ${incline}% · ${speed} km/h`
+    if (hr) m += ` · ♥ ${hr}bpm`
     return m
   } 
   
   if (exType.value === 'isometric') {
-    let sets = ex.sets || '?'
+    let sets = ex.sets || 3
+    let durSec = ex.duration_sec || ex.reps || 60
+    
     if (info.value.phase === 'deload' && ex.sets) sets = Math.max(1, Math.ceil(ex.sets/2))
-    return `${sets} × ${ex.duration_sec}s`
+    
+    if (p && p.length > 0) {
+      sets = p[0] || sets
+      durSec = p[1] || durSec
+    }
+    
+    return `${sets} × ${durSec}s`
   } 
   
   if (ex.group_type === 'pyramid' && ex.pyramid_reps) {
@@ -47,8 +74,16 @@ const meta = computed(() => {
   if (info.value.reps_change === '+1 rep') reps = (parseInt(reps)||0)+1
   if (info.value.phase === 'deload' && ex.sets) sets = Math.max(1, Math.ceil(ex.sets/2))
   
+  let weight = ex.current_weight_kg || null
+  
+  if (p && p.length > 0 && !ex.group_type?.includes('pyramid')) {
+    sets = p[0] || sets
+    reps = p[1] || reps
+    weight = p[2] || weight
+  }
+  
   let m = `${sets} × ${reps}`
-  if (ex.current_weight_kg) m += ` · ${ex.current_weight_kg}kg`
+  if (weight) m += ` · ${weight}kg`
   if (ex.max_safety_limit_kg) m += ` ⚠${ex.max_safety_limit_kg}kg`
   return m
 })
@@ -101,7 +136,7 @@ function handleLogClick() {
     exType: exType.value,
     preWeight: preWeightFinal,
     safetyLimit: props.exercise.max_safety_limit_kg || 0,
-    duration_min: props.exercise.duration_min || props.exercise.duration_minutes || 0,
+    duration_min: props.exercise.duration_min || props.exercise.duration_minutes || 15,
     incline_pct: props.exercise.incline_pct || 0,
     speed_kmh: props.exercise.speed_kmh || 0,
     target_hr: props.exercise.target_heart_rate_bpm || 0,
@@ -143,8 +178,8 @@ function handleLogClick() {
       <div v-if="fmtRest" class="ex-rest">⏱ descanso: {{ fmtRest }}</div>
     </div>
     
-    <button class="ex-log-btn" :class="{ 'logged': isLogged }" @click="handleLogClick">
-      {{ isLogged ? '✓' : 'Log' }}
+    <button class="ex-log-btn" :class="{ 'logged': isEffectivelyLogged }" @click="handleLogClick">
+      {{ isEffectivelyLogged ? '✓' : 'Log' }}
     </button>
   </div>
 </template>

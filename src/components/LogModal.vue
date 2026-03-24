@@ -66,7 +66,16 @@ function initModalData() {
       mDuration.value = prev[1] || d.duration_min || 15
       mSpeed.value = prev[2] || d.speed_kmh || 0
       mHr.value = prev[3] || d.target_hr || 0
-      mNotes.value = (prev[4]||'').replace(/incline:[^\s]+ speed:[^\s]+ hr:[^\s]+\s?/,'')
+      
+      const prevNotes = prev[4] || ''
+      const inclineMatch = prevNotes.match(/incline:([\d.]+)%/)
+      if (inclineMatch) {
+        mIncline.value = parseFloat(inclineMatch[1])
+      } else {
+        mIncline.value = d.incline_pct || 0
+      }
+      
+      mNotes.value = prevNotes.replace(/incline:[^\s]+ speed:[^\s]+ hr:[^\s]+\s?/,'')
     }
   } else {
     mNotes.value = ''

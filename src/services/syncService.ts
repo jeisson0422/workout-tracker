@@ -139,8 +139,17 @@ class SyncService {
           
           (day.exercises || []).forEach((ex: any, ei: number) => {
             const exId = crypto.randomUUID();
-            dbService.run("INSERT INTO plan_exercises (id, training_day_id, exercise_name, exercise_type, sets, reps, rest_seconds, order_index, special_notes, synced, deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)",
-              [exId, dayId, ex.exercise_name, ex.exercise_type || 'strength', ex.sets || 0, ex.reps || 0, ex.rest_seconds || 60, ei, ex.special_notes || '']
+            dbService.run(`INSERT INTO plan_exercises (
+              id, training_day_id, exercise_name, exercise_type, sets, reps, rest_seconds, order_index, special_notes, 
+              current_weight_kg, max_safety_limit_kg, tempo, group_id, group_type, duration_min, duration_sec, 
+              incline_pct, speed_kmh, target_heart_rate_bpm, intensity_mode, synced, deleted
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)`,
+              [
+                exId, dayId, ex.exercise_name, ex.exercise_type || 'strength', ex.sets || 0, ex.reps || 0, ex.rest_seconds || 60, ei, ex.special_notes || '',
+                ex.current_weight_kg || null, ex.max_safety_limit_kg || null, ex.tempo || null, ex.group_id || null, ex.group_type || null, 
+                ex.duration_min || ex.duration_minutes || null, ex.duration_sec || null, ex.incline_pct || null, ex.speed_kmh || null, 
+                ex.target_heart_rate_bpm || null, ex.intensity_mode || null
+              ]
             );
           });
         });
