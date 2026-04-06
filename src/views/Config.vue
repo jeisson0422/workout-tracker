@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWorkoutStore } from '../stores/workout'
 import { useAuthStore } from '../stores/auth'
@@ -14,6 +14,11 @@ const msg = ref({ text: '', type: '' })
 const weekInput = ref(store.currentWeek)
 const themeInput = ref(store.themeMode || 'system')
 
+const totalWeeks = computed(() => {
+  store.dbUpdateTrigger; // force reactivity
+  return store.totalWeeks;
+})
+
 onMounted(() => {
 })
 
@@ -23,11 +28,11 @@ function showMsg(text: string, type: string) {
 }
 
 function saveWeek() {
-  if (weekInput.value >= 1 && weekInput.value <= 14) {
+  if (weekInput.value >= 1 && weekInput.value <= totalWeeks.value) {
     store.setWeek(weekInput.value)
     showMsg('✓ Semana actualizada a ' + weekInput.value, 'ok')
   } else {
-    showMsg('La semana debe estar entre 1 y 14', 'err')
+    showMsg('La semana debe estar entre 1 y ' + totalWeeks.value, 'err')
   }
 }
 
@@ -118,8 +123,8 @@ async function handleSignOut() {
       <div class="cfg-lbl">Semana actual</div>
       <div style="display:flex;gap:10px;margin-bottom:20px">
         <div class="input-group" style="flex:1">
-          <label>Número (1–14)</label>
-          <input type="number" v-model="weekInput" min="1" max="14">
+          <label>Número (1–{{ totalWeeks }})</label>
+          <input type="number" v-model="weekInput" min="1" :max="totalWeeks">
         </div>
         <div style="display:flex;align-items:flex-end">
           <button class="btn btn-primary" style="margin:0;padding:12px 20px;width:auto" @click="saveWeek">Guardar</button>

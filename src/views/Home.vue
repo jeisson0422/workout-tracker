@@ -25,6 +25,11 @@ const doneSets = computed(() => {
 })
 const pct = computed(() => totalSets.value > 0 ? Math.min(100, Math.round((doneSets.value / totalSets.value) * 100)) : 0)
 
+const totalWeeks = computed(() => {
+  store.dbUpdateTrigger; // force reactivity
+  return store.totalWeeks;
+})
+
 // Nuevas variables computadas para las mejoras
 const days = computed(() => {
   store.dbUpdateTrigger;
@@ -83,10 +88,10 @@ function getCellClass(w: number, phase: string) {
 <template>
   <div class="pb-6">
     <div style="padding:calc(24px + env(safe-area-inset-top,0px)) 20px 10px">
-      <div style="font-size:12px;color:var(--text2);font-weight:600;letter-spacing:.5px">MACROCICLO 14 SEMANAS</div>
+      <div style="font-size:12px;color:var(--text2);font-weight:600;letter-spacing:.5px">MACROCICLO {{ totalWeeks }} SEMANAS</div>
       <div style="font-size:30px;font-weight:800;letter-spacing:-.5px;margin-top:4px">
         Semana <span>{{ currentWeek }}</span>
-        <span style="color:var(--text2);font-size:20px;font-weight:400"> / 14</span>
+        <span style="color:var(--text2);font-size:20px;font-weight:400"> / {{ totalWeeks }}</span>
       </div>
       <div style="font-size:13px;color:var(--accent2);margin-top:4px;font-weight:600">
         {{ (info.phase || '').toUpperCase() }} · {{ (info.system_focus || '').replace(/_/g,' ') }}
@@ -144,7 +149,7 @@ function getCellClass(w: number, phase: string) {
 
     <div class="week-grid">
       <div 
-        v-for="w in 14" 
+        v-for="w in totalWeeks" 
         :key="w"
         :class="getCellClass(w, store.getWeekInfo(w).phase)"
         @click="setWeek(w)"

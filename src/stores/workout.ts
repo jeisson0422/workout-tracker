@@ -14,6 +14,21 @@ export const useWorkoutStore = defineStore('workout', {
     themeMode: 'system' // 'dark', 'light', or 'system'
   }),
 
+  getters: {
+    totalWeeks: (state) => {
+      state.dbUpdateTrigger; // force reactivity
+      const plansStore = usePlansStore();
+      const activePlan = plansStore.activePlan;
+      if (activePlan) {
+        const progs = plansStore.planProgressions.filter(p => p.plan_id === activePlan.id && !p.deleted);
+        if (progs.length > 0) {
+          return Math.max(...progs.map(p => p.week_number));
+        }
+      }
+      return (state.progression.progression_data || []).length || 14;
+    }
+  },
+
   actions: {
     async initialize() {
       await dbService.init();
@@ -157,7 +172,7 @@ export const useWorkoutStore = defineStore('workout', {
         if (!this.isDayComplete(label)) return di;
       }
       
-      const totalWeeks = (this.progression.progression_data || []).length || 14;
+      const totalWeeks = this.totalWeeks;
       if (this.currentWeek < totalWeeks) {
         this.setWeek(this.currentWeek + 1);
       }
