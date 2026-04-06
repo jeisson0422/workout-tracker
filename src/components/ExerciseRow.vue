@@ -24,6 +24,29 @@ const isGrouped = computed(() => !!props.exercise.group_id)
 const prev = computed(() => store.getPrevLog(props.dayLabel, name.value))
 const isEffectivelyLogged = computed(() => props.isLogged || !!prev.value)
 
+const calculatedSets = computed(() => {
+  const ex = props.exercise
+  let sets = ex.sets || (exType.value === 'isometric' ? 3 : 1)
+  if (info.value.phase === 'deload' && ex.sets) {
+    sets = Math.max(1, Math.ceil(ex.sets / 2))
+  }
+  return sets
+})
+
+const calculatedReps = computed(() => {
+  const ex = props.exercise
+  let reps = ex.reps || ex.duration_sec || 0
+  
+  if (exType.value === 'strength') {
+    if (info.value.reps_change && info.value.reps_change.includes('+2')) {
+      reps = (parseInt(reps as any) || 0) + 2
+    } else if (info.value.reps_change === '+1 rep') {
+      reps = (parseInt(reps as any) || 0) + 1
+    }
+  }
+  return reps
+})
+
 const meta = computed(() => {
   const ex = props.exercise
   const p = prev.value
@@ -51,10 +74,8 @@ const meta = computed(() => {
   } 
   
   if (exType.value === 'isometric') {
-    let sets = ex.sets || 3
-    let durSec = ex.duration_sec || ex.reps || 60
-    
-    if (info.value.phase === 'deload' && ex.sets) sets = Math.max(1, Math.ceil(ex.sets/2))
+    let sets = calculatedSets.value
+    let durSec = calculatedReps.value
     
     if (p && p.length > 0) {
       sets = p[0] || sets
@@ -68,11 +89,8 @@ const meta = computed(() => {
     return ex.pyramid_reps.map((r: any, i: number) => `${ex.pyramid_weights_kg?.[i]||'?'}kg×${r}`).join(' → ')
   } 
   
-  let sets = ex.sets || '?'
-  let reps = ex.reps || '?'
-  if (info.value.reps_change && info.value.reps_change.includes('+2')) reps = (parseInt(reps)||0)+2
-  if (info.value.reps_change === '+1 rep') reps = (parseInt(reps)||0)+1
-  if (info.value.phase === 'deload' && ex.sets) sets = Math.max(1, Math.ceil(ex.sets/2))
+  let sets = calculatedSets.value
+  let reps = calculatedReps.value
   
   let weight = ex.current_weight_kg || null
   
@@ -130,8 +148,8 @@ function handleLogClick() {
   emit('open-modal', {
     dayLabel: props.dayLabel,
     name: name.value,
-    sets: props.exercise.sets || 1,
-    reps: props.exercise.reps || props.exercise.duration_sec || 0,
+    sets: calculatedSets.value,
+    reps: calculatedReps.value,
     logId: `${props.dayIndex}-${props.exIndex}`,
     exType: exType.value,
     preWeight: preWeightFinal,
