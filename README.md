@@ -4,18 +4,15 @@ A high-performance, offline-first workout tracking application built with **Vue 
 
 ## 🚀 Key Features
 
-- **Dynamic Macrocycle Management**: Plan and track progress across cycles of any length (e.g., 4, 8, 12, or 20+ weeks).
-- **Phase-Based Training**: Automatic adjustment and visualization for:
-  - **Adaptation**: Prepare muscles and joints.
-  - **Density**: Build volume and muscle mass.
-  - **Intensity**: Focus on heavy loads and strength.
-  - **Deload (Descarga)**: Recovery and technique focus.
-  - **Peaking (Pico)**: Maximize performance for new PRs.
-- **Offline-First Architecture**: Uses **SQL.js** (SQLite in the browser) to ensure the app works perfectly without an internet connection.
-- **Real-Time Sync**: Seamless data synchronization with **Supabase** when online.
-- **PWA Ready**: Installable on iOS, Android, and Desktop for a native-like experience.
-- **Advanced Workout Logging**: Track sets, reps, weight, RPE, and notes with a clean, dark-themed UI.
-- **Flexible Plan Editor**: Create complex routines including strength exercises, cardio, pyramid sets, and supersets.
+- **Multi-Plan Data Isolation**: Training logs and weight suggestions are strictly linked to the active plan, preventing progress contamination between routines.
+- **Individual Plan Persistence**: The app remembers the current week and state for each plan independently.
+- **Dynamic Macrocycle Management**: Plan and track progress across cycles of any length with phase-based scaling (Adaptation, Density, Intensity, Deload, Peaking).
+- **Offline-First Architecture**: High-performance **SQLite (WASM)** in the browser ensures the app works perfectly without an internet connection.
+- **Improved Real-Time Sync**: Intelligent bidirectional synchronization with **Supabase** that protects local state during plan activation.
+- **Theme-Aware UI/UX**: Full support for **Light and Dark modes** with a premium, high-contrast design.
+- **Optimized Profile Context**: Frequency-based UI ordering, placing weight tracking at the top for faster daily logging.
+- **PWA Ready**: Installable on iOS, Android, and Desktop with native-like performance and safe-area support.
+- **Customizable Workout Logic**: Advanced sets, RPE tracking, and phase-specific volume adjustments.
 
 ## 🛠 Tech Stack
 
@@ -58,9 +55,11 @@ A high-performance, offline-first workout tracking application built with **Vue 
 
 ## 💾 Data Management
 
-The application uses a hybrid storage approach:
-- **SQLite (sql.js)**: All training data is stored in an in-memory SQLite database that is persisted to `localStorage` as a base64 string (`wt_db_v2`).
-- **Supabase**: Acts as the master record. Data is synced in the background to allow multi-device usage.
+The application uses an advanced hybrid storage and synchronization architecture:
+- **SQLite (sql.js/WASM)**: All training data is stored in a high-performance SQLite database in the browser. This database is persisted to `localStorage` (via `wt_db_v2` base64 encoding).
+- **Plan-Based Isolation**: Each `workout_log` and `plan_exercise` is strictly keyed to a `plan_id`. This ensures that starting a new routine does not mix historical suggestions or progress from previous ones.
+- **Master-Remote Sync (Supabase)**: Acts as the source of truth for long-term storage and multi-device support. The synchronization service ensures bi-directional consistency without overwriting active local progress.
+- **State Persistence**: Critical states like `current_week` are stored at the plan level, allowing users to switch between different training routines without losing their place in the cycle.
 
 ## 📂 Project Structure
 
