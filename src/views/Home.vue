@@ -3,6 +3,7 @@ import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWorkoutStore } from '../stores/workout'
 import { useUserStore } from '../stores/user'
+import { getSwalSettings } from '../services/swalHelper'
 import Swal from 'sweetalert2'
 
 const router = useRouter()
@@ -93,15 +94,12 @@ function getCellClass(w: number, phase: string) {
 
 async function quickWeightEntry() {
   const { value: weight } = await Swal.fire({
+    ...getSwalSettings(),
     title: 'Registrar Peso',
     input: 'number',
     inputLabel: 'Peso actual (kg)',
     inputValue: userStore.profile.weight_kg || '',
     showCancelButton: true,
-    confirmButtonColor: '#ccff00',
-    cancelButtonColor: '#333333',
-    background: '#1a1a1a',
-    color: '#ffffff',
     inputValidator: (value) => {
       const num = parseFloat(value)
       if (isNaN(num) || num <= 0) {
@@ -113,13 +111,12 @@ async function quickWeightEntry() {
   if (weight) {
     userStore.addWeightEntry(parseFloat(weight))
     Swal.fire({
-      title: '¡Registrado!',
-      text: `Peso de ${weight}kg guardado.`,
+      ...getSwalSettings('success'),
+      title: '¡Peso Guardado!',
+      text: `${weight} kg registrado`,
       icon: 'success',
       timer: 1500,
-      showConfirmButton: false,
-      background: '#1a1a1a',
-      color: '#ffffff'
+      showConfirmButton: false
     })
   }
 }

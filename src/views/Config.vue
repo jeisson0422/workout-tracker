@@ -6,6 +6,7 @@ import { useAuthStore } from '../stores/auth'
 import { useUserStore } from '../stores/user'
 import { TRAINING_MODALITIES, GOALS, GENDERS, TRAINING_LEVELS } from '../constants/modalities'
 import { dbService } from '../services/localDb'
+import { getSwalSettings } from '../services/swalHelper'
 import Swal from 'sweetalert2'
 
 const store = useWorkoutStore()
@@ -72,16 +73,12 @@ function registerWeight() {
 
 async function resetAll() {
   const result = await Swal.fire({
+    ...getSwalSettings('danger'),
     title: '¿Estás seguro?',
     text: "Se borrarán todos los registros de entrenamiento y caché de planes locales.",
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonColor: '#ff4444',
-    cancelButtonColor: '#333333',
-    confirmButtonText: 'Sí, borrar todo',
-    cancelButtonText: 'Cancelar',
-    background: '#1a1a1a',
-    color: '#ffffff'
+    confirmButtonText: 'Sí, borrar todo'
   })
 
   if (!result.isConfirmed) return
@@ -98,12 +95,10 @@ async function resetAll() {
   store.setWeek(1)
   
   await Swal.fire({
+    ...getSwalSettings('success'),
     title: '¡Borrado!',
     text: 'Datos locales borrados. La app se recargará.',
     icon: 'success',
-    background: '#1a1a1a',
-    color: '#ffffff',
-    confirmButtonColor: '#ccff00',
     timer: 1500,
     showConfirmButton: false
   })

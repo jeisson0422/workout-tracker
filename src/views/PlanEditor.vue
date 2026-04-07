@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePlansStore } from '../stores/plans'
+import { getSwalSettings } from '../services/swalHelper'
 import Swal from 'sweetalert2'
 import ExerciseIcon from '../components/ExerciseIcon.vue'
 
@@ -34,18 +35,14 @@ function savePlanName() {
 
 async function addDay() {
   const { value: name } = await Swal.fire({
+    ...getSwalSettings(),
     title: 'Añadir Día',
     input: 'text',
     inputLabel: 'Nombre de la sesión',
     inputPlaceholder: 'ej. Empuje, Pierna',
     showCancelButton: true,
-    confirmButtonColor: '#ccff00',
-    cancelButtonColor: '#333333',
     confirmButtonText: 'Guardar',
-    cancelButtonText: 'Cancelar',
-    background: '#1a1a1a',
-    color: '#ffffff',
-    customClass: { confirmButton: 'text-black font-bold' }
+    customClass: { confirmButton: 'swal-confirm-btn font-bold' }
   })
 
   if (name) {
@@ -55,16 +52,12 @@ async function addDay() {
 
 async function deleteDay(id: string) {
   const result = await Swal.fire({
+    ...getSwalSettings('danger'),
     title: '¿Borrar día?',
     text: "Se borrará este día y todos sus ejercicios.",
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonColor: '#ff4444',
-    cancelButtonColor: '#333333',
-    confirmButtonText: 'Sí, borrar',
-    cancelButtonText: 'Cancelar',
-    background: '#1a1a1a',
-    color: '#ffffff'
+    confirmButtonText: 'Sí, borrar'
   })
 
   if (result.isConfirmed) {
@@ -144,15 +137,11 @@ function saveExercise() {
 
 async function deleteExercise(id: string) {
   const result = await Swal.fire({
+    ...getSwalSettings('danger'),
     title: '¿Borrar ejercicio?',
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonColor: '#ff4444',
-    cancelButtonColor: '#333333',
-    confirmButtonText: 'Sí, borrar',
-    cancelButtonText: 'Cancelar',
-    background: '#1a1a1a',
-    color: '#ffffff'
+    confirmButtonText: 'Sí, borrar'
   })
 
   if (result.isConfirmed) {
@@ -208,15 +197,11 @@ function saveProgression() {
 
 async function deleteProgression(id: string) {
   const result = await Swal.fire({
+    ...getSwalSettings('danger'),
     title: '¿Borrar semana?',
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonColor: '#ff4444',
-    cancelButtonColor: '#333333',
-    confirmButtonText: 'Sí, borrar',
-    cancelButtonText: 'Cancelar',
-    background: '#1a1a1a',
-    color: '#ffffff'
+    confirmButtonText: 'Sí, borrar'
   })
 
   if (result.isConfirmed) {

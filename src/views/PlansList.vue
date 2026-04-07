@@ -5,6 +5,7 @@ import { usePlansStore } from '../stores/plans'
 import { useUserStore } from '../stores/user'
 import { useWorkoutStore } from '../stores/workout'
 import { generateMasterPrompt } from '../services/aiPrompt'
+import { getSwalSettings } from '../services/swalHelper'
 import Swal from 'sweetalert2'
 
 const plansStore = usePlansStore()
@@ -28,16 +29,12 @@ function createPlan() {
 
 async function deletePlan(id: string) {
   const result = await Swal.fire({
+    ...getSwalSettings('danger'),
     title: '¿Eliminar plan?',
     text: "Esta acción no se puede deshacer.",
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonColor: '#ff4444',
-    cancelButtonColor: '#333333',
-    confirmButtonText: 'Sí, eliminar',
-    cancelButtonText: 'Cancelar',
-    background: '#1a1a1a',
-    color: '#ffffff'
+    confirmButtonText: 'Sí, eliminar'
   })
 
   if (result.isConfirmed) {
@@ -52,12 +49,10 @@ async function copyAiPrompt() {
   try {
     await navigator.clipboard.writeText(prompt)
     Swal.fire({
+      ...getSwalSettings('success'),
       title: '¡Prompt Copiado!',
       text: 'Pégalo en Gemini para generar tu plan.',
       icon: 'success',
-      background: '#1a1a1a',
-      color: '#ffffff',
-      confirmButtonColor: '#ccff00',
       timer: 2000
     })
     showAiModal.value = false
@@ -81,11 +76,10 @@ function importPlan() {
     router.push(`/plans/${id}`)
   } catch (err: any) {
     Swal.fire({
+      ...getSwalSettings('danger'),
       title: 'Error de Importación',
       text: err.message || 'El JSON no es válido o está incompleto.',
-      icon: 'error',
-      background: '#1a1a1a',
-      color: '#ffffff'
+      icon: 'error'
     })
   }
 }
