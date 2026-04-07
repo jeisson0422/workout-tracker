@@ -2,13 +2,19 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlansStore } from '../stores/plans'
+import { useUserStore } from '../stores/user'
+import { generateMasterPrompt } from '../services/aiPrompt'
 import Swal from 'sweetalert2'
 
 const plansStore = usePlansStore()
+const userStore = useUserStore()
 const router = useRouter()
 
 const showNewPlanModal = ref(false)
+const showAiModal = ref(false)
+const showImportModal = ref(false)
 const newPlanName = ref('')
+const aiJsonInput = ref('')
 
 function createPlan() {
   if (!newPlanName.value.trim()) return
@@ -36,6 +42,46 @@ async function deletePlan(id: string) {
     plansStore.deletePlan(id)
   }
 }
+
+async function copyAiPrompt() {
+  await userStore.loadProfile()
+  const prompt = generateMasterPrompt()
+  
+  try {
+    await navigator.clipboard.writeText(prompt)
+    Swal.fire({
+      title: '¡Prompt Copiado!',
+      text: 'Pégalo en Gemini para generar tu plan.',
+      icon: 'success',
+      background: '#1a1a1a',
+      color: '#ffffff',
+      confirmButtonColor: '#ccff00',
+      timer: 2000
+    })
+    showAiModal.value = false
+  } catch (err) {
+    Swal.fire('Error', 'No se pudo copiar al portapapeles', 'error')
+  }
+}
+
+function importPlan() {
+  try {
+    const data = JSON.parse(aiJsonInput.value)
+    const id = plansStore.importFullPlan(data)
+    aiJsonInput.value = ''
+    showImportModal.value = false
+    Swal.fire('¡Éxito!', 'Plan importado correctamente', 'success')
+    router.push(`/plans/${id}`)
+  } catch (err: any) {
+    Swal.fire({
+      title: 'Error de Importación',
+      text: err.message || 'El JSON no es válido o está incompleto.',
+      icon: 'error',
+      background: '#1a1a1a',
+      color: '#ffffff'
+    })
+  }
+}
 </script>
 
 <template>
@@ -60,14 +106,53 @@ async function deletePlan(id: string) {
           <div class="plan-title">{{ plan.name }}</div>
           <div class="plan-badge" v-if="plan.is_active">Activo</div>
         </div>
-        <div class="plan-actions">
+      <div class="plan-actions">
           <button class="btn btn-secondary btn-sm" v-if="!plan.is_active" @click="plansStore.setActivePlan(plan.id)">Activar</button>
           <button class="btn btn-secondary btn-sm" @click="router.push(`/plans/${plan.id}`)">Editar</button>
           <button class="btn btn-danger btn-sm" @click="deletePlan(plan.id)">Borrar</button>
         </div>
       </div>
 
-      <button class="btn btn-primary" style="margin-top: 20px;" @click="showNewPlanModal = true">+ Crear Nuevo Plan</button>
+      <div class="ai-box">
+        <div class="ai-box-title">🤖 Generación con IA</div>
+        <div class="ai-box-desc">Usa el poder de Gemini para crear planes basados en tu perfil y equipo.</div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-ai" style="flex:1" @click="showAiModal = true">Obtener Prompt</button>
+          <button class="btn btn-ai-alt" style="flex:1" @click="showImportModal = true">Importar JSON</button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" style="margin-top: 20px;" @click="showNewPlanModal = true">+ Crear Nuevo Plan Manual</button>
+    </div>
+
+    <!-- Modal AI Prompt -->
+    <div v-if="showAiModal" class="modal-overlay">
+      <div class="modal-content ai-modal">
+        <h3>Prompt para Gemini</h3>
+        <p style="font-size: 13px; color: var(--text2); margin-bottom: 15px;">
+          Copia este prompt y pégalo en Gemini. La IA generará un plan basado en tu perfil (peso, equipo, metas).
+        </p>
+        <div class="prompt-preview">
+          {{ generateMasterPrompt() }}
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <button class="btn btn-secondary" @click="showAiModal = false">Cerrar</button>
+          <button class="btn btn-ai" @click="copyAiPrompt">Copiar y Abrir Gemini</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Import -->
+    <div v-if="showImportModal" class="modal-overlay">
+      <div class="modal-content">
+        <h3>Importar Plan de IA</h3>
+        <p style="font-size: 13px; color: var(--text2); margin-bottom: 10px;">Pega aquí el código JSON que generó Gemini:</p>
+        <textarea v-model="aiJsonInput" placeholder='{ "name": "Mi Plan...", "training_days": [...] }' class="import-area"></textarea>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <button class="btn btn-secondary" @click="showImportModal = false">Cancelar</button>
+          <button class="btn btn-primary" @click="importPlan">Importar Plan</button>
+        </div>
+      </div>
     </div>
 
     <!-- Modal Nuevo Plan -->
@@ -102,4 +187,14 @@ async function deletePlan(id: string) {
 .modal-content h3 { margin: 0 0 16px 0; font-size: 20px; }
 .modal-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 12px; font-size: 16px; box-sizing: border-box; }
 .modal-input:focus { outline: none; border-color: var(--accent); }
+
+.ai-box { background: linear-gradient(135deg, rgba(200,255,0,0.1) 0%, rgba(200,255,0,0) 100%); border: 1px dashed var(--accent); padding: 16px; border-radius: var(--r2); margin-top: 24px; }
+.ai-box-title { font-weight: 800; font-size: 14px; margin-bottom: 4px; color: var(--accent); }
+.ai-box-desc { font-size: 12px; color: var(--text2); margin-bottom: 12px; }
+.btn-ai { background: var(--accent); color: var(--accent-text); font-size: 13px; padding: 10px; }
+.btn-ai-alt { background: var(--bg3); color: var(--accent); border: 1px solid var(--accent); font-size: 13px; padding: 10px; }
+
+.ai-modal { max-width: 500px !important; }
+.prompt-preview { background: var(--bg3); padding: 12px; border-radius: 8px; font-size: 11px; font-family: monospace; height: 200px; overflow-y: auto; color: var(--text2); border: 1px solid var(--border); white-space: pre-wrap; }
+.import-area { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 12px; font-size: 12px; font-family: monospace; height: 200px; resize: none; }
 </style>

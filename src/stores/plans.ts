@@ -143,6 +143,69 @@ export const usePlansStore = defineStore('plans', {
       this.loadData();
     },
 
+    importFullPlan(data: any): string {
+      // 1. Validation
+      if (!data || typeof data !== 'object') throw new Error('Cuerpo de JSON inválido.');
+      if (!data.name) throw new Error('El nombre del plan es obligatorio.');
+      if (!Array.isArray(data.training_days) || data.training_days.length === 0) throw new Error('El plan debe tener al menos un día de entrenamiento.');
+      if (!Array.isArray(data.progression_data) || data.progression_data.length === 0) throw new Error('El plan debe tener al menos una semana de progresión.');
+
+      const planId = crypto.randomUUID();
+
+      // 2. Transaction (SQLite is single-threaded, we'll run sequential commands)
+      // Note: We don't have true multi-statement transactions in the helper, 
+      // but we can ensure atomic-like behavior in the store.
+      
+      dbService.run("INSERT INTO plans (id, name, is_active) VALUES (?, ?, 0)", [planId, data.name]);
+
+      data.training_days.forEach((day: any) => {
+        const dayId = crypto.randomUUID();
+        dbService.run(
+          "INSERT INTO training_days (id, plan_id, day_number, session_name) VALUES (?, ?, ?, ?)",
+          [dayId, planId, day.day_number, day.session_name]
+        );
+
+        if (Array.isArray(day.exercises)) {
+          day.exercises.forEach((ex: any, idx: number) => {
+            const exId = crypto.randomUUID();
+            dbService.run(
+              `INSERT INTO plan_exercises (
+                id, training_day_id, exercise_name, exercise_type, sets, reps, rest_seconds, order_index, 
+                special_notes, tempo, group_id, group_type, duration_min, duration_sec, incline_pct,
+                speed_kmh, target_heart_rate_bpm, intensity_mode, pyramid_reps, pyramid_weights_kg
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              [
+                exId, dayId, ex.exercise_name, ex.exercise_type || 'strength', 
+                ex.sets || 0, ex.reps || 0, ex.rest_seconds || 60, idx,
+                ex.special_notes || '', ex.tempo || '', ex.group_id || '', ex.group_type || '',
+                ex.duration_min || 0, ex.duration_sec || 0, ex.incline_pct || 0,
+                ex.speed_kmh || 0, ex.target_heart_rate_bpm || 0, ex.intensity_mode || '',
+                ex.pyramid_reps ? JSON.stringify(ex.pyramid_reps) : null,
+                ex.pyramid_weights_kg ? JSON.stringify(ex.pyramid_weights_kg) : null
+              ]
+            );
+          });
+        }
+      });
+
+      data.progression_data.forEach((prog: any) => {
+        const progId = crypto.randomUUID();
+        dbService.run(
+          `INSERT INTO plan_progressions (
+            id, plan_id, week_number, phase, weight_change_pct, reps_change, rpe_target, system_focus
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            progId, planId, prog.week_number, prog.phase || 'adaptation',
+            prog.weight_change_pct || '0%', prog.reps_change || 'baseline',
+            prog.rpe_target || 7, prog.system_focus || ''
+          ]
+        );
+      });
+
+      this.loadData();
+      return planId;
+    },
+
     addDay(planId: string, sessionName: string) {
       const id = crypto.randomUUID();
       const planDays = this.trainingDays.filter(d => d.plan_id === planId && !d.deleted);

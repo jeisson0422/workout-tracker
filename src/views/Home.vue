@@ -1,10 +1,17 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWorkoutStore } from '../stores/workout'
+import { useUserStore } from '../stores/user'
+import Swal from 'sweetalert2'
 
 const router = useRouter()
 const store = useWorkoutStore()
+const userStore = useUserStore()
+
+onMounted(async () => {
+  store.dbUpdateTrigger; // forzar reactividad
+})
 
 const currentWeek = computed(() => {
   store.dbUpdateTrigger; // forzar reactividad
@@ -83,6 +90,39 @@ function getCellClass(w: number, phase: string) {
   if (w < currentWeek.value) base += ' past'
   return base
 }
+
+async function quickWeightEntry() {
+  const { value: weight } = await Swal.fire({
+    title: 'Registrar Peso',
+    input: 'number',
+    inputLabel: 'Peso actual (kg)',
+    inputValue: userStore.profile.weight_kg || '',
+    showCancelButton: true,
+    confirmButtonColor: '#ccff00',
+    cancelButtonColor: '#333333',
+    background: '#1a1a1a',
+    color: '#ffffff',
+    inputValidator: (value) => {
+      const num = parseFloat(value)
+      if (isNaN(num) || num <= 0) {
+        return 'Por favor ingresa un peso válido'
+      }
+    }
+  })
+
+  if (weight) {
+    userStore.addWeightEntry(parseFloat(weight))
+    Swal.fire({
+      title: '¡Registrado!',
+      text: `Peso de ${weight}kg guardado.`,
+      icon: 'success',
+      timer: 1500,
+      showConfirmButton: false,
+      background: '#1a1a1a',
+      color: '#ffffff'
+    })
+  }
+}
 </script>
 
 <template>
@@ -96,6 +136,15 @@ function getCellClass(w: number, phase: string) {
       <div style="font-size:13px;color:var(--accent2);margin-top:4px;font-weight:600">
         {{ (info.phase || '').toUpperCase() }} · {{ (info.system_focus || '').replace(/_/g,' ') }}
       </div>
+    </div>
+
+    <!-- Acceso Rápido Peso -->
+    <div class="weight-quick-access" @click="quickWeightEntry">
+      <div class="weight-info">
+        <span class="weight-lbl">PESO ACTUAL:</span>
+        <span class="weight-val">{{ userStore.profile.weight_kg || '--' }}<span class="unit">kg</span></span>
+      </div>
+      <div class="weight-btn">Anotar</div>
     </div>
 
     <!-- 1. Próximo Entrenamiento (CTA Principal) -->
@@ -334,4 +383,21 @@ function getCellClass(w: number, phase: string) {
   border-radius: 50%;
   flex-shrink: 0;
 }
+
+.weight-quick-access {
+  margin: 0 16px 12px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+.weight-info { display: flex; align-items: center; gap: 8px; }
+.weight-lbl { font-size: 11px; font-weight: 700; color: var(--text2); }
+.weight-val { font-size: 18px; font-weight: 800; color: var(--accent); }
+.weight-val .unit { font-size: 10px; margin-left: 2px; color: var(--text2); }
+.weight-btn { font-size: 12px; font-weight: 700; color: var(--accent2); text-transform: uppercase; border: 1px solid var(--accent2); padding: 4px 10px; border-radius: 12px; }
 </style>
