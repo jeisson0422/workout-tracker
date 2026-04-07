@@ -64,6 +64,7 @@ class LocalDbService {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       is_active INTEGER DEFAULT 0,
+      current_week INTEGER DEFAULT 1,
       synced INTEGER DEFAULT 0,
       deleted INTEGER DEFAULT 0
     )`);
@@ -156,6 +157,27 @@ class LocalDbService {
       
       if (!hasSynced) {
         this.run("ALTER TABLE workout_log ADD COLUMN synced INTEGER DEFAULT 0");
+      }
+
+      const hasPlanId = colsLog[0].values.some((col: any) => col[1] === 'plan_id');
+      if (!hasPlanId) {
+        this.run("ALTER TABLE workout_log ADD COLUMN plan_id TEXT");
+        
+        // Data Migration: Link existing logs to active plan
+        const activePlan = this.q("SELECT id FROM plans WHERE is_active = 1 LIMIT 1");
+        if (activePlan.length && activePlan[0].values.length) {
+          const id = activePlan[0].values[0][0];
+          this.run("UPDATE workout_log SET plan_id = ? WHERE plan_id IS NULL", [id]);
+        }
+      }
+    }
+
+    // Migrar plans
+    const colsPlans = this.q("PRAGMA table_info(plans)");
+    if (colsPlans.length && colsPlans[0].values) {
+      const hasWeek = colsPlans[0].values.some((col: any) => col[1] === 'current_week');
+      if (!hasWeek) {
+        this.run("ALTER TABLE plans ADD COLUMN current_week INTEGER DEFAULT 1");
       }
     }
 

@@ -5,6 +5,7 @@ export interface Plan {
   id: string
   name: string
   is_active: boolean
+  current_week: number
   synced: boolean
   deleted: boolean
 }
@@ -90,9 +91,9 @@ export const usePlansStore = defineStore('plans', {
     loadData() {
       this.dbUpdateTrigger; // trigger reactivity
       
-      const plansRes = dbService.q("SELECT id, name, is_active, synced, deleted FROM plans WHERE deleted = 0");
+      const plansRes = dbService.q("SELECT id, name, is_active, synced, deleted, current_week FROM plans WHERE deleted = 0");
       this.plans = plansRes.length && plansRes[0].values ? plansRes[0].values.map((r: any) => ({
-        id: r[0], name: r[1], is_active: r[2] === 1, synced: r[3] === 1, deleted: r[4] === 1
+        id: r[0], name: r[1], is_active: r[2] === 1, synced: r[3] === 1, deleted: r[4] === 1, current_week: r[5] || 1
       })) : [];
 
       const daysRes = dbService.q("SELECT id, plan_id, day_number, session_name, synced, deleted FROM training_days WHERE deleted = 0");
@@ -133,6 +134,14 @@ export const usePlansStore = defineStore('plans', {
     setActivePlan(id: string) {
       dbService.run("UPDATE plans SET is_active = 0, synced = 0");
       dbService.run("UPDATE plans SET is_active = 1, synced = 0 WHERE id = ?", [id]);
+      
+      // Load current_week from the activated plan
+      const planRes = dbService.q("SELECT current_week FROM plans WHERE id = ?", [id]);
+      const week = (planRes.length && planRes[0].values) ? (planRes[0].values[0][0] || 1) : 1;
+      
+      // Update global context
+      dbService.setConfig('current_week', week);
+
       this.dbUpdateTrigger++;
       this.loadData();
     },

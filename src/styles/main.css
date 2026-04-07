@@ -33,7 +33,7 @@
   --bg4:#22223a;
   --accent:#6c63ff;
   --accent2:#a78bfa;
-  --accent-text:#000000;
+  --accent-text:#ffffff;
   --green:#34d399;
   --amber:#fbbf24;
   --red:#f87171;
@@ -56,6 +56,7 @@
   --color-bg3: var(--bg3);
   --color-bg4: var(--bg4);
   --color-accent: var(--accent);
+  --color-accent-text: var(--accent-text);
   --color-accent2: var(--accent2);
   --color-text-main: var(--text);
   --color-text-dim: var(--text2);

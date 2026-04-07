@@ -3,11 +3,13 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlansStore } from '../stores/plans'
 import { useUserStore } from '../stores/user'
+import { useWorkoutStore } from '../stores/workout'
 import { generateMasterPrompt } from '../services/aiPrompt'
 import Swal from 'sweetalert2'
 
 const plansStore = usePlansStore()
 const userStore = useUserStore()
+const workoutStore = useWorkoutStore()
 const router = useRouter()
 
 const showNewPlanModal = ref(false)
@@ -64,6 +66,11 @@ async function copyAiPrompt() {
   }
 }
 
+function handleActivate(id: string) {
+  plansStore.setActivePlan(id)
+  workoutStore.loadConfig()
+}
+
 function importPlan() {
   try {
     const data = JSON.parse(aiJsonInput.value)
@@ -106,8 +113,8 @@ function importPlan() {
           <div class="plan-title">{{ plan.name }}</div>
           <div class="plan-badge" v-if="plan.is_active">Activo</div>
         </div>
-      <div class="plan-actions">
-          <button class="btn btn-secondary btn-sm" v-if="!plan.is_active" @click="plansStore.setActivePlan(plan.id)">Activar</button>
+        <div class="plan-actions">
+          <button class="btn btn-secondary btn-sm" v-if="!plan.is_active" @click="handleActivate(plan.id)">Activar</button>
           <button class="btn btn-secondary btn-sm" @click="router.push(`/plans/${plan.id}`)">Editar</button>
           <button class="btn btn-danger btn-sm" @click="deletePlan(plan.id)">Borrar</button>
         </div>

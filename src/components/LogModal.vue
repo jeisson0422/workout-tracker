@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useWorkoutStore } from '../stores/workout'
+import { usePlansStore } from '../stores/plans'
 import { dbService } from '../services/localDb'
 
 const props = defineProps<{
@@ -10,6 +11,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['close', 'logged'])
 const store = useWorkoutStore()
+const plansStore = usePlansStore()
 
 const weightUnit = ref('kg')
 const mSets = ref(1)
@@ -100,6 +102,7 @@ function getWeightKg() {
 function saveLog() {
   const d = props.data
   const isCardio = d.exType === 'cardio'
+  const planId = plansStore.activePlan?.id
   
   if (isCardio) {
     const cardioNotes = `incline:${mIncline.value}% speed:${mSpeed.value}km/h hr:${mHr.value}bpm${mNotes.value?' '+mNotes.value:''}`
@@ -112,8 +115,8 @@ function saveLog() {
         [mDuration.value, mSpeed.value, mHr.value, cardioNotes, existing[0].values[0][0]])
     } else {
       const syncId = crypto.randomUUID()
-      dbService.run(`INSERT INTO workout_log (sync_id,week,day_label,exercise,sets,reps,weight_kg,rpe,notes,synced) VALUES (?,?,?,?,?,?,?,?,?,0)`,
-        [syncId, store.currentWeek, d.dayLabel, d.name, 1, mDuration.value, mSpeed.value, mHr.value, cardioNotes])
+      dbService.run(`INSERT INTO workout_log (sync_id,week,day_label,exercise,sets,reps,weight_kg,rpe,notes,synced,plan_id) VALUES (?,?,?,?,?,?,?,?,?,0,?)`,
+        [syncId, store.currentWeek, d.dayLabel, d.name, 1, mDuration.value, mSpeed.value, mHr.value, cardioNotes, planId])
     }
   } else if (d.pyramid_reps) {
     for (let i = 0; i < d.pyramid_reps.length; i++) {
@@ -123,8 +126,8 @@ function saveLog() {
         if (!confirm(`⚠ Serie ${i+1}: ${w}kg supera límite de ${d.safetyLimit}kg. ¿Continuar?`)) return
       }
       const syncId = crypto.randomUUID()
-      dbService.run(`INSERT INTO workout_log (sync_id,week,day_label,exercise,sets,reps,weight_kg,rpe,notes,synced) VALUES (?,?,?,?,?,?,?,?,?,0)`,
-        [syncId, store.currentWeek, d.dayLabel, d.name+'_s'+(i+1), 1, r, w, mRpe.value, mNotes.value])
+      dbService.run(`INSERT INTO workout_log (sync_id,week,day_label,exercise,sets,reps,weight_kg,rpe,notes,synced,plan_id) VALUES (?,?,?,?,?,?,?,?,?,0,?)`,
+        [syncId, store.currentWeek, d.dayLabel, d.name+'_s'+(i+1), 1, r, w, mRpe.value, mNotes.value, planId])
     }
   } else {
     const weight = getWeightKg()
@@ -140,8 +143,8 @@ function saveLog() {
         [mSets.value, mReps.value, weight, mRpe.value, mNotes.value, existing[0].values[0][0]])
     } else {
       const syncId = crypto.randomUUID()
-      dbService.run(`INSERT INTO workout_log (sync_id,week,day_label,exercise,sets,reps,weight_kg,rpe,notes,synced) VALUES (?,?,?,?,?,?,?,?,?,0)`,
-        [syncId, store.currentWeek, d.dayLabel, d.name, mSets.value, mReps.value, weight, mRpe.value, mNotes.value])
+      dbService.run(`INSERT INTO workout_log (sync_id,week,day_label,exercise,sets,reps,weight_kg,rpe,notes,synced,plan_id) VALUES (?,?,?,?,?,?,?,?,?,0,?)`,
+        [syncId, store.currentWeek, d.dayLabel, d.name, mSets.value, mReps.value, weight, mRpe.value, mNotes.value, planId])
     }
   }
 

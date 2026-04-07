@@ -51,13 +51,17 @@ class SyncService {
 
   private async pushPlans(userId: string) {
     // 1. Push plans
-    const unsyncedPlans = dbService.q("SELECT id, name, is_active, deleted FROM plans WHERE synced = 0");
+    const unsyncedPlans = dbService.q("SELECT id, name, is_active, deleted, current_week FROM plans WHERE synced = 0");
     if (unsyncedPlans.length && unsyncedPlans[0].values.length) {
       for (const row of unsyncedPlans[0].values) {
         if (row[3] === 1) { // deleted
           await supabase.from('plans').delete().eq('id', row[0]);
         } else {
-          await supabase.from('plans').upsert({ id: row[0], user_id: userId, name: row[1], is_active: row[2] === 1 });
+          await supabase.from('plans').upsert({ 
+            id: row[0], user_id: userId, name: row[1], 
+            is_active: row[2] === 1,
+            current_week: row[4] || 1
+          });
         }
         dbService.run("UPDATE plans SET synced = 1 WHERE id = ?", [row[0]]);
       }
@@ -77,7 +81,7 @@ class SyncService {
     }
 
     // 3. Push plan exercises
-    const unsyncedEx = dbService.q("SELECT id, training_day_id, exercise_name, exercise_type, sets, reps, rest_seconds, order_index, special_notes, deleted FROM plan_exercises WHERE synced = 0");
+    const unsyncedEx = dbService.q("SELECT id, training_day_id, exercise_name, exercise_type, sets, reps, rest_seconds, order_index, special_notes, deleted, current_weight_kg, max_safety_limit_kg, tempo, group_id, group_type, duration_min, duration_sec, incline_pct, speed_kmh, target_heart_rate_bpm, intensity_mode, pyramid_reps, pyramid_weights_kg FROM plan_exercises WHERE synced = 0");
     if (unsyncedEx.length && unsyncedEx[0].values.length) {
       for (const row of unsyncedEx[0].values) {
         if (row[9] === 1) { // deleted
@@ -85,7 +89,12 @@ class SyncService {
         } else {
           await supabase.from('plan_exercises').upsert({ 
             id: row[0], training_day_id: row[1], exercise_name: row[2], exercise_type: row[3],
-            sets: row[4], reps: row[5], rest_seconds: row[6], order_index: row[7], special_notes: row[8]
+            sets: row[4], reps: row[5], rest_seconds: row[6], order_index: row[7], special_notes: row[8],
+            current_weight_kg: row[10], max_safety_limit_kg: row[11], tempo: row[12], group_id: row[13], 
+            group_type: row[14], duration_min: row[15], duration_sec: row[16], incline_pct: row[17], 
+            speed_kmh: row[18], target_heart_rate_bpm: row[19], intensity_mode: row[20], 
+            pyramid_reps: row[21] ? JSON.parse(row[21]) : null, 
+            pyramid_weights_kg: row[22] ? JSON.parse(row[22]) : null
           });
         }
         dbService.run("UPDATE plan_exercises SET synced = 1 WHERE id = ?", [row[0]]);
@@ -179,9 +188,16 @@ class SyncService {
 
       for (const p of plansData) {
         serverPlanIds.add(p.id);
-        dbService.run("INSERT OR REPLACE INTO plans (id, name, is_active, synced, deleted) VALUES (?, ?, ?, 1, 0)", 
-          [p.id, p.name, p.is_active ? 1 : 0]);
-        if (p.updated_at > latestUpdated) latestUpdated = p.updated_at;
+        
+        // Evitar sobrescribir si hay cambios locales no subidos
+        const local = dbService.q("SELECT synced FROM plans WHERE id=?", [p.id]);
+        const isSynced = local.length && local[0].values.length ? local[0].values[0][0] === 1 : true;
+
+        if (isSynced) {
+          dbService.run("INSERT OR REPLACE INTO plans (id, name, is_active, synced, deleted, current_week) VALUES (?, ?, ?, 1, 0, ?)", 
+            [p.id, p.name, p.is_active ? 1 : 0, p.current_week || 1]);
+          if (p.updated_at > latestUpdated) latestUpdated = p.updated_at;
+        }
 
         for (const d of p.training_days || []) {
           serverDayIds.add(d.id);
@@ -190,8 +206,20 @@ class SyncService {
           
           for (const e of d.plan_exercises || []) {
             serverExIds.add(e.id);
-            dbService.run("INSERT OR REPLACE INTO plan_exercises (id, training_day_id, exercise_name, exercise_type, sets, reps, rest_seconds, order_index, special_notes, synced, deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)",
-              [e.id, d.id, e.exercise_name, e.exercise_type, e.sets, e.reps, e.rest_seconds, e.order_index, e.special_notes]);
+            dbService.run(`INSERT OR REPLACE INTO plan_exercises (
+              id, training_day_id, exercise_name, exercise_type, sets, reps, rest_seconds, order_index, special_notes, 
+              current_weight_kg, max_safety_limit_kg, tempo, group_id, group_type, duration_min, duration_sec, 
+              incline_pct, speed_kmh, target_heart_rate_bpm, intensity_mode, pyramid_reps, pyramid_weights_kg,
+              synced, deleted
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)`,
+              [
+                e.id, d.id, e.exercise_name, e.exercise_type, e.sets, e.reps, e.rest_seconds, e.order_index, e.special_notes,
+                e.current_weight_kg, e.max_safety_limit_kg, e.tempo, e.group_id, e.group_type, e.duration_min, e.duration_sec,
+                e.incline_pct, e.speed_kmh, e.target_heart_rate_bpm, e.intensity_mode, 
+                e.pyramid_reps ? JSON.stringify(e.pyramid_reps) : null, 
+                e.pyramid_weights_kg ? JSON.stringify(e.pyramid_weights_kg) : null
+              ]
+            );
           }
         }
 
@@ -227,7 +255,7 @@ class SyncService {
 
   private async pushLogs(userId: string) {
     // Buscar logs locales no sincronizados
-    const unsyncedLogs = dbService.q("SELECT id, sync_id, week, day_label, exercise, sets, reps, weight_kg, rpe, notes, logged_at FROM workout_log WHERE synced = 0");
+    const unsyncedLogs = dbService.q("SELECT id, sync_id, week, day_label, exercise, sets, reps, weight_kg, rpe, notes, logged_at, plan_id FROM workout_log WHERE synced = 0");
     if (!unsyncedLogs.length || !unsyncedLogs[0].values.length) return;
 
     // Procesar en lotes pequeños por si hay muchos registros (ej. 100)
@@ -260,6 +288,7 @@ class SyncService {
           rpe: Number(row[8]) || 0,
           notes: row[9] || '',
           logged_at: validDate,
+          plan_id: row[11] || null
         };
       });
 
@@ -294,20 +323,23 @@ class SyncService {
     // Guardar los logs remotos en SQLite
     remoteLogs.forEach((log) => {
       // Intentar actualizar si el sync_id ya existe
-      const existing = dbService.q("SELECT id FROM workout_log WHERE sync_id=?", [log.id]);
+      const existing = dbService.q("SELECT id, synced FROM workout_log WHERE sync_id=?", [log.id]);
+      const isSynced = existing.length && existing[0].values.length ? existing[0].values[0][1] === 1 : true;
       
+      if (!isSynced) return; // No sobrescribir cambios locales
+
       // Limpiar Z para guardar local como string
       const localDate = log.logged_at.replace('Z', '');
 
       if (existing.length && existing[0].values.length) {
         dbService.run(
-          `UPDATE workout_log SET week=?, day_label=?, exercise=?, sets=?, reps=?, weight_kg=?, rpe=?, notes=?, logged_at=?, synced=1 WHERE sync_id=?`,
-          [log.week, log.day_label, log.exercise, log.sets, log.reps, log.weight_kg, log.rpe, log.notes, localDate, log.id]
+          `UPDATE workout_log SET week=?, day_label=?, exercise=?, sets=?, reps=?, weight_kg=?, rpe=?, notes=?, logged_at=?, synced=1, plan_id=? WHERE sync_id=?`,
+          [log.week, log.day_label, log.exercise, log.sets, log.reps, log.weight_kg, log.rpe, log.notes, localDate, log.plan_id, log.id]
         );
       } else {
         dbService.run(
-          `INSERT INTO workout_log (sync_id, week, day_label, exercise, sets, reps, weight_kg, rpe, notes, logged_at, synced) VALUES (?,?,?,?,?,?,?,?,?,?,1)`,
-          [log.id, log.week, log.day_label, log.exercise, log.sets, log.reps, log.weight_kg, log.rpe, log.notes, localDate]
+          `INSERT INTO workout_log (sync_id, week, day_label, exercise, sets, reps, weight_kg, rpe, notes, logged_at, synced, plan_id) VALUES (?,?,?,?,?,?,?,?,?,?,1,?)`,
+          [log.id, log.week, log.day_label, log.exercise, log.sets, log.reps, log.weight_kg, log.rpe, log.notes, localDate, log.plan_id]
         );
       }
       didUpdate = true;

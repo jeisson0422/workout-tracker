@@ -162,7 +162,32 @@ async function handleSignOut() {
 
       <div class="separator"></div>
 
-      <div class="cfg-lbl">Mi Perfil (IA Context)</div>
+      <div class="cfg-lbl">Seguimiento de Peso</div>
+      <div class="weight-card">
+        <div style="display:flex; gap:10px; align-items: flex-end;">
+          <div class="input-group" style="flex:1">
+            <label>Registrar peso hoy (kg)</label>
+            <input type="number" v-model="newWeight" step="0.1" placeholder="0.0">
+          </div>
+          <button class="btn btn-primary" style="margin:0; width: auto; padding: 12px 20px" @click="registerWeight">Anotar</button>
+        </div>
+
+        <div v-if="userStore.stats_history.length > 0" class="history-list">
+          <div v-for="(entry, b) in userStore.stats_history" :key="b" class="history-item">
+            <div class="history-date">{{ new Date(entry.recorded_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) }}</div>
+            <div class="history-val">{{ entry.weight_kg }}<span style="font-size: 10px; margin-left: 2px;">kg</span></div>
+            <div class="history-diff" v-if="b < userStore.stats_history.length - 1">
+              <span :class="entry.weight_kg < userStore.stats_history[b+1].weight_kg ? 'down' : 'up'">
+                {{ (entry.weight_kg - userStore.stats_history[b+1].weight_kg).toFixed(1) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="separator"></div>
+
+      <div class="cfg-lbl">Mi Perfil</div>
       <div class="profile-card">
         <div class="input-grid">
           <div class="input-group">
@@ -232,28 +257,6 @@ async function handleSignOut() {
         </div>
       </div>
 
-      <div class="cfg-lbl mt-8">Seguimiento de Peso</div>
-      <div class="weight-card">
-        <div style="display:flex; gap:10px; align-items: flex-end;">
-          <div class="input-group" style="flex:1">
-            <label>Registrar peso hoy (kg)</label>
-            <input type="number" v-model="newWeight" step="0.1" placeholder="0.0">
-          </div>
-          <button class="btn btn-primary" style="margin:0; width: auto; padding: 12px 20px" @click="registerWeight">Anotar</button>
-        </div>
-
-        <div v-if="userStore.stats_history.length > 0" class="history-list">
-          <div v-for="(entry, b) in userStore.stats_history" :key="b" class="history-item">
-            <div class="history-date">{{ new Date(entry.recorded_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) }}</div>
-            <div class="history-val">{{ entry.weight_kg }}<span style="font-size: 10px; margin-left: 2px;">kg</span></div>
-            <div class="history-diff" v-if="b < userStore.stats_history.length - 1">
-              <span :class="entry.weight_kg < userStore.stats_history[b+1].weight_kg ? 'down' : 'up'">
-                {{ (entry.weight_kg - userStore.stats_history[b+1].weight_kg).toFixed(1) }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div class="separator"></div>
 

@@ -102,6 +102,13 @@ export const useWorkoutStore = defineStore('workout', {
     setWeek(w: number) {
       this.currentWeek = w;
       dbService.setConfig('current_week', w);
+
+      const plansStore = usePlansStore();
+      const activePlan = plansStore.activePlan;
+      if (activePlan) {
+        dbService.run("UPDATE plans SET current_week = ? WHERE id = ?", [w, activePlan.id]);
+        plansStore.loadData();
+      }
     },
 
     getWeekInfo(weekNum: number): Record<string, any> {
@@ -180,11 +187,14 @@ export const useWorkoutStore = defineStore('workout', {
     },
 
     markDayComplete(dayLabel: string, di: number) {
+      const plansStore = usePlansStore();
+      const planId = plansStore.activePlan?.id;
       const syncId = crypto.randomUUID();
+
       dbService.run(
-        `INSERT INTO workout_log (sync_id,week,day_label,exercise,sets,reps,weight_kg,rpe,notes,synced)
-         VALUES (?,?,?,'_day_complete',1,0,0,0,'',0)`,
-        [syncId, this.currentWeek, dayLabel]
+        `INSERT INTO workout_log (sync_id,week,day_label,exercise,sets,reps,weight_kg,rpe,notes,synced,plan_id)
+         VALUES (?,?,?,'_day_complete',1,0,0,0,'',0,?)`,
+        [syncId, this.currentWeek, dayLabel, planId]
       );
       this.loggedThisSession.add('_complete_'+di);
       this.dbUpdateTrigger++;
@@ -194,11 +204,13 @@ export const useWorkoutStore = defineStore('workout', {
       this.dbUpdateTrigger; // trigger reactivity
       if (exType !== 'strength' || groupType === 'pyramid') return null;
 
+      const plansStore = usePlansStore();
+      const planId = plansStore.activePlan?.id;
       const r = dbService.q(
         `SELECT weight_kg, week FROM workout_log
-         WHERE exercise=? AND week < ? AND weight_kg > 0
+         WHERE exercise=? AND week < ? AND weight_kg > 0 AND plan_id = ?
          ORDER BY week DESC, id DESC LIMIT 1`,
-        [exName, this.currentWeek]
+        [exName, this.currentWeek, planId]
       );
       
       if (!r.length || !r[0].values.length) return null;
@@ -220,11 +232,13 @@ export const useWorkoutStore = defineStore('workout', {
 
     getPrevLog(dayLabel: string, exName: string) {
       this.dbUpdateTrigger; // trigger reactivity
+      const plansStore = usePlansStore();
+      const planId = plansStore.activePlan?.id;
       const prevLog = dbService.q(
         `SELECT sets, reps, weight_kg, rpe, notes FROM workout_log
-         WHERE week=? AND day_label=? AND exercise=? AND exercise != '_day_complete'
+         WHERE week=? AND day_label=? AND exercise=? AND exercise != '_day_complete' AND plan_id = ?
          ORDER BY id DESC LIMIT 1`,
-        [this.currentWeek, dayLabel, exName]
+        [this.currentWeek, dayLabel, exName, planId]
       );
       return prevLog.length && prevLog[0].values.length ? prevLog[0].values[0] : null;
     }
