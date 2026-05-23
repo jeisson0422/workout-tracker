@@ -1,0 +1,246 @@
+import { defineStore } from 'pinia'
+import { dbService } from '../services/localDb'
+import { DEFAULT_EXERCISES, DEFAULT_PROGRESSION } from './defaultData'
+import { usePlansStore } from './plans'
+
+export const useWorkoutStore = defineStore('workout', {
+  state: () => ({
+    currentWeek: 1,
+    exercises: DEFAULT_EXERCISES, // Fallback if no active plan
+    progression: DEFAULT_PROGRESSION,
+    isLoaded: false,
+    loggedThisSession: new Set<string>(),
+    dbUpdateTrigger: 0,
+    themeMode: 'system' // 'dark', 'light', or 'system'
+  }),
+
+  getters: {
+    totalWeeks: (state) => {
+      state.dbUpdateTrigger; // force reactivity
+      const plansStore = usePlansStore();
+      const activePlan = plansStore.activePlan;
+      if (activePlan) {
+        const progs = plansStore.planProgressions.filter(p => p.plan_id === activePlan.id && !p.deleted);
+        if (progs.length > 0) {
+          return Math.max(...progs.map(p => p.week_number));
+        }
+      }
+      return (state.progression.progression_data || []).length || 14;
+    }
+  },
+
+  actions: {
+    async initialize() {
+      await dbService.init();
+      const plansStore = usePlansStore();
+      plansStore.loadData();
+      this.loadConfig();
+      this.applyTheme(this.themeMode);
+      this.isLoaded = true;
+    },
+
+    loadConfig() {
+      const w = dbService.getConfig('current_week');
+      if (w) this.currentWeek = parseInt(w) || 1;
+
+      const pg = dbService.getConfig('progression');
+      if (pg) {
+        try { this.progression = JSON.parse(pg); } catch(e) {}
+      }
+      
+      const theme = dbService.getConfig('theme_mode');
+      if (theme) this.themeMode = theme;
+    },
+
+    setThemeMode(mode: string) {
+      if (['dark', 'light', 'system'].includes(mode)) {
+        this.themeMode = mode;
+        dbService.setConfig('theme_mode', mode);
+        this.applyTheme(mode);
+      }
+    },
+    
+    applyTheme(mode: string) {
+      const html = document.documentElement;
+      
+      if (mode === 'dark') {
+        html.setAttribute('data-theme', 'dark');
+      } else if (mode === 'light') {
+        html.removeAttribute('data-theme');
+      } else {
+        // system
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (prefersDark) {
+          html.setAttribute('data-theme', 'dark');
+        } else {
+          html.removeAttribute('data-theme');
+        }
+      }
+      
+      // Also listen for system changes if mode is 'system'
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      
+      // Remove old listener if exists
+      const oldListener = (this as any)._themeListener;
+      if (oldListener) {
+        mediaQuery.removeEventListener('change', oldListener);
+      }
+      
+      if (mode === 'system') {
+        const listener = (e: MediaQueryListEvent) => {
+          if (e.matches) {
+            html.setAttribute('data-theme', 'dark');
+          } else {
+            html.removeAttribute('data-theme');
+          }
+        };
+        mediaQuery.addEventListener('change', listener);
+        (this as any)._themeListener = listener;
+      }
+    },
+
+    setWeek(w: number) {
+      this.currentWeek = w;
+      dbService.setConfig('current_week', w);
+
+      const plansStore = usePlansStore();
+      const activePlan = plansStore.activePlan;
+      if (activePlan) {
+        dbService.run("UPDATE plans SET current_week = ?, synced = 0 WHERE id = ?", [w, activePlan.id]);
+        plansStore.loadData();
+      }
+    },
+
+    getWeekInfo(weekNum: number): Record<string, any> {
+      const plansStore = usePlansStore();
+      const activePlan = plansStore.activePlan;
+      if (activePlan) {
+        const progs = plansStore.progressionsForPlan(activePlan.id);
+        const weekInfo = progs.find(p => p.week_number === weekNum);
+        if (weekInfo) return weekInfo;
+      }
+      
+      // Fallback
+      const pd = this.progression.progression_data || [];
+      return pd.find((x: any) => x.week_number === weekNum) || {};
+    },
+
+    getDays() {
+      const plansStore = usePlansStore();
+      const activeDays = plansStore.activePlanDays;
+      if (activeDays.length > 0) {
+        return activeDays.map(d => {
+          return {
+            id: d.id,
+            day_number: d.day_number,
+            session_name: d.session_name,
+            exercises: plansStore.exercisesForDay(d.id)
+          };
+        });
+      }
+      // Fallback
+      if (this.exercises.training_days) return this.exercises.training_days;
+      return ((this.exercises as any).days || []).map((d: any, i: number) => {
+        const dayKey = Object.keys(d).find(k => k.startsWith('day_'));
+        return { day_number: i+1, session_name: dayKey ? d[dayKey] : 'Day '+(i+1), exercises: d.exercises || [] };
+      });
+    },
+
+    calcTotalSets() {
+      let t = 0;
+      this.getDays().forEach((d: any) => {
+        (d.exercises || []).forEach((ex: any) => {
+          const etype = ex.exercise_type || (ex.duration_min||ex.duration_minutes ? 'cardio' : ex.duration_sec ? 'isometric' : 'strength');
+          t += etype === 'cardio' ? 1 : (ex.sets || (ex.duration_sec ? 1 : 0));
+        });
+      });
+      return t;
+    },
+
+    getLoggedSets(week: number) {
+      this.dbUpdateTrigger; // trigger reactivity
+      const r = dbService.q("SELECT COALESCE(SUM(sets),0) FROM workout_log WHERE week=?", [week]);
+      return r.length && r[0].values.length ? (r[0].values[0][0] || 0) : 0;
+    },
+
+    isDayComplete(dayLabel: string) {
+      this.dbUpdateTrigger; // trigger reactivity
+      const r = dbService.q(
+        "SELECT COUNT(*) FROM workout_log WHERE week=? AND day_label=? AND exercise='_day_complete'",
+        [this.currentWeek, dayLabel]
+      );
+      return r.length && r[0].values.length ? (r[0].values[0][0] || 0) > 0 : false;
+    },
+
+    getCurrentDayIndex() {
+      const days = this.getDays();
+      for (let di = 0; di < days.length; di++) {
+        const label = days[di].session_name || 'Día '+(di+1);
+        if (!this.isDayComplete(label)) return di;
+      }
+      
+      const totalWeeks = this.totalWeeks;
+      if (this.currentWeek < totalWeeks) {
+        this.setWeek(this.currentWeek + 1);
+      }
+      return 0;
+    },
+
+    markDayComplete(dayLabel: string, di: number) {
+      const plansStore = usePlansStore();
+      const planId = plansStore.activePlan?.id;
+      const syncId = crypto.randomUUID();
+
+      dbService.run(
+        `INSERT INTO workout_log (sync_id,week,day_label,exercise,sets,reps,weight_kg,rpe,notes,synced,plan_id)
+         VALUES (?,?,?,'_day_complete',1,0,0,0,'',0,?)`,
+        [syncId, this.currentWeek, dayLabel, planId]
+      );
+      this.loggedThisSession.add('_complete_'+di);
+      this.dbUpdateTrigger++;
+    },
+
+    getSuggestedWeight(exName: string, weekInfo: any, exType: string, groupType: string) {
+      this.dbUpdateTrigger; // trigger reactivity
+      if (exType !== 'strength' || groupType === 'pyramid') return null;
+
+      const plansStore = usePlansStore();
+      const planId = plansStore.activePlan?.id;
+      const r = dbService.q(
+        `SELECT weight_kg, week FROM workout_log
+         WHERE exercise=? AND week < ? AND weight_kg > 0 AND plan_id = ?
+         ORDER BY week DESC, id DESC LIMIT 1`,
+        [exName, this.currentWeek, planId]
+      );
+      
+      if (!r.length || !r[0].values.length) return null;
+      const lastWeight = parseFloat(r[0].values[0][0]);
+      const lastWeek = parseInt(r[0].values[0][1]);
+      if (!lastWeight) return null;
+
+      const pct = weekInfo.weight_change_pct || '0%';
+      if (pct === 'maintain' || pct === '0%') return { kg: lastWeight, change: '=' };
+
+      const match = pct.match(/([+-]?[\d.]+)%/);
+      if (!match) return { kg: lastWeight, change: '=' };
+
+      const delta = parseFloat(match[1]) / 100;
+      const raw = lastWeight * (1 + delta);
+      const rounded = Math.round(raw / 2.5) * 2.5;
+      return { kg: rounded, change: pct, from: lastWeight, fromWeek: lastWeek };
+    },
+
+    getPrevLog(dayLabel: string, exName: string) {
+      this.dbUpdateTrigger; // trigger reactivity
+      const plansStore = usePlansStore();
+      const planId = plansStore.activePlan?.id;
+      const prevLog = dbService.q(
+        `SELECT sets, reps, weight_kg, rpe, notes FROM workout_log
+         WHERE week=? AND day_label=? AND exercise=? AND exercise != '_day_complete' AND plan_id = ?
+         ORDER BY id DESC LIMIT 1`,
+        [this.currentWeek, dayLabel, exName, planId]
+      );
+      return prevLog.length && prevLog[0].values.length ? prevLog[0].values[0] : null;
+    }
+  }
+})
