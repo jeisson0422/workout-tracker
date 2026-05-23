@@ -10,18 +10,31 @@ class SyncService {
   private syncInterval: any = null;
   private isSyncing = false;
 
+  private _visibilityHandler: (() => void) | null = null;
+
   startAutoSync() {
     if (this.syncInterval) clearInterval(this.syncInterval);
-    // Sincronizar cada 30 segundos si hay cambios
     this.syncInterval = setInterval(() => this.sync(), 30000);
-    // Intentar sincronizar ahora mismo
     this.sync();
+
+    if (!this._visibilityHandler) {
+      this._visibilityHandler = () => {
+        if (document.visibilityState === 'hidden') {
+          this.sync();
+        }
+      };
+      document.addEventListener('visibilitychange', this._visibilityHandler);
+    }
   }
 
   stopAutoSync() {
     if (this.syncInterval) {
       clearInterval(this.syncInterval);
       this.syncInterval = null;
+    }
+    if (this._visibilityHandler) {
+      document.removeEventListener('visibilitychange', this._visibilityHandler);
+      this._visibilityHandler = null;
     }
   }
 
@@ -197,6 +210,11 @@ class SyncService {
           dbService.run("INSERT OR REPLACE INTO plans (id, name, is_active, synced, deleted, current_week) VALUES (?, ?, ?, 1, 0, ?)", 
             [p.id, p.name, p.is_active ? 1 : 0, p.current_week || 1]);
           if (p.updated_at > latestUpdated) latestUpdated = p.updated_at;
+        } else {
+          const localPlan = dbService.q("SELECT current_week FROM plans WHERE id=?", [p.id]);
+          const localWeek = localPlan.length && localPlan[0].values.length ? localPlan[0].values[0][0] : p.current_week;
+          dbService.run("INSERT OR REPLACE INTO plans (id, name, is_active, synced, deleted, current_week) VALUES (?, ?, ?, 0, 0, ?)",
+            [p.id, p.name, p.is_active ? 1 : 0, localWeek || 1]);
         }
 
         for (const d of p.training_days || []) {
@@ -392,8 +410,11 @@ class SyncService {
     let didUpdate = false;
 
     remoteConfigs.forEach((conf) => {
-      // Guardar local pero marcarlo como sincronizado
-      dbService.run("INSERT OR REPLACE INTO config (key, value, synced) VALUES (?, ?, 1)", [conf.key, conf.value]);
+      const local = dbService.q("SELECT synced FROM config WHERE key=?", [conf.key]);
+      const isSynced = local.length && local[0].values.length ? local[0].values[0][0] === 1 : true;
+      if (isSynced) {
+        dbService.run("INSERT OR REPLACE INTO config (key, value, synced) VALUES (?, ?, 1)", [conf.key, conf.value]);
+      }
       didUpdate = true;
       if (conf.updated_at > latestUpdated) {
         latestUpdated = conf.updated_at;
