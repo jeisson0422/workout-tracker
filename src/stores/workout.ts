@@ -106,7 +106,7 @@ export const useWorkoutStore = defineStore('workout', {
       const plansStore = usePlansStore();
       const activePlan = plansStore.activePlan;
       if (activePlan) {
-        dbService.run("UPDATE plans SET current_week = ?, synced = 0 WHERE id = ?", [w, activePlan.id]);
+        dbService.run("UPDATE plans SET current_week = ? WHERE id = ?", [w, activePlan.id]);
         plansStore.loadData();
       }
     },
