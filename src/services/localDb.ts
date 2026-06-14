@@ -4,6 +4,7 @@ class LocalDbService {
   db: any = null;
   SQL: any = null;
   initialized = false;
+  private _persistTimer: any = null;
 
   async init() {
     if (this.initialized) return;
@@ -256,10 +257,18 @@ class LocalDbService {
     if (!this.db) return;
     try { 
       this.db.run(sql, params); 
-      this.persistDB(); 
+      this.schedulePersist();
     } catch(e) { 
       console.error(e); 
     }
+  }
+
+  private schedulePersist() {
+    if (this._persistTimer) return;
+    this._persistTimer = setTimeout(() => {
+      this._persistTimer = null;
+      this.persistDB();
+    }, 0);
   }
 
   setConfig(key: string, value: any) {
