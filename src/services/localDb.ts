@@ -34,7 +34,12 @@ class LocalDbService {
   persistDB() {
     try {
       const buf = this.db.export();
-      localStorage.setItem('wt_db_v2', btoa(String.fromCharCode(...buf)));
+      let binary = '';
+      const chunkSize = 8192;
+      for (let i = 0; i < buf.length; i += chunkSize) {
+        binary += String.fromCharCode(...buf.slice(i, Math.min(i + chunkSize, buf.length)));
+      }
+      localStorage.setItem('wt_db_v2', btoa(binary));
     } catch(e) {
       console.error('Error guardando datos', e);
     }
