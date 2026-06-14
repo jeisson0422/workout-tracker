@@ -6,6 +6,8 @@ import { useAuthStore } from '../stores/auth'
 import { useUserStore } from '../stores/user'
 import { TRAINING_MODALITIES, GOALS, GENDERS, TRAINING_LEVELS } from '../constants/modalities'
 import { dbService } from '../services/localDb'
+import { supabase } from '../services/supabase'
+import { injectDefaultPlan } from '../services/planUtils'
 import { getSwalSettings } from '../services/swalHelper'
 import Swal from 'sweetalert2'
 
@@ -75,34 +77,45 @@ async function resetAll() {
   const result = await Swal.fire({
     ...getSwalSettings('danger'),
     title: '¿Estás seguro?',
-    text: "Se borrarán todos los registros de entrenamiento y caché de planes locales.",
+    text: "Se borrarán todos los registros de entrenamiento y caché de planes locales. Se iniciará un plan nuevo.",
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonText: 'Sí, borrar todo'
+    confirmButtonText: 'Sí, empezar de cero'
   })
 
   if (!result.isConfirmed) return
 
+  // Desactivar planes viejos en Supabase para que no se restauren
+  if (authStore.user) {
+    await supabase.from('plans').update({ is_active: false }).eq('user_id', authStore.user.id)
+  }
+
+  const now = new Date().toISOString()
+
   dbService.run("DELETE FROM workout_log")
-  dbService.run("DELETE FROM config WHERE key='current_week'")
-  
-  // Limpiar caché de planes locales para forzar descarga o re-inicialización
+  dbService.run("DELETE FROM config")
   dbService.run("DELETE FROM plans")
   dbService.run("DELETE FROM training_days")
   dbService.run("DELETE FROM plan_exercises")
   dbService.run("DELETE FROM plan_progressions")
-  
-  store.setWeek(1)
-  
+
+  // Sellar timestamps de sync para que el incremental no jale datos viejos
+  dbService.setConfig('last_sync_date', now)
+  dbService.setConfig('last_plans_sync_date', now)
+  dbService.setConfig('last_config_sync_date', now)
+
+  injectDefaultPlan()
+  dbService.setConfig('current_week', '1')
+
   await Swal.fire({
     ...getSwalSettings('success'),
-    title: '¡Borrado!',
-    text: 'Datos locales borrados. La app se recargará.',
+    title: '¡Listo!',
+    text: 'Plan nuevo creado. La app se recargará.',
     icon: 'success',
     timer: 1500,
     showConfirmButton: false
   })
-  
+
   window.location.reload()
 }
 
