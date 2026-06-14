@@ -162,29 +162,43 @@ class SyncService {
           dbService.run("INSERT OR REPLACE INTO plans (id, name, is_active, synced, deleted, current_week) VALUES (?, ?, ?, 1, 0, ?)", 
             [p.id, p.name, p.is_active ? 1 : 0, p.current_week || 1]);
           if (p.updated_at > latestUpdated) latestUpdated = p.updated_at;
+        } else {
+          const localPlan = dbService.q("SELECT current_week, deleted FROM plans WHERE id=?", [p.id]);
+          const localWeek = localPlan.length && localPlan[0].values.length ? localPlan[0].values[0][0] : p.current_week;
+          const localDeleted = localPlan.length && localPlan[0].values.length ? localPlan[0].values[0][1] : 0;
+          dbService.run("INSERT OR REPLACE INTO plans (id, name, is_active, synced, deleted, current_week) VALUES (?, ?, ?, 0, ?, ?)",
+            [p.id, p.name, p.is_active ? 1 : 0, localDeleted, localWeek || 1]);
         }
 
         for (const d of p.training_days || []) {
           serverDayIds.add(d.id);
-          dbService.run("INSERT OR REPLACE INTO training_days (id, plan_id, day_number, session_name, synced, deleted) VALUES (?, ?, ?, ?, 1, 0)",
-            [d.id, p.id, d.day_number, d.session_name]);
+          const localDay = dbService.q("SELECT synced FROM training_days WHERE id=?", [d.id]);
+          const daySynced = localDay.length && localDay[0].values.length ? localDay[0].values[0][0] === 1 : true;
+          if (daySynced) {
+            dbService.run("INSERT OR REPLACE INTO training_days (id, plan_id, day_number, session_name, synced, deleted) VALUES (?, ?, ?, ?, 1, 0)",
+              [d.id, p.id, d.day_number, d.session_name]);
+          }
           
           for (const e of d.plan_exercises || []) {
             serverExIds.add(e.id);
-            dbService.run(`INSERT OR REPLACE INTO plan_exercises (
-              id, training_day_id, exercise_name, exercise_type, sets, reps, rest_seconds, order_index, special_notes, 
-              current_weight_kg, max_safety_limit_kg, tempo, group_id, group_type, duration_min, duration_sec, 
-              incline_pct, speed_kmh, target_heart_rate_bpm, intensity_mode, pyramid_reps, pyramid_weights_kg,
-              synced, deleted
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)`,
-              [
-                e.id, d.id, e.exercise_name, e.exercise_type, e.sets, e.reps, e.rest_seconds, e.order_index, e.special_notes,
-                e.current_weight_kg, e.max_safety_limit_kg, e.tempo, e.group_id, e.group_type, e.duration_min, e.duration_sec,
-                e.incline_pct, e.speed_kmh, e.target_heart_rate_bpm, e.intensity_mode, 
-                e.pyramid_reps ? JSON.stringify(e.pyramid_reps) : null, 
-                e.pyramid_weights_kg ? JSON.stringify(e.pyramid_weights_kg) : null
-              ]
-            );
+            const localEx = dbService.q("SELECT synced FROM plan_exercises WHERE id=?", [e.id]);
+            const exSynced = localEx.length && localEx[0].values.length ? localEx[0].values[0][0] === 1 : true;
+            if (exSynced) {
+              dbService.run(`INSERT OR REPLACE INTO plan_exercises (
+                id, training_day_id, exercise_name, exercise_type, sets, reps, rest_seconds, order_index, special_notes, 
+                current_weight_kg, max_safety_limit_kg, tempo, group_id, group_type, duration_min, duration_sec, 
+                incline_pct, speed_kmh, target_heart_rate_bpm, intensity_mode, pyramid_reps, pyramid_weights_kg,
+                synced, deleted
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)`,
+                [
+                  e.id, d.id, e.exercise_name, e.exercise_type, e.sets, e.reps, e.rest_seconds, e.order_index, e.special_notes,
+                  e.current_weight_kg, e.max_safety_limit_kg, e.tempo, e.group_id, e.group_type, e.duration_min, e.duration_sec,
+                  e.incline_pct, e.speed_kmh, e.target_heart_rate_bpm, e.intensity_mode, 
+                  e.pyramid_reps ? JSON.stringify(e.pyramid_reps) : null, 
+                  e.pyramid_weights_kg ? JSON.stringify(e.pyramid_weights_kg) : null
+                ]
+              );
+            }
           }
         }
 
