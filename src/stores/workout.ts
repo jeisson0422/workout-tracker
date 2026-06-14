@@ -159,15 +159,19 @@ export const useWorkoutStore = defineStore('workout', {
 
     getLoggedSets(week: number) {
       this.dbUpdateTrigger; // trigger reactivity
-      const r = dbService.q("SELECT COALESCE(SUM(sets),0) FROM workout_log WHERE week=?", [week]);
+      const plansStore = usePlansStore();
+      const planId = plansStore.activePlan?.id;
+      const r = dbService.q("SELECT COALESCE(SUM(sets),0) FROM workout_log WHERE week=? AND plan_id=?", [week, planId]);
       return r.length && r[0].values.length ? (r[0].values[0][0] || 0) : 0;
     },
 
     isDayComplete(dayLabel: string) {
       this.dbUpdateTrigger; // trigger reactivity
+      const plansStore = usePlansStore();
+      const planId = plansStore.activePlan?.id;
       const r = dbService.q(
-        "SELECT COUNT(*) FROM workout_log WHERE week=? AND day_label=? AND exercise='_day_complete'",
-        [this.currentWeek, dayLabel]
+        "SELECT COUNT(*) FROM workout_log WHERE week=? AND day_label=? AND exercise='_day_complete' AND plan_id=?",
+        [this.currentWeek, dayLabel, planId]
       );
       return r.length && r[0].values.length ? (r[0].values[0][0] || 0) > 0 : false;
     },

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useWorkoutStore } from '../stores/workout'
+import { syncService } from '../services/syncService'
 import DayCard from '../components/DayCard.vue'
 import LogModal from '../components/LogModal.vue'
 
@@ -27,6 +28,7 @@ function openModal(data: any) {
 function advanceDay() {
   if (dayObj.value) {
     store.markDayComplete(dayLabel.value, dayIndex.value)
+    syncService.sync()
   }
 }
 
