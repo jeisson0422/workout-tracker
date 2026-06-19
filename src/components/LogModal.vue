@@ -24,6 +24,7 @@ const mDuration = ref(15)
 const mIncline = ref(0)
 const mSpeed = ref(0)
 const mHr = ref(0)
+const mDurationSec = ref(0)
 
 const mPyrW = ref<number[]>([])
 const mPyrR = ref<number[]>([])
@@ -47,6 +48,7 @@ function initModalData() {
   } else {
     mSets.value = d.sets || 1
     mReps.value = d.reps || 0
+    mDurationSec.value = d.duration_sec || 0
     mWeight.value = d.preWeight || 0
     mRpe.value = info.rpe_target || 7
     
@@ -58,7 +60,18 @@ function initModalData() {
 
   const prev = store.getPrevLog(d.dayLabel, d.name)
   if (prev) {
-    if (!d.exType || d.exType !== 'cardio') {
+    if (d.exType === 'isometric') {
+      mSets.value = prev[0] || d.sets || 1
+      mReps.value = prev[1] || d.reps || 0
+      const prevNotes = prev[4] || ''
+      const durMatch = prevNotes.match(/duration_sec:(\d+)/)
+      if (durMatch) {
+        mDurationSec.value = parseInt(durMatch[1])
+      } else {
+        mDurationSec.value = d.duration_sec || 0
+      }
+      mNotes.value = prevNotes.replace(/duration_sec:\d+\s?/, '').trim()
+    } else if (!d.exType || d.exType !== 'cardio') {
       mSets.value = prev[0] || d.sets || 1
       mReps.value = prev[1] || d.reps || 0
       mWeight.value = prev[2] || d.preWeight || 0
@@ -130,21 +143,25 @@ function saveLog() {
         [syncId, store.currentWeek, d.dayLabel, d.name+'_s'+(i+1), 1, r, w, mRpe.value, mNotes.value, planId])
     }
   } else {
+    const isIsometric = d.exType === 'isometric'
     const weight = getWeightKg()
-    if (d.safetyLimit > 0 && weight > d.safetyLimit) {
+    if (!isIsometric && d.safetyLimit > 0 && weight > d.safetyLimit) {
       if (!confirm(`⚠ ${weight}kg supera el límite de seguridad de ${d.safetyLimit}kg. ¿Continuar?`)) return
     }
+    const logNotes = isIsometric
+      ? `duration_sec:${mDurationSec.value}${mNotes.value ? ' ' + mNotes.value : ''}`
+      : mNotes.value
     const existing = dbService.q(
       "SELECT id FROM workout_log WHERE week=? AND day_label=? AND exercise=? ORDER BY id DESC LIMIT 1",
       [store.currentWeek, d.dayLabel, d.name]
     )
     if (existing.length && existing[0].values.length) {
       dbService.run(`UPDATE workout_log SET sets=?,reps=?,weight_kg=?,rpe=?,notes=?,synced=0 WHERE id=?`,
-        [mSets.value, mReps.value, weight, mRpe.value, mNotes.value, existing[0].values[0][0]])
+        [mSets.value, mReps.value, weight, mRpe.value, logNotes, existing[0].values[0][0]])
     } else {
       const syncId = crypto.randomUUID()
       dbService.run(`INSERT INTO workout_log (sync_id,week,day_label,exercise,sets,reps,weight_kg,rpe,notes,synced,plan_id) VALUES (?,?,?,?,?,?,?,?,?,0,?)`,
-        [syncId, store.currentWeek, d.dayLabel, d.name, mSets.value, mReps.value, weight, mRpe.value, mNotes.value, planId])
+        [syncId, store.currentWeek, d.dayLabel, d.name, mSets.value, mReps.value, weight, mRpe.value, logNotes, planId])
     }
   }
 
@@ -172,7 +189,11 @@ function formatRest(sec: number) {
       <div v-if="data?.exType !== 'cardio'">
         <div class="input-row">
           <div class="input-group"><label>Series realizadas</label><input type="number" v-model="mSets" min="1" max="10"></div>
-          <div class="input-group"><label>{{ data?.exType === 'isometric' ? 'Segundos' : 'Repeticiones' }}</label><input type="number" v-model="mReps" min="1" max="50"></div>
+          <div v-if="data?.exType === 'isometric'" class="input-group"><label>Repeticiones</label><input type="number" v-model="mReps" min="0" max="50"></div>
+          <div v-else class="input-group"><label>Repeticiones</label><input type="number" v-model="mReps" min="1" max="50"></div>
+        </div>
+        <div v-if="data?.exType === 'isometric'" class="input-row">
+          <div class="input-group"><label>Segundos (hold)</label><input type="number" v-model="mDurationSec" min="1" max="300"></div>
         </div>
         
         <div class="input-row">

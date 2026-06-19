@@ -35,7 +35,7 @@ const calculatedSets = computed(() => {
 
 const calculatedReps = computed(() => {
   const ex = props.exercise
-  let reps = ex.reps || ex.duration_sec || 0
+  let reps = exType.value === 'isometric' ? (ex.reps || 0) : (ex.reps || ex.duration_sec || 0)
   
   if (exType.value === 'strength') {
     if (info.value.reps_change && info.value.reps_change.includes('+2')) {
@@ -75,13 +75,20 @@ const meta = computed(() => {
   
   if (exType.value === 'isometric') {
     let sets = calculatedSets.value
-    let durSec = calculatedReps.value
+    let reps = ex.reps || 0
+    let durSec = ex.duration_sec || 0
     
     if (p && p.length > 0) {
       sets = p[0] || sets
-      durSec = p[1] || durSec
+      reps = p[1] || reps
+      const prevNotes = p[4] || ''
+      const durMatch = prevNotes.match(/duration_sec:(\d+)/)
+      if (durMatch) durSec = parseInt(durMatch[1])
     }
     
+    if (reps > 0) {
+      return `${sets} × ${reps} reps × ${durSec}s`
+    }
     return `${sets} × ${durSec}s`
   } 
   
@@ -150,6 +157,7 @@ function handleLogClick() {
     name: name.value,
     sets: calculatedSets.value,
     reps: calculatedReps.value,
+    duration_sec: props.exercise.duration_sec || 0,
     logId: `${props.dayIndex}-${props.exIndex}`,
     exType: exType.value,
     preWeight: preWeightFinal,

@@ -260,7 +260,7 @@ async function deleteProgression(id: string) {
               <div style="font-size: 12px; color: var(--text2)">
                 <span v-if="ex.exercise_type === 'strength'">{{ ex.sets }} sets x {{ ex.reps }} reps</span>
                 <span v-else-if="ex.exercise_type === 'cardio'">{{ ex.duration_min }} min • Incline: {{ ex.incline_pct }}%</span>
-                <span v-else-if="ex.exercise_type === 'isometric'">{{ ex.sets }} sets x {{ ex.duration_sec }}s</span>
+                <span v-else-if="ex.exercise_type === 'isometric'">{{ ex.sets }} sets x {{ ex.reps || 0 }} reps x {{ ex.duration_sec }}s</span>
                 • {{ ex.rest_seconds }}s rest
               </div>
             </div>
@@ -402,6 +402,10 @@ async function deleteProgression(id: string) {
             <div class="form-group" style="flex: 1">
               <label>Series</label>
               <input type="number" v-model="newEx.sets" class="modal-input">
+            </div>
+            <div class="form-group" style="flex: 1">
+              <label>Reps</label>
+              <input type="number" v-model="newEx.reps" class="modal-input">
             </div>
             <div class="form-group" style="flex: 1">
               <label>Duración (seg)</label>
