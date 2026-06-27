@@ -63,6 +63,8 @@ function initModalData() {
     if (d.exType === 'isometric') {
       mSets.value = prev[0] || d.sets || 1
       mReps.value = prev[1] || d.reps || 0
+      mWeight.value = prev[2] || d.preWeight || 0
+      mRpe.value = prev[3] || info.rpe_target || 7
       const prevNotes = prev[4] || ''
       const durMatch = prevNotes.match(/duration_sec:(\d+)/)
       if (durMatch) {
