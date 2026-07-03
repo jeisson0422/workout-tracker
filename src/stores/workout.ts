@@ -206,7 +206,7 @@ export const useWorkoutStore = defineStore('workout', {
 
     getSuggestedWeight(exName: string, weekInfo: any, exType: string, groupType: string) {
       this.dbUpdateTrigger; // trigger reactivity
-      if (exType !== 'strength' || groupType === 'pyramid') return null;
+      if ((exType !== 'strength' && exType !== 'isometric') || groupType === 'pyramid') return null;
 
       const plansStore = usePlansStore();
       const planId = plansStore.activePlan?.id;

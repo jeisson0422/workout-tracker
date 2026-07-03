@@ -77,19 +77,22 @@ const meta = computed(() => {
     let sets = calculatedSets.value
     let reps = ex.reps || 0
     let durSec = ex.duration_sec || 0
+    let weight = ex.current_weight_kg || null
     
     if (p && p.length > 0) {
       sets = p[0] || sets
       reps = p[1] || reps
+      weight = p[2] || weight
       const prevNotes = p[4] || ''
       const durMatch = prevNotes.match(/duration_sec:(\d+)/)
       if (durMatch) durSec = parseInt(durMatch[1])
     }
     
-    if (reps > 0) {
-      return `${sets} × ${reps} reps × ${durSec}s`
-    }
-    return `${sets} × ${durSec}s`
+    let m = sets > 0 && reps > 0
+      ? `${sets} × ${reps} reps × ${durSec}s`
+      : `${sets} × ${durSec}s`
+    if (weight) m += ` · ${weight}kg`
+    return m
   } 
   
   if (ex.group_type === 'pyramid' && ex.pyramid_reps) {
@@ -149,7 +152,7 @@ const fmtRest = computed(() => {
 const suggestedWeight = computed(() => store.getSuggestedWeight(name.value, info.value, exType.value, props.exercise.group_type))
 
 function handleLogClick() {
-  const sugForModal = (exType.value === 'strength' && props.exercise.group_type !== 'pyramid') ? suggestedWeight.value : null
+  const sugForModal = ((exType.value === 'strength' || exType.value === 'isometric') && props.exercise.group_type !== 'pyramid') ? suggestedWeight.value : null
   const preWeightFinal = sugForModal ? sugForModal.kg : (props.exercise.current_weight_kg || 0)
   
   emit('open-modal', {
