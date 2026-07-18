@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useWorkoutStore } from '../stores/workout'
 import { syncService } from '../services/syncService'
+import { swalInstance, getSwalSettings } from '../services/swalHelper'
 import DayCard from '../components/DayCard.vue'
 import LogModal from '../components/LogModal.vue'
 
@@ -26,10 +27,28 @@ function openModal(data: any) {
 }
 
 function advanceDay() {
-  if (dayObj.value) {
-    store.markDayComplete(dayLabel.value, dayIndex.value)
-    syncService.sync()
-  }
+  if (!dayObj.value) return
+
+  swalInstance.fire({
+    ...getSwalSettings(),
+    title: '¿Marcar día como completado?',
+    html: `<p style="margin:0;line-height:1.5">
+      ¿Estás seguro de que terminaste el <strong>${dayLabel.value}</strong>?<br>
+      Esta acción quedará registrada.
+    </p>`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, marcar como completado',
+    cancelButtonText: 'Cancelar',
+    reverseButtons: true,
+    showClass: { popup: 'animate__animated animate__fadeInUp animate__faster' },
+    hideClass: { popup: 'animate__animated animate__fadeOutDown animate__faster' }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      store.markDayComplete(dayLabel.value, dayIndex.value)
+      syncService.sync()
+    }
+  })
 }
 
 const nextDayLabel = computed(() => {
