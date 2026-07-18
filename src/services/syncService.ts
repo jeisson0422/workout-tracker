@@ -286,8 +286,12 @@ class SyncService {
   }
 
   private async pullLogs(_userId: string) {
-    // Obtener la fecha de la última sincronización
-    const lastSyncDate = dbService.getConfig('last_sync_date') || '2000-01-01T00:00:00.000Z';
+    const localCount = dbService.q("SELECT COUNT(*) FROM workout_log");
+    const isEmpty = !localCount.length || !localCount[0].values.length || localCount[0].values[0][0] === 0;
+
+    const lastSyncDate = isEmpty 
+      ? '2000-01-01T00:00:00.000Z' 
+      : (dbService.getConfig('last_sync_date') || '2000-01-01T00:00:00.000Z');
 
     const { data: remoteLogs, error } = await supabase
       .from('workout_logs')
