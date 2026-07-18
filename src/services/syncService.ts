@@ -406,7 +406,7 @@ class SyncService {
     let didUpdate = false;
 
     remoteConfigs.forEach((conf) => {
-      // Guardar local pero marcarlo como sincronizado
+      if (['last_sync_date', 'last_plans_sync_date'].includes(conf.key)) return;
       dbService.run("INSERT OR REPLACE INTO config (key, value, synced) VALUES (?, ?, 1)", [conf.key, conf.value]);
       didUpdate = true;
       if (conf.updated_at > latestUpdated) {
