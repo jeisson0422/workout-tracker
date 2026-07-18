@@ -38,12 +38,12 @@ class SyncService {
     try {
       await this.pushPlans(authStore.user.id);
       await this.pushLogs(authStore.user.id);
+      await this.pullConfig(authStore.user.id);
       await this.pushConfig(authStore.user.id);
       
       await this.pullPlans(authStore.user.id);
       await this.pullLogs(authStore.user.id);
       await this.cleanOrphanDayCompletes(authStore.user.id);
-      await this.pullConfig(authStore.user.id);
     } catch (e) {
       console.error('Error durante la sincronización:', e);
     } finally {
