@@ -42,6 +42,7 @@ class SyncService {
       
       await this.pullPlans(authStore.user.id);
       await this.pullLogs(authStore.user.id);
+      await this.cleanOrphanDayCompletes(authStore.user.id);
       await this.pullConfig(authStore.user.id);
     } catch (e) {
       console.error('Error durante la sincronización:', e);
@@ -330,6 +331,40 @@ class SyncService {
 
     dbService.setConfig('last_sync_date', latestUpdated);
     if (didUpdate) {
+      const workoutStore = useWorkoutStore();
+      workoutStore.dbUpdateTrigger++;
+    }
+  }
+
+  private async cleanOrphanDayCompletes(userId: string) {
+    const plansStore = usePlansStore();
+    const planId = plansStore.activePlan?.id;
+    if (!planId) return;
+
+    const localRows = dbService.q(
+      "SELECT sync_id FROM workout_log WHERE exercise = '_day_complete' AND plan_id = ?",
+      [planId]
+    );
+    if (!localRows.length || !localRows[0].values.length) return;
+
+    const localIds: string[] = localRows[0].values.map((r: any) => r[0]);
+
+    const { data: remoteRows, error } = await supabase
+      .from('workout_logs')
+      .select('id')
+      .in('id', localIds);
+
+    if (error) return;
+
+    const remoteIds = new Set((remoteRows || []).map((r: any) => r.id));
+    const orphanIds = localIds.filter(id => !remoteIds.has(id));
+
+    if (orphanIds.length > 0) {
+      const placeholders = orphanIds.map(() => '?').join(',');
+      dbService.run(
+        `DELETE FROM workout_log WHERE sync_id IN (${placeholders}) AND exercise = '_day_complete'`,
+        orphanIds
+      );
       const workoutStore = useWorkoutStore();
       workoutStore.dbUpdateTrigger++;
     }
