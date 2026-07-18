@@ -145,6 +145,60 @@ onMounted(() => {
   loadStats()
 })
 
+const stalledCount = computed(() => {
+  return progressionMatrix.value.rows.filter(row => {
+    const weeks = progressionMatrix.value.weeks
+    let streak = 0
+    for (let i = weeks.length - 1; i >= 0; i--) {
+      const w = weeks[i]
+      const prev = i > 0 ? weeks[i - 1] : null
+      if (row.weights[w] != null && prev != null && row.weights[prev] != null && row.weights[w] === row.weights[prev]) {
+        streak++
+      } else {
+        break
+      }
+    }
+    return streak >= 2
+  }).length
+})
+
+function isStalled(row: { weights: Record<number, number | null> }, weekIndex: number): boolean {
+  const weeks = progressionMatrix.value.weeks
+  if (weekIndex < 2) return false
+  const w = weeks[weekIndex]
+  const prev1 = weeks[weekIndex - 1]
+  const prev2 = weeks[weekIndex - 2]
+  const curr = row.weights[w]
+  const p1 = row.weights[prev1]
+  const p2 = row.weights[prev2]
+  if (curr == null || p1 == null || p2 == null) return false
+  return curr === p1 && curr === p2
+}
+
+function rowStallScore(row: { weights: Record<number, number | null> }): number {
+  const weeks = progressionMatrix.value.weeks
+  let streak = 0
+  for (let i = weeks.length - 1; i > 0; i--) {
+    const w = weeks[i]
+    const prev = weeks[i - 1]
+    if (row.weights[w] != null && row.weights[prev] != null && row.weights[w] === row.weights[prev]) {
+      streak++
+    } else {
+      break
+    }
+  }
+  return streak
+}
+
+const sortedRows = computed(() => {
+  return [...progressionMatrix.value.rows].sort((a, b) => {
+    const scoreA = rowStallScore(a)
+    const scoreB = rowStallScore(b)
+    if (scoreA !== scoreB) return scoreB - scoreA
+    return a.exercise.localeCompare(b.exercise)
+  })
+})
+
 function prevDiff(current: number, prev: number | null): string {
   if (!prev || prev === 0) return ''
   const diff = ((current - prev) / prev) * 100
@@ -193,7 +247,11 @@ function prevDiff(current: number, prev: number | null): string {
           </select>
         </div>
 
-        <div v-if="progressionMatrix.rows.length === 0" class="empty">Registra pesos para ver tu progresión.</div>
+        <div v-if="stalledCount > 0" class="stall-warning">
+          ⚠ {{ stalledCount }} {{ stalledCount === 1 ? 'ejercicio estancado' : 'ejercicios estancados' }} (3+ semanas sin aumento)
+        </div>
+
+        <div v-if="sortedRows.length === 0" class="empty">Registra pesos para ver tu progresión.</div>
         <div v-else class="prog-table-wrap">
           <table class="prog-table">
             <thead>
@@ -203,9 +261,12 @@ function prevDiff(current: number, prev: number | null): string {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in progressionMatrix.rows" :key="row.exercise">
-                <td class="ex-name">{{ row.exercise }}</td>
-                <td v-for="(w, wi) in progressionMatrix.weeks" :key="w" class="weight-cell">
+              <tr v-for="row in sortedRows" :key="row.exercise">
+                <td class="ex-name">
+                  <span v-if="rowStallScore(row) >= 2" class="stall-icon" title="Estancado">⚠</span>
+                  {{ row.exercise }}
+                </td>
+                <td v-for="(w, wi) in progressionMatrix.weeks" :key="w" class="weight-cell" :class="{ 'stalled-cell': isStalled(row, wi) }">
                   <template v-if="row.weights[w] !== null && row.weights[w] !== undefined">
                     <span class="weight-val">{{ row.weights[w] }}</span>
                     <span
@@ -288,4 +349,13 @@ function prevDiff(current: number, prev: number | null): string {
 .diff-up { color: var(--green); }
 .diff-down { color: var(--red); }
 .weight-empty { color: var(--text3); }
+
+.stall-warning {
+  background: rgba(251,191,36,.12); color: var(--amber, #d97706);
+  font-size: 12px; font-weight: 600; padding: 8px 12px; border-radius: var(--r1);
+  margin-bottom: 10px; text-align: center;
+}
+.stall-icon { margin-right: 3px; }
+.stalled-cell .weight-val { color: var(--text3); }
+.stalled-cell .weight-diff { opacity: 0.4; }
 </style>

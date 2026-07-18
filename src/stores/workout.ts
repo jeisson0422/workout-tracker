@@ -231,7 +231,8 @@ export const useWorkoutStore = defineStore('workout', {
       const delta = parseFloat(match[1]) / 100;
       const raw = lastWeight * (1 + delta);
       const rounded = Math.round(raw / 2.5) * 2.5;
-      return { kg: rounded, change: pct, from: lastWeight, fromWeek: lastWeek };
+      const kg = rounded > lastWeight ? rounded : parseFloat(raw.toFixed(2));
+      return { kg, change: pct, from: lastWeight, fromWeek: lastWeek };
     },
 
     getPrevLog(dayLabel: string, exName: string) {
