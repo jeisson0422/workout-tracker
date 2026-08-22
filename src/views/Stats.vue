@@ -277,18 +277,26 @@ function loadProgression() {
 
   if (dayFilter) {
     sql = `
-      SELECT exercise, week, MAX(weight_kg)
-      FROM workout_log
-      WHERE exercise != '_day_complete' AND weight_kg > 0 AND plan_id = ? AND day_label = ?
+      SELECT exercise, week, MAX(best_kg)
+      FROM (
+        SELECT wl.exercise as exercise, wl.week as week,
+          COALESCE((SELECT MAX(s.weight_kg) FROM workout_log_sets s WHERE s.log_sync_id = wl.sync_id AND s.deleted = 0), wl.weight_kg) as best_kg
+        FROM workout_log wl
+        WHERE wl.exercise != '_day_complete' AND wl.weight_kg > 0 AND wl.plan_id = ? AND wl.day_label = ?
+      )
       GROUP BY exercise, week
       ORDER BY exercise, week
     `
     params = [pid, dayFilter]
   } else {
     sql = `
-      SELECT exercise, week, MAX(weight_kg)
-      FROM workout_log
-      WHERE exercise != '_day_complete' AND weight_kg > 0 AND plan_id = ?
+      SELECT exercise, week, MAX(best_kg)
+      FROM (
+        SELECT wl.exercise as exercise, wl.week as week,
+          COALESCE((SELECT MAX(s.weight_kg) FROM workout_log_sets s WHERE s.log_sync_id = wl.sync_id AND s.deleted = 0), wl.weight_kg) as best_kg
+        FROM workout_log wl
+        WHERE wl.exercise != '_day_complete' AND wl.weight_kg > 0 AND wl.plan_id = ?
+      )
       GROUP BY exercise, week
       ORDER BY exercise, week
     `
