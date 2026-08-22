@@ -211,15 +211,29 @@ export const useWorkoutStore = defineStore('workout', {
       const plansStore = usePlansStore();
       const planId = plansStore.activePlan?.id;
       const r = dbService.q(
-        `SELECT weight_kg, week FROM workout_log
+        `SELECT weight_kg, week, sync_id FROM workout_log
          WHERE exercise=? AND week < ? AND weight_kg > 0 AND plan_id = ?
          ORDER BY week DESC, id DESC LIMIT 1`,
         [exName, this.currentWeek, planId]
       );
-      
+
       if (!r.length || !r[0].values.length) return null;
-      const lastWeight = parseFloat(r[0].values[0][0]);
+      let lastWeight = parseFloat(r[0].values[0][0]);
       const lastWeek = parseInt(r[0].values[0][1]);
+      const logSyncId = r[0].values[0][2];
+
+      // Si esa sesión tiene detalle por serie, usar el peso máximo real
+      // (el de trabajo) en vez del último valor que quedó en el campo,
+      // que puede ser una serie de bajada/fallo.
+      if (logSyncId) {
+        const setsMax = dbService.q(
+          `SELECT MAX(weight_kg) FROM workout_log_sets WHERE log_sync_id=? AND deleted=0`,
+          [logSyncId]
+        );
+        const maxFromSets = setsMax.length && setsMax[0].values.length ? setsMax[0].values[0][0] : null;
+        if (maxFromSets != null) lastWeight = parseFloat(maxFromSets);
+      }
+
       if (!lastWeight) return null;
 
       const pct = weekInfo.weight_change_pct || '0%';
@@ -246,6 +260,31 @@ export const useWorkoutStore = defineStore('workout', {
         [this.currentWeek, dayLabel, exName, planId]
       );
       return prevLog.length && prevLog[0].values.length ? prevLog[0].values[0] : null;
+    },
+
+    getExerciseHistory(exName: string, limit: number = 3) {
+      this.dbUpdateTrigger; // trigger reactivity
+      const plansStore = usePlansStore();
+      const planId = plansStore.activePlan?.id;
+      const logs = dbService.q(
+        `SELECT sync_id, week, sets, reps, weight_kg, rpe, logged_at FROM workout_log
+         WHERE exercise=? AND exercise != '_day_complete' AND plan_id = ? AND week < ?
+         ORDER BY week DESC, id DESC LIMIT ?`,
+        [exName, planId, this.currentWeek, limit]
+      );
+      if (!logs.length || !logs[0].values.length) return [];
+
+      return logs[0].values.map((row: any) => {
+        const [syncId, week, sets, reps, weightKg, rpe] = row;
+        const setsRes = dbService.q(
+          `SELECT set_number, weight_kg, reps FROM workout_log_sets WHERE log_sync_id=? AND deleted=0 ORDER BY set_number`,
+          [syncId]
+        );
+        const setDetails = setsRes.length && setsRes[0].values.length
+          ? setsRes[0].values.map((s: any) => ({ setNumber: s[0], weight: s[1], reps: s[2] }))
+          : [];
+        return { week, sets, reps, weightKg, rpe, setDetails };
+      });
     }
   }
 })

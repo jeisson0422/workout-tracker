@@ -34,10 +34,18 @@ const mPyrR = ref<number[]>([])
 
 const doneSets = ref(0)
 const showsSetTracker = computed(() => props.data?.exType !== 'cardio' && !props.data?.pyramid_reps)
+const exerciseHistory = computed(() => {
+  if (!props.isOpen || !props.data?.name || props.data?.exType === 'cardio') return []
+  return store.getExerciseHistory(props.data.name, 3)
+})
+
+interface SetRecord { setNumber: number; weight: number; reps: number; rpe: number; durationSec: number | null }
+const setRecords = ref<SetRecord[]>([])
 
 watch(() => props.isOpen, (newVal) => {
   if (newVal && props.data) {
     doneSets.value = 0
+    setRecords.value = []
     initModalData()
   }
 })
@@ -49,6 +57,13 @@ watch(mSets, (val) => {
 function markSetDone() {
   if (doneSets.value >= mSets.value) return
   doneSets.value++
+  setRecords.value.push({
+    setNumber: doneSets.value,
+    weight: getWeightKg(),
+    reps: mReps.value,
+    rpe: mRpe.value,
+    durationSec: props.data?.exType === 'isometric' ? mDurationSec.value : null
+  })
   haptic('success')
   const d = props.data
   if (d?.restSec > 0 && doneSets.value < mSets.value) {
@@ -60,6 +75,7 @@ function undoSet(n: number) {
   if (n > doneSets.value) return
   haptic('light')
   doneSets.value = n - 1
+  setRecords.value = setRecords.value.slice(0, n - 1)
   dismissRestTimer()
 }
 
@@ -191,17 +207,20 @@ function saveLog() {
       ? `duration_sec:${mDurationSec.value}${mNotes.value ? ' ' + mNotes.value : ''}`
       : mNotes.value
     const existing = dbService.q(
-      "SELECT id FROM workout_log WHERE week=? AND day_label=? AND exercise=? ORDER BY id DESC LIMIT 1",
+      "SELECT id, sync_id FROM workout_log WHERE week=? AND day_label=? AND exercise=? ORDER BY id DESC LIMIT 1",
       [store.currentWeek, d.dayLabel, d.name]
     )
+    let logSyncId: string
     if (existing.length && existing[0].values.length) {
+      logSyncId = existing[0].values[0][1]
       dbService.run(`UPDATE workout_log SET sets=?,reps=?,weight_kg=?,rpe=?,notes=?,synced=0 WHERE id=?`,
         [mSets.value, mReps.value, weight, mRpe.value, logNotes, existing[0].values[0][0]])
     } else {
-      const syncId = crypto.randomUUID()
+      logSyncId = crypto.randomUUID()
       dbService.run(`INSERT INTO workout_log (sync_id,week,day_label,exercise,sets,reps,weight_kg,rpe,notes,synced,plan_id) VALUES (?,?,?,?,?,?,?,?,?,0,?)`,
-        [syncId, store.currentWeek, d.dayLabel, d.name, mSets.value, mReps.value, weight, mRpe.value, logNotes, planId])
+        [logSyncId, store.currentWeek, d.dayLabel, d.name, mSets.value, mReps.value, weight, mRpe.value, logNotes, planId])
     }
+    dbService.saveLogSets(logSyncId, setRecords.value)
   }
 
   store.loggedThisSession.add(d.logId)
@@ -231,6 +250,20 @@ function formatRest(sec: number) {
     </div>
 
     <div class="log-body">
+      <div v-if="exerciseHistory.length > 0" class="history-card">
+        <div class="history-title">Historial reciente</div>
+        <div v-for="h in exerciseHistory" :key="h.week" class="history-row">
+          <span class="history-week">Sem {{ h.week }}</span>
+          <span v-if="h.setDetails.length > 0" class="history-detail">
+            <span v-for="(s, i) in h.setDetails" :key="Number(i)" class="history-set" :class="{ drop: Number(i) > 0 && Number(s.weight) < Number(h.setDetails[Number(i)-1].weight) }">
+              {{ s.weight }}<span v-if="Number(i) < h.setDetails.length - 1"> · </span>
+            </span>
+            <span class="history-unit">kg</span>
+          </span>
+          <span v-else class="history-detail">{{ h.sets }}×{{ h.reps }} · {{ h.weightKg }}kg</span>
+        </div>
+      </div>
+
       <div v-if="data?.exType !== 'cardio'">
         <div class="input-row">
           <div class="input-group"><label>Series realizadas</label><input type="number" v-model="mSets" min="1" max="10"></div>
@@ -385,6 +418,13 @@ function formatRest(sec: number) {
   background: var(--bg);
 }
 
+.history-card { background: var(--bg3); border-radius: var(--r2); padding: 12px 14px; margin-bottom: 16px; }
+.history-title { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px; }
+.history-row { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; font-size: 13px; }
+.history-week { color: var(--text2); font-weight: 600; flex-shrink: 0; }
+.history-detail { color: var(--text); font-weight: 600; text-align: right; }
+.history-set.drop { color: var(--amber); }
+.history-unit { color: var(--text3); font-weight: 500; margin-left: 2px; }
 .input-row { display: flex; gap: 10px; margin-bottom: 12px; }
 .input-group { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .input-group-narrow { flex: 0 0 64px; }

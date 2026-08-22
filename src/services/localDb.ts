@@ -61,6 +61,19 @@ class LocalDbService {
       logged_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M','now','localtime')),
       synced INTEGER DEFAULT 0
     )`);
+    this.run(`CREATE TABLE IF NOT EXISTS workout_log_sets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      sync_id TEXT UNIQUE,
+      log_sync_id TEXT NOT NULL,
+      set_number INTEGER NOT NULL,
+      weight_kg REAL,
+      reps INTEGER,
+      rpe REAL,
+      duration_sec INTEGER,
+      synced INTEGER DEFAULT 0,
+      deleted INTEGER DEFAULT 0
+    )`);
+    this.run(`CREATE INDEX IF NOT EXISTS idx_workout_log_sets_log_sync_id ON workout_log_sets(log_sync_id)`);
     this.run(`CREATE TABLE IF NOT EXISTS config (
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL,
@@ -330,6 +343,17 @@ class LocalDbService {
       }));
     }
     return [];
+  }
+
+  saveLogSets(logSyncId: string, sets: { setNumber: number; weight: number; reps: number; rpe: number; durationSec: number | null }[]) {
+    this.run("UPDATE workout_log_sets SET deleted=1, synced=0 WHERE log_sync_id=? AND deleted=0", [logSyncId]);
+    sets.forEach(s => {
+      const syncId = crypto.randomUUID();
+      this.run(
+        `INSERT INTO workout_log_sets (sync_id, log_sync_id, set_number, weight_kg, reps, rpe, duration_sec, synced, deleted) VALUES (?,?,?,?,?,?,?,0,0)`,
+        [syncId, logSyncId, s.setNumber, s.weight, s.reps, s.rpe, s.durationSec]
+      );
+    });
   }
 
   getRecentLogs(limit: number = 20): any[] {

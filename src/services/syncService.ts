@@ -38,11 +38,13 @@ class SyncService {
     try {
       await this.pushPlans(authStore.user.id);
       await this.pushLogs(authStore.user.id);
+      await this.pushLogSets(authStore.user.id);
       await this.pullConfig(authStore.user.id);
       await this.pushConfig(authStore.user.id);
-      
+
       await this.pullPlans(authStore.user.id);
       await this.pullLogs(authStore.user.id);
+      await this.pullLogSets(authStore.user.id);
       await this.cleanOrphanDayCompletes(authStore.user.id);
     } catch (e) {
       console.error('Error durante la sincronización:', e);
@@ -283,6 +285,83 @@ class SyncService {
         console.error('Error pushing logs batch:', error);
       }
     }
+  }
+
+  private async pushLogSets(_userId: string) {
+    const unsynced = dbService.q("SELECT id, sync_id, log_sync_id, set_number, weight_kg, reps, rpe, duration_sec, deleted FROM workout_log_sets WHERE synced = 0");
+    if (!unsynced.length || !unsynced[0].values.length) return;
+
+    const BATCH_SIZE = 100;
+    const allRows = unsynced[0].values;
+
+    for (let i = 0; i < allRows.length; i += BATCH_SIZE) {
+      const batch = allRows.slice(i, i + BATCH_SIZE);
+      const toDelete = batch.filter((row: any) => row[8] === 1);
+      const toUpsert = batch.filter((row: any) => row[8] !== 1);
+      let ok = true;
+
+      if (toDelete.length) {
+        const ids = toDelete.map((row: any) => row[1]); // sync_id
+        const { error } = await supabase.from('workout_log_sets').delete().in('id', ids);
+        if (error) { ok = false; console.error('Error deleting log sets batch:', error); }
+      }
+
+      if (ok && toUpsert.length) {
+        const rowsToPush = toUpsert.map((row: any) => ({
+          id: row[1],
+          log_id: row[2],
+          set_number: row[3],
+          weight_kg: row[4] != null ? Number(row[4]) : null,
+          reps: row[5] != null ? Number(row[5]) : null,
+          rpe: row[6] != null ? Number(row[6]) : null,
+          duration_sec: row[7] != null ? Number(row[7]) : null
+        }));
+        const { error } = await supabase.from('workout_log_sets').upsert(rowsToPush, { onConflict: 'id' });
+        if (error) { ok = false; console.error('Error pushing log sets batch:', error); }
+      }
+
+      if (ok) {
+        const ids = batch.map((row: any) => row[0]); // local ids
+        const placeholders = ids.map(() => '?').join(',');
+        dbService.run(`UPDATE workout_log_sets SET synced = 1 WHERE id IN (${placeholders})`, ids);
+      }
+    }
+  }
+
+  private async pullLogSets(_userId: string) {
+    const lastSyncDate = dbService.getConfig('last_log_sets_sync_date') || '2000-01-01T00:00:00.000Z';
+
+    const { data: remoteSets, error } = await supabase
+      .from('workout_log_sets')
+      .select('*')
+      .gt('updated_at', lastSyncDate)
+      .order('updated_at', { ascending: true });
+
+    if (error || !remoteSets || remoteSets.length === 0) return;
+
+    let latestUpdated = lastSyncDate;
+
+    remoteSets.forEach((row: any) => {
+      const existing = dbService.q("SELECT id, synced FROM workout_log_sets WHERE sync_id=?", [row.id]);
+      const isSynced = existing.length && existing[0].values.length ? existing[0].values[0][1] === 1 : true;
+      if (!isSynced) return; // No sobrescribir cambios locales
+
+      if (existing.length && existing[0].values.length) {
+        dbService.run(
+          `UPDATE workout_log_sets SET log_sync_id=?, set_number=?, weight_kg=?, reps=?, rpe=?, duration_sec=?, synced=1, deleted=0 WHERE sync_id=?`,
+          [row.log_id, row.set_number, row.weight_kg, row.reps, row.rpe, row.duration_sec, row.id]
+        );
+      } else {
+        dbService.run(
+          `INSERT INTO workout_log_sets (sync_id, log_sync_id, set_number, weight_kg, reps, rpe, duration_sec, synced, deleted) VALUES (?,?,?,?,?,?,?,1,0)`,
+          [row.id, row.log_id, row.set_number, row.weight_kg, row.reps, row.rpe, row.duration_sec]
+        );
+      }
+
+      if (row.updated_at > latestUpdated) latestUpdated = row.updated_at;
+    });
+
+    dbService.setConfig('last_log_sets_sync_date', latestUpdated);
   }
 
   private async pullLogs(_userId: string) {
