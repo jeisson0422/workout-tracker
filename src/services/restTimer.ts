@@ -21,11 +21,29 @@ export const restTimerState = reactive<RestTimerState>({
 
 let intervalId: ReturnType<typeof setInterval> | null = null
 let autoDismissId: ReturnType<typeof setTimeout> | null = null
+let wakeLock: any = null
 
 function stopInterval() {
   if (intervalId !== null) {
     clearInterval(intervalId)
     intervalId = null
+  }
+}
+
+async function acquireWakeLock() {
+  try {
+    if (typeof navigator !== 'undefined' && 'wakeLock' in navigator) {
+      wakeLock = await (navigator as any).wakeLock.request('screen')
+    }
+  } catch {
+    wakeLock = null
+  }
+}
+
+function releaseWakeLock() {
+  if (wakeLock) {
+    wakeLock.release?.().catch(() => {})
+    wakeLock = null
   }
 }
 
@@ -50,7 +68,12 @@ function tick() {
 }
 
 if (typeof document !== 'undefined') {
-  document.addEventListener('visibilitychange', tick)
+  document.addEventListener('visibilitychange', () => {
+    tick()
+    if (document.visibilityState === 'visible' && restTimerState.active && !wakeLock) {
+      acquireWakeLock()
+    }
+  })
 }
 
 export function startRestTimer(seconds: number, label = '') {
@@ -64,6 +87,7 @@ export function startRestTimer(seconds: number, label = '') {
   restTimerState.remainingSec = seconds
   stopInterval()
   intervalId = setInterval(tick, 250)
+  acquireWakeLock()
 }
 
 export function addRestTime(deltaSec: number) {
@@ -84,4 +108,5 @@ export function dismissRestTimer() {
   restTimerState.finished = false
   stopInterval()
   clearAutoDismiss()
+  releaseWakeLock()
 }

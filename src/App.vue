@@ -6,7 +6,7 @@ import { useAuthStore } from './stores/auth'
 import { syncService } from './services/syncService'
 import BottomNav from './components/BottomNav.vue'
 import ToastHost from './components/ToastHost.vue'
-import RestTimerBar from './components/RestTimerBar.vue'
+import RestTimerOverlay from './components/RestTimerOverlay.vue'
 
 const store = useWorkoutStore()
 const authStore = useAuthStore()
@@ -64,8 +64,8 @@ const showBottomNav = computed(() => !route.meta.hideNav)
       <router-view />
     </div>
     <BottomNav v-if="isAppReady && showBottomNav" />
-    <RestTimerBar v-if="isAppReady && showBottomNav" />
     <ToastHost />
+    <RestTimerOverlay />
   </div>
 </template>
 

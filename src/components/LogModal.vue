@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
+import { CheckIcon } from 'lucide-vue-next'
 import { useWorkoutStore } from '../stores/workout'
 import { usePlansStore } from '../stores/plans'
 import { dbService } from '../services/localDb'
@@ -31,11 +32,29 @@ const mDurationSec = ref(0)
 const mPyrW = ref<number[]>([])
 const mPyrR = ref<number[]>([])
 
+const doneSets = ref(0)
+const showsSetTracker = computed(() => props.data?.exType !== 'cardio' && !props.data?.pyramid_reps)
+
 watch(() => props.isOpen, (newVal) => {
   if (newVal && props.data) {
+    doneSets.value = 0
     initModalData()
   }
 })
+
+watch(mSets, (val) => {
+  if (doneSets.value > val) doneSets.value = val
+})
+
+function markSetDone() {
+  if (doneSets.value >= mSets.value) return
+  doneSets.value++
+  haptic('success')
+  const d = props.data
+  if (d?.restSec > 0 && doneSets.value < mSets.value) {
+    startRestTimer(d.restSec, d.name)
+  }
+}
 
 function initModalData() {
   const d = props.data
@@ -181,9 +200,6 @@ function saveLog() {
   store.loggedThisSession.add(d.logId)
   store.dbUpdateTrigger++
   haptic('success')
-  if (!isCardio && d.restSec > 0) {
-    startRestTimer(d.restSec, d.name)
-  }
   emit('logged')
   emit('close')
 }
@@ -209,11 +225,12 @@ function formatRest(sec: number) {
           <div class="input-group"><label>Series realizadas</label><input type="number" v-model="mSets" min="1" max="10"></div>
           <div v-if="data?.exType === 'isometric'" class="input-group"><label>Repeticiones</label><input type="number" v-model="mReps" min="0" max="50"></div>
           <div v-else class="input-group"><label>Repeticiones</label><input type="number" v-model="mReps" min="1" max="50"></div>
+          <div class="input-group input-group-narrow"><label>RPE</label><input type="number" v-model="mRpe" min="1" max="10" step="0.5"></div>
         </div>
         <div v-if="data?.exType === 'isometric'" class="input-row">
           <div class="input-group"><label>Segundos (hold)</label><input type="number" v-model="mDurationSec" min="1" max="300"></div>
         </div>
-        
+
         <div class="input-row">
           <div class="input-group">
             <label>Peso</label>
@@ -232,7 +249,31 @@ function formatRest(sec: number) {
             <div v-if="weightUnit === 'kg' && mWeight > 0" style="font-size:11px;color:var(--text3);margin-top:4px">= {{ Math.round(mWeight * 2.2046 * 10) / 10 }} lbs</div>
             <div style="font-size:10px;color:var(--text3);margin-top:3px">📌 Registra el peso <b>por mancuerna</b></div>
           </div>
-          <div class="input-group"><label>RPE (1–10)</label><input type="number" v-model="mRpe" min="1" max="10" step="0.5"></div>
+        </div>
+
+        <div v-if="showsSetTracker" class="set-tracker">
+          <div class="set-tracker-head">
+            <span class="set-tracker-label">
+              {{ doneSets >= mSets ? '¡Series completadas!' : `Serie ${doneSets + 1} de ${mSets}` }}
+            </span>
+          </div>
+          <div class="set-dots">
+            <button
+              v-for="n in mSets"
+              :key="n"
+              type="button"
+              class="set-dot"
+              :class="{ done: n <= doneSets, next: n === doneSets + 1 }"
+              @click="n === doneSets + 1 && markSetDone()"
+            >
+              <CheckIcon v-if="n <= doneSets" />
+              <span v-else>{{ n }}</span>
+            </button>
+          </div>
+          <button v-if="doneSets < mSets" type="button" class="btn btn-set-done" @click="markSetDone">
+            {{ doneSets + 1 < mSets ? `✓ Serie ${doneSets + 1} hecha — iniciar descanso` : `✓ Marcar última serie` }}
+          </button>
+          <div v-else class="set-tracker-done-hint">Toca "Registrar" para guardar el ejercicio</div>
         </div>
 
         <div v-if="data?.pyramid_reps" style="margin-bottom:12px">
@@ -283,8 +324,9 @@ function formatRest(sec: number) {
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 .modal-sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
 .input-row { display: flex; gap: 10px; margin-bottom: 12px; }
-.input-group { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-.input-group label { font-size: 12px; color: var(--text2); font-weight: 500; }
+.input-group { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.input-group-narrow { flex: 0 0 64px; }
+.input-group label { font-size: 12px; color: var(--text2); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 input[type=number], input[type=text] { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r3); color: var(--text); font-size: 16px; padding: 12px; width: 100%; }
 input:focus { outline: none; border-color: var(--accent); }
 .weight-stepper { display: flex; align-items: stretch; flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r3); overflow: hidden; }
@@ -293,6 +335,31 @@ input:focus { outline: none; border-color: var(--accent); }
 .stepper-btn { flex-shrink: 0; width: 40px; border: none; background: transparent; color: var(--accent2); font-size: 20px; font-weight: 600; cursor: pointer; line-height: 1; transition: background .15s, transform .1s; }
 .stepper-btn:active { background: var(--bg4); transform: scale(0.9); }
 .modal-rest { font-size: 12px; color: var(--text2); background: var(--bg3); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; text-align: center; }
+.set-tracker { background: var(--bg3); border-radius: var(--r2); padding: 14px; margin-bottom: 16px; }
+.set-tracker-head { text-align: center; margin-bottom: 10px; }
+.set-tracker-label { font-size: 13px; font-weight: 700; color: var(--text); }
+.set-dots { display: flex; justify-content: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.set-dot {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg4);
+  color: var(--text2);
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  transition: transform .15s, background .2s, color .2s;
+}
+.set-dot :deep(svg) { width: 18px; height: 18px; }
+.set-dot.done { background: var(--green); color: #fff; }
+.set-dot.next { background: var(--accent); color: #fff; cursor: pointer; box-shadow: 0 0 0 4px rgba(108,99,255,.25); }
+.set-dot.next:active { transform: scale(0.88); }
+.btn-set-done { background: var(--accent); color: var(--accent-text); margin-bottom: 0; }
+.set-tracker-done-hint { text-align: center; font-size: 12px; color: var(--green); font-weight: 600; }
 .unit-toggle { display: flex; border: 1px solid var(--border2); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
 .unit-btn { padding: 0 12px; height: 100%; border: none; background: transparent; color: var(--text2); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
 .unit-btn.active { background: var(--accent); color: #fff; }
