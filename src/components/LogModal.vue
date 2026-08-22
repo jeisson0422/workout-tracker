@@ -5,7 +5,7 @@ import { useWorkoutStore } from '../stores/workout'
 import { usePlansStore } from '../stores/plans'
 import { dbService } from '../services/localDb'
 import { haptic } from '../services/haptics'
-import { startRestTimer } from '../services/restTimer'
+import { startRestTimer, dismissRestTimer } from '../services/restTimer'
 
 const props = defineProps<{
   isOpen: boolean
@@ -54,6 +54,13 @@ function markSetDone() {
   if (d?.restSec > 0 && doneSets.value < mSets.value) {
     startRestTimer(d.restSec, d.name)
   }
+}
+
+function undoSet(n: number) {
+  if (n > doneSets.value) return
+  haptic('light')
+  doneSets.value = n - 1
+  dismissRestTimer()
 }
 
 function initModalData() {
@@ -264,12 +271,13 @@ function formatRest(sec: number) {
               type="button"
               class="set-dot"
               :class="{ done: n <= doneSets, next: n === doneSets + 1 }"
-              @click="n === doneSets + 1 && markSetDone()"
+              @click="n <= doneSets ? undoSet(n) : (n === doneSets + 1 && markSetDone())"
             >
               <CheckIcon v-if="n <= doneSets" />
               <span v-else>{{ n }}</span>
             </button>
           </div>
+          <div v-if="doneSets > 0" class="set-undo-hint">Toca una serie marcada para deshacerla</div>
           <button v-if="doneSets < mSets" type="button" class="btn btn-set-done" @click="markSetDone">
             {{ doneSets + 1 < mSets ? `✓ Serie ${doneSets + 1} hecha — iniciar descanso` : `✓ Marcar última serie` }}
           </button>
@@ -355,9 +363,11 @@ input:focus { outline: none; border-color: var(--accent); }
   transition: transform .15s, background .2s, color .2s;
 }
 .set-dot :deep(svg) { width: 18px; height: 18px; }
-.set-dot.done { background: var(--green); color: #fff; }
+.set-dot.done { background: var(--green); color: #fff; cursor: pointer; }
+.set-dot.done:active { transform: scale(0.88); }
 .set-dot.next { background: var(--accent); color: #fff; cursor: pointer; box-shadow: 0 0 0 4px rgba(108,99,255,.25); }
 .set-dot.next:active { transform: scale(0.88); }
+.set-undo-hint { text-align: center; font-size: 11px; color: var(--text3); margin-bottom: 10px; }
 .btn-set-done { background: var(--accent); color: var(--accent-text); margin-bottom: 0; }
 .set-tracker-done-hint { text-align: center; font-size: 12px; color: var(--green); font-weight: 600; }
 .unit-toggle { display: flex; border: 1px solid var(--border2); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
