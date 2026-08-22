@@ -356,6 +356,7 @@ class SyncService {
     const { data: remoteRows, error } = await supabase
       .from('workout_logs')
       .select('id')
+      .eq('user_id', userId)
       .in('id', localIds);
 
     if (error) return;
