@@ -4,6 +4,7 @@ import { useWorkoutStore } from '../stores/workout'
 import { usePlansStore } from '../stores/plans'
 import { dbService } from '../services/localDb'
 import { haptic } from '../services/haptics'
+import { startRestTimer } from '../services/restTimer'
 
 const props = defineProps<{
   isOpen: boolean
@@ -180,6 +181,9 @@ function saveLog() {
   store.loggedThisSession.add(d.logId)
   store.dbUpdateTrigger++
   haptic('success')
+  if (!isCardio && d.restSec > 0) {
+    startRestTimer(d.restSec, d.name)
+  }
   emit('logged')
   emit('close')
 }
