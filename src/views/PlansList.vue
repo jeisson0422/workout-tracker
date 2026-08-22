@@ -171,23 +171,28 @@ function importPlan() {
 </template>
 
 <style scoped>
-.back-btn { background: var(--bg2); border: 1px solid var(--border); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: var(--text); cursor: pointer; padding: 0; }
-.plan-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); padding: 16px; margin-bottom: 12px; transition: border-color 0.2s; }
+.back-btn { background: var(--bg2); border: 1px solid var(--card-border); box-shadow: var(--card-shadow); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: var(--text); cursor: pointer; padding: 0; transition: transform .1s; }
+.back-btn:active { transform: scale(0.9); }
+.plan-card { background: var(--bg2); border: 1px solid var(--card-border); box-shadow: var(--card-shadow); border-radius: var(--r2); padding: 16px; margin-bottom: 12px; transition: border-color 0.2s; }
 .plan-card.active { border-color: var(--accent); background: linear-gradient(180deg, rgba(200,255,0,0.05) 0%, rgba(200,255,0,0) 100%), var(--bg2); }
 .plan-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; cursor: pointer; }
 .plan-title { font-size: 18px; font-weight: 700; color: var(--text); }
 .plan-badge { background: var(--accent); color: var(--accent-text); font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; }
 .plan-actions { display: flex; gap: 8px; }
-.btn { width: 100%; padding: 14px; border-radius: var(--r2); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: all .2s; text-align: center; }
+.btn { width: 100%; padding: 14px; border-radius: var(--r2); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform .1s, opacity .2s; text-align: center; }
+.btn:active { transform: scale(0.97); }
 .btn-primary { background: var(--accent); color: var(--accent-text); }
 .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
 .btn-danger { background: var(--danger-bg); color: var(--red); border: 1px solid var(--danger-border); }
-.btn-sm { padding: 8px 12px; font-size: 13px; border-radius: 8px; }
-.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-.modal-content { background: var(--bg); padding: 24px; border-radius: var(--r2); width: 100%; max-width: 400px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-.modal-content h3 { margin: 0 0 16px 0; font-size: 20px; }
-.modal-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 12px; font-size: 16px; box-sizing: border-box; }
+.btn-sm { padding: 8px 12px; font-size: 13px; border-radius: 999px; }
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.4); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; z-index: 1000; animation: fade-in .2s ease-out; }
+.modal-content { background: var(--bg2); padding: 8px 20px 24px; border-radius: var(--r) var(--r) 0 0; width: 100%; max-width: 430px; box-shadow: 0 -8px 40px rgba(0,0,0,.2); padding-bottom: calc(24px + env(safe-area-inset-bottom,0px)); animation: sheet-up .28s cubic-bezier(.32,.72,0,1); }
+.modal-content::before { content: ''; display: block; width: 36px; height: 5px; border-radius: 3px; background: var(--border2); margin: 0 auto 16px; opacity: .6; }
+.modal-content h3 { margin: 0 0 16px 0; font-size: 18px; text-align: center; }
+.modal-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r3); color: var(--text); padding: 12px; font-size: 16px; box-sizing: border-box; }
 .modal-input:focus { outline: none; border-color: var(--accent); }
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 .ai-box { background: linear-gradient(135deg, rgba(200,255,0,0.1) 0%, rgba(200,255,0,0) 100%); border: 1px dashed var(--accent); padding: 16px; border-radius: var(--r2); margin-top: 24px; }
 .ai-box-title { font-weight: 800; font-size: 14px; margin-bottom: 4px; color: var(--accent); }
@@ -196,6 +201,6 @@ function importPlan() {
 .btn-ai-alt { background: var(--bg3); color: var(--accent); border: 1px solid var(--accent); font-size: 13px; padding: 10px; }
 
 .ai-modal { max-width: 500px !important; }
-.prompt-preview { background: var(--bg3); padding: 12px; border-radius: 8px; font-size: 11px; font-family: monospace; height: 200px; overflow-y: auto; color: var(--text2); border: 1px solid var(--border); white-space: pre-wrap; }
-.import-area { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 12px; font-size: 12px; font-family: monospace; height: 200px; resize: none; }
+.prompt-preview { background: var(--bg3); padding: 12px; border-radius: var(--r3); font-size: 11px; font-family: monospace; height: 200px; overflow-y: auto; color: var(--text2); border: 1px solid var(--border); white-space: pre-wrap; }
+.import-area { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r3); color: var(--text); padding: 12px; font-size: 12px; font-family: monospace; height: 200px; resize: none; }
 </style>

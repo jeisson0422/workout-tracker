@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useWorkoutStore } from '../stores/workout'
 import { useUserStore } from '../stores/user'
 import { getSwalSettings } from '../services/swalHelper'
+import { haptic } from '../services/haptics'
 import Swal from 'sweetalert2'
 
 const router = useRouter()
@@ -110,6 +111,7 @@ async function quickWeightEntry() {
 
   if (weight) {
     userStore.addWeightEntry(parseFloat(weight))
+    haptic('success')
     Swal.fire({
       ...getSwalSettings('success'),
       title: '¡Peso Guardado!',
@@ -227,10 +229,12 @@ async function quickWeightEntry() {
 <style scoped>
 .card {
   background: var(--bg2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
   border-radius: var(--r);
   padding: 16px;
   margin: 0 16px 12px;
+  transition: transform .15s;
 }
 .card-title {
   font-size: 13px;
@@ -250,6 +254,9 @@ async function quickWeightEntry() {
   border-left: 4px solid var(--accent);
   cursor: pointer;
   padding: 20px 16px;
+}
+.next-workout-card:active, .weight-quick-access:active {
+  transform: scale(0.98);
 }
 .next-info { display: flex; flex-direction: column; }
 .next-lbl { font-size: 11px; font-weight: 700; color: var(--text2); letter-spacing: 0.5px; margin-bottom: 4px; }
@@ -384,13 +391,15 @@ async function quickWeightEntry() {
 .weight-quick-access {
   margin: 0 16px 12px;
   background: var(--bg2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
   border-radius: var(--r);
   padding: 12px 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
+  transition: transform .15s;
 }
 .weight-info { display: flex; align-items: center; gap: 8px; }
 .weight-lbl { font-size: 11px; font-weight: 700; color: var(--text2); }

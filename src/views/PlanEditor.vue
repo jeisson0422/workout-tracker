@@ -41,8 +41,7 @@ async function addDay() {
     inputLabel: 'Nombre de la sesión',
     inputPlaceholder: 'ej. Empuje, Pierna',
     showCancelButton: true,
-    confirmButtonText: 'Guardar',
-    customClass: { confirmButton: 'swal-confirm-btn font-bold' }
+    confirmButtonText: 'Guardar'
   })
 
   if (name) {
@@ -484,27 +483,34 @@ async function deleteProgression(id: string) {
 </template>
 
 <style scoped>
-.back-btn { background: var(--bg2); border: 1px solid var(--border); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: var(--text); cursor: pointer; padding: 0; }
-.tabs { display: flex; border-bottom: 1px solid var(--border); margin-top: 10px; }
-.tab { flex: 1; text-align: center; padding: 12px; font-weight: 600; font-size: 14px; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; }
-.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-.day-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); margin-bottom: 12px; overflow: hidden; }
-.day-header { padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: var(--bg3); }
-.day-content { padding: 12px 16px; border-top: 1px solid var(--border); }
-.ex-row { padding: 12px 0; border-bottom: 1px solid var(--border2); display: flex; align-items: center; cursor: pointer; }
+.back-btn { background: var(--bg2); border: 1px solid var(--card-border); box-shadow: var(--card-shadow); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: var(--text); cursor: pointer; padding: 0; transition: transform .1s; }
+.back-btn:active { transform: scale(0.9); }
+.tabs { display: flex; gap: 2px; background: var(--bg3); border-radius: 999px; margin: 10px 16px 0; padding: 3px; }
+.tab { flex: 1; text-align: center; padding: 8px; font-weight: 600; font-size: 13px; color: var(--text2); cursor: pointer; border-radius: 999px; transition: background .2s, color .2s; }
+.tab.active { color: var(--text); background: var(--bg2); box-shadow: var(--card-shadow); }
+.day-card { background: var(--bg2); border: 1px solid var(--card-border); box-shadow: var(--card-shadow); border-radius: var(--r2); margin-bottom: 12px; overflow: hidden; }
+.day-header { padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background .15s; }
+.day-header:active { background: var(--bg3); }
+.day-content { padding: 12px 16px; border-top: 0.5px solid var(--border); }
+.ex-row { padding: 12px 0; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; cursor: pointer; transition: opacity .15s; }
 .ex-row:last-child { border-bottom: none; }
-.btn { width: 100%; padding: 14px; border-radius: var(--r2); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: all .2s; text-align: center; }
+.ex-row:active { opacity: .6; }
+.btn { width: 100%; padding: 14px; border-radius: var(--r2); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform .1s, opacity .2s; text-align: center; }
+.btn:active { transform: scale(0.97); }
 .btn-primary { background: var(--accent); color: var(--accent-text); }
 .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
 .btn-danger { background: var(--danger-bg); color: var(--red); border: 1px solid var(--danger-border); }
-.btn-sm { padding: 8px 12px; font-size: 13px; border-radius: 8px; }
+.btn-sm { padding: 8px 12px; font-size: 13px; border-radius: 999px; }
 .btn-icon { background: transparent; border: none; color: var(--text2); cursor: pointer; padding: 4px; display: flex; }
-.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-.modal-content { background: var(--bg); padding: 24px; border-radius: var(--r2); width: 100%; max-width: 400px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-.modal-content h3 { margin: 0 0 16px 0; font-size: 20px; }
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.4); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; z-index: 1000; animation: fade-in .2s ease-out; }
+.modal-content { background: var(--bg2); padding: 8px 20px 24px; border-radius: var(--r) var(--r) 0 0; width: 100%; max-width: 430px; box-shadow: 0 -8px 40px rgba(0,0,0,.2); padding-bottom: calc(24px + env(safe-area-inset-bottom,0px)); animation: sheet-up .28s cubic-bezier(.32,.72,0,1); }
+.modal-content::before { content: ''; display: block; width: 36px; height: 5px; border-radius: 3px; background: var(--border2); margin: 0 auto 16px; opacity: .6; }
+.modal-content h3 { margin: 0 0 16px 0; font-size: 18px; text-align: center; }
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 .form-group { margin-bottom: 12px; }
 .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
-.modal-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 12px; font-size: 16px; box-sizing: border-box; }
+.modal-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r3); color: var(--text); padding: 12px; font-size: 16px; box-sizing: border-box; }
 .modal-input:focus { outline: none; border-color: var(--accent); }
 select.modal-input { appearance: none; }
 .group-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }

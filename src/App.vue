@@ -5,6 +5,7 @@ import { useWorkoutStore } from './stores/workout'
 import { useAuthStore } from './stores/auth'
 import { syncService } from './services/syncService'
 import BottomNav from './components/BottomNav.vue'
+import ToastHost from './components/ToastHost.vue'
 
 const store = useWorkoutStore()
 const authStore = useAuthStore()
@@ -58,10 +59,11 @@ const showBottomNav = computed(() => !route.meta.hideNav)
     <div v-if="!isAppReady" class="flex flex-1 items-center justify-center">
       Cargando...
     </div>
-    <div v-else class="main-content">
+    <div v-else class="main-content" :class="{ 'with-nav-padding': showBottomNav }">
       <router-view />
     </div>
     <BottomNav v-if="isAppReady && showBottomNav" />
+    <ToastHost />
   </div>
 </template>
 
@@ -78,6 +80,9 @@ const showBottomNav = computed(() => !route.meta.hideNav)
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+}
+.main-content.with-nav-padding {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
 }
 .update-banner {
   background: var(--accent);

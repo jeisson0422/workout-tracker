@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useWorkoutStore } from '../stores/workout'
 import { syncService } from '../services/syncService'
 import { swalInstance, getSwalSettings } from '../services/swalHelper'
+import { haptic } from '../services/haptics'
 import DayCard from '../components/DayCard.vue'
 import LogModal from '../components/LogModal.vue'
 
@@ -45,6 +46,7 @@ function advanceDay() {
     hideClass: { popup: 'animate__animated animate__fadeOutDown animate__faster' }
   }).then((result) => {
     if (result.isConfirmed) {
+      haptic('success')
       store.markDayComplete(dayLabel.value, dayIndex.value)
       syncService.sync()
     }
@@ -96,6 +98,7 @@ const nextDayLabel = computed(() => {
 </template>
 
 <style scoped>
-.btn { padding: 14px; border-radius: var(--r2); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: all .2s; text-align: center; }
+.btn { padding: 14px; border-radius: var(--r2); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform .1s, opacity .2s; text-align: center; }
+.btn:active { transform: scale(0.97); }
 .btn-secondary { background: var(--bg2); color: var(--text); border: 1px solid var(--border2); }
 </style>

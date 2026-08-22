@@ -3,6 +3,7 @@ import { ref, watch } from 'vue'
 import { useWorkoutStore } from '../stores/workout'
 import { usePlansStore } from '../stores/plans'
 import { dbService } from '../services/localDb'
+import { haptic } from '../services/haptics'
 
 const props = defineProps<{
   isOpen: boolean
@@ -101,12 +102,19 @@ function initModalData() {
 
 function setWeightUnit(unit: string) {
   if (unit === weightUnit.value) return
+  haptic('light')
   if (unit === 'lbs' && mWeight.value > 0) {
     mWeight.value = Math.round(mWeight.value * 2.2046 * 4) / 4
   } else if (unit === 'kg' && mWeight.value > 0) {
     mWeight.value = Math.round(mWeight.value / 2.2046 * 4) / 4
   }
   weightUnit.value = unit
+}
+
+function adjustWeight(delta: number) {
+  haptic('light')
+  const step = weightUnit.value === 'kg' ? 2.5 : 5
+  mWeight.value = Math.max(0, Math.round((mWeight.value + delta * step) * 4) / 4)
 }
 
 function getWeightKg() {
@@ -138,6 +146,7 @@ function saveLog() {
       const w = mPyrW.value[i] || 0
       const r = mPyrR.value[i] || 0
       if (w > d.safetyLimit && d.safetyLimit > 0) {
+        haptic('warning')
         if (!confirm(`⚠ Serie ${i+1}: ${w}kg supera límite de ${d.safetyLimit}kg. ¿Continuar?`)) return
       }
       const syncId = crypto.randomUUID()
@@ -148,6 +157,7 @@ function saveLog() {
     const isIsometric = d.exType === 'isometric'
     const weight = getWeightKg()
     if (!isIsometric && d.safetyLimit > 0 && weight > d.safetyLimit) {
+      haptic('warning')
       if (!confirm(`⚠ ${weight}kg supera el límite de seguridad de ${d.safetyLimit}kg. ¿Continuar?`)) return
     }
     const logNotes = isIsometric
@@ -169,6 +179,7 @@ function saveLog() {
 
   store.loggedThisSession.add(d.logId)
   store.dbUpdateTrigger++
+  haptic('success')
   emit('logged')
   emit('close')
 }
@@ -182,6 +193,7 @@ function formatRest(sec: number) {
 <template>
   <div v-if="isOpen" class="overlay open">
     <div class="modal" @click.stop>
+      <div class="modal-handle"></div>
       <div class="modal-title">{{ data?.name }}</div>
       <div class="modal-sub">
         <span v-if="data?.exType === 'cardio'">{{ data?.duration_min }} min · {{ data?.incline_pct }}% · {{ data?.speed_kmh }} km/h</span>
@@ -202,7 +214,11 @@ function formatRest(sec: number) {
           <div class="input-group">
             <label>Peso</label>
             <div style="display:flex;gap:8px;align-items:stretch">
-              <input type="number" v-model="mWeight" min="0" :step="weightUnit === 'kg' ? 0.5 : 0.25" style="flex:1">
+              <div class="weight-stepper">
+                <button type="button" class="stepper-btn" @click="adjustWeight(-1)">−</button>
+                <input type="number" v-model="mWeight" min="0" :step="weightUnit === 'kg' ? 0.5 : 0.25">
+                <button type="button" class="stepper-btn" @click="adjustWeight(1)">+</button>
+              </div>
               <div class="unit-toggle">
                 <button class="unit-btn" :class="{active: weightUnit === 'kg'}" @click="setWeightUnit('kg')">kg</button>
                 <button class="unit-btn" :class="{active: weightUnit === 'lbs'}" @click="setWeightUnit('lbs')">lbs</button>
@@ -255,20 +271,29 @@ function formatRest(sec: number) {
 </template>
 
 <style scoped>
-.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 200; display: flex; align-items: flex-end; backdrop-filter: blur(4px); }
-.modal { background: var(--bg2); border-radius: 20px 20px 0 0; padding: 24px 20px; width: 100%; max-width: 430px; margin: 0 auto; max-height: 80vh; overflow-y: auto; padding-bottom: calc(24px + env(safe-area-inset-bottom,0px)); }
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 200; display: flex; align-items: flex-end; backdrop-filter: blur(4px); animation: fade-in .2s ease-out; }
+.modal { background: var(--bg2); border-radius: var(--r) var(--r) 0 0; padding: 8px 20px 24px; width: 100%; max-width: 430px; margin: 0 auto; max-height: 85vh; overflow-y: auto; padding-bottom: calc(24px + env(safe-area-inset-bottom,0px)); box-shadow: 0 -8px 40px rgba(0,0,0,.2); animation: sheet-up .28s cubic-bezier(.32,.72,0,1); }
+.modal-handle { width: 36px; height: 5px; border-radius: 3px; background: var(--border2); margin: 0 auto 16px; opacity: .6; }
 .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; text-transform: capitalize; }
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 .modal-sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
 .input-row { display: flex; gap: 10px; margin-bottom: 12px; }
 .input-group { flex: 1; display: flex; flex-direction: column; gap: 6px; }
 .input-group label { font-size: 12px; color: var(--text2); font-weight: 500; }
-input[type=number], input[type=text] { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 16px; padding: 12px; width: 100%; }
+input[type=number], input[type=text] { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r3); color: var(--text); font-size: 16px; padding: 12px; width: 100%; }
 input:focus { outline: none; border-color: var(--accent); }
+.weight-stepper { display: flex; align-items: stretch; flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r3); overflow: hidden; }
+.weight-stepper input { flex: 1; width: auto; border: none; border-radius: 0; text-align: center; padding: 12px 4px; min-width: 0; background: transparent; }
+.weight-stepper input:focus { outline: none; }
+.stepper-btn { flex-shrink: 0; width: 40px; border: none; background: transparent; color: var(--accent2); font-size: 20px; font-weight: 600; cursor: pointer; line-height: 1; transition: background .15s, transform .1s; }
+.stepper-btn:active { background: var(--bg4); transform: scale(0.9); }
 .modal-rest { font-size: 12px; color: var(--text2); background: var(--bg3); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; text-align: center; }
 .unit-toggle { display: flex; border: 1px solid var(--border2); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
 .unit-btn { padding: 0 12px; height: 100%; border: none; background: transparent; color: var(--text2); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
 .unit-btn.active { background: var(--accent); color: #fff; }
-.btn { display: block; width: 100%; padding: 14px; border-radius: var(--r2); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: all .2s; text-align: center; margin-bottom: 10px; }
+.btn { display: block; width: 100%; padding: 14px; border-radius: var(--r2); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform .1s, opacity .2s; text-align: center; margin-bottom: 10px; }
+.btn:active { transform: scale(0.97); }
 .btn-primary { background: var(--accent); color: var(--accent-text); }
 .btn-secondary { background: var(--bg2); color: var(--text); border: 1px solid var(--border2); }
 </style>

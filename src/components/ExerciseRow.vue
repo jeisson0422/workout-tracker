@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useWorkoutStore } from '../stores/workout'
+import { haptic } from '../services/haptics'
 import ExerciseIcon from './ExerciseIcon.vue'
 
 const props = defineProps<{
@@ -152,6 +153,7 @@ const fmtRest = computed(() => {
 const suggestedWeight = computed(() => store.getSuggestedWeight(name.value, info.value, exType.value, props.exercise.group_type))
 
 function handleLogClick() {
+  haptic('light')
   const sugForModal = ((exType.value === 'strength' || exType.value === 'isometric') && props.exercise.group_type !== 'pyramid') ? suggestedWeight.value : null
   const preWeightFinal = sugForModal ? sugForModal.kg : (props.exercise.current_weight_kg || 0)
   
@@ -214,14 +216,16 @@ function handleLogClick() {
 </template>
 
 <style scoped>
-.ex-row { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); gap: 10px; }
+.ex-row { display: flex; align-items: center; padding: 12px 16px; border-bottom: 0.5px solid var(--border); gap: 10px; transition: background .15s; }
 .ex-row:last-child { border-bottom: none; }
-.ex-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--bg3); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ex-row:active { background: var(--bg3); }
+.ex-icon { width: 36px; height: 36px; border-radius: 9px; background: var(--bg3); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .ex-info { flex: 1; min-width: 0; }
 .ex-name { font-size: 14px; font-weight: 500; text-transform: capitalize; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ex-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
-.ex-log-btn { background: var(--bg3); border: 1px solid var(--border2); color: var(--text); border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
-.ex-log-btn.logged { background: var(--accent); border-color: var(--accent); color: #fff; }
+.ex-log-btn { background: var(--bg3); border: none; color: var(--accent2); border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: transform .1s, background .15s; }
+.ex-log-btn:active { transform: scale(0.92); }
+.ex-log-btn.logged { background: var(--accent); color: #fff; }
 .ex-hint { font-size: 11px; color: var(--accent2); margin-top: 3px; font-style: italic; opacity: .8; }
 .ex-rest { font-size: 11px; color: var(--text3); margin-top: 2px; }
 .ex-suggested { font-size: 11px; color: var(--green); margin-top: 2px; font-weight: 600; }

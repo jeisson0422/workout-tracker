@@ -9,13 +9,14 @@ import { dbService } from '../services/localDb'
 import { supabase } from '../services/supabase'
 import { injectDefaultPlan } from '../services/planUtils'
 import { getSwalSettings } from '../services/swalHelper'
+import { showToast } from '../services/toast'
+import { haptic } from '../services/haptics'
 import Swal from 'sweetalert2'
 
 const store = useWorkoutStore()
 const authStore = useAuthStore()
 const userStore = useUserStore()
 const router = useRouter()
-const msg = ref({ text: '', type: '' })
 
 const weekInput = ref(store.currentWeek)
 const themeInput = ref(store.themeMode || 'system')
@@ -33,28 +34,27 @@ const totalWeeks = computed(() => {
   store.dbUpdateTrigger; // force reactivity
   return store.totalWeeks;
 })
-function showMsg(text: string, type: string) {
-  msg.value = { text, type }
-  setTimeout(() => { msg.value = { text: '', type: '' } }, 3500)
-}
 
 function saveWeek() {
   if (weekInput.value >= 1 && weekInput.value <= totalWeeks.value) {
     store.setWeek(weekInput.value)
-    showMsg('✓ Semana actualizada a ' + weekInput.value, 'ok')
+    haptic('success')
+    showToast('Semana actualizada a ' + weekInput.value, 'success')
   } else {
-    showMsg('La semana debe estar entre 1 y ' + totalWeeks.value, 'err')
+    haptic('warning')
+    showToast('La semana debe estar entre 1 y ' + totalWeeks.value, 'error')
   }
 }
 
 function saveTheme() {
   store.setThemeMode(themeInput.value)
-  showMsg('✓ Tema actualizado', 'ok')
+  haptic('light')
+  showToast('Tema actualizado', 'success')
 }
 
 function saveProfile() {
   userStore.saveProfile()
-  showMsg('✓ Perfil actualizado', 'ok')
+  showToast('Perfil actualizado', 'success')
 }
 
 function toggleModality(id: string) {
@@ -64,13 +64,15 @@ function toggleModality(id: string) {
   } else {
     userStore.profile.modalities.splice(idx, 1)
   }
+  haptic('light')
   userStore.saveProfile()
 }
 
 function registerWeight() {
   if (!newWeight.value || newWeight.value <= 0) return
   userStore.addWeightEntry(newWeight.value)
-  showMsg('✓ Peso registrado: ' + newWeight.value + 'kg', 'ok')
+  haptic('success')
+  showToast('Peso registrado: ' + newWeight.value + 'kg', 'success')
 }
 
 async function resetAll() {
@@ -133,10 +135,8 @@ async function handleSignOut() {
     </div>
     
     <div style="padding:12px 16px">
-      <div v-if="msg.text" :class="['msg', msg.type]">{{ msg.text }}</div>
-
       <div class="cfg-lbl">Cuenta</div>
-      <div style="background:var(--bg2); padding: 16px; border-radius: var(--r2); border: 1px solid var(--border); margin-bottom: 20px;">
+      <div style="background:var(--bg2); padding: 16px; border-radius: var(--r2); border: 1px solid var(--card-border); box-shadow: var(--card-shadow); margin-bottom: 20px;">
         <div style="font-size: 14px; margin-bottom: 12px; word-break: break-all;">
           Sesión iniciada como:<br><strong style="color:var(--accent2)">{{ authStore.user?.email }}</strong>
         </div>
@@ -281,16 +281,14 @@ textarea:focus { outline: none; border-color: var(--accent); }
 .input-group label { font-size: 12px; color: var(--text2); font-weight: 500; }
 input[type=number], .custom-select { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 16px; padding: 12px; width: 100%; box-sizing: border-box; appearance: none; }
 input:focus, .custom-select:focus { outline: none; border-color: var(--accent); }
-.btn { display: block; width: 100%; padding: 14px; border-radius: var(--r2); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: all .2s; text-align: center; }
+.btn { display: block; width: 100%; padding: 14px; border-radius: var(--r2); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform .1s, opacity .2s; text-align: center; }
+.btn:active { transform: scale(0.97); }
 .btn-primary { background: var(--accent); color: var(--accent-text); }
 .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border2); }
 .btn-danger { background: var(--danger-bg); color: var(--red); border: 1px solid var(--danger-border); }
-.msg { padding: 10px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 10px; }
-.msg.ok { background: var(--success-bg); color: var(--green); border: 1px solid var(--success-border); }
-.msg.err { background: var(--danger-bg); color: var(--red); border: 1px solid var(--danger-border); }
 
 .separator { height: 1px; background: var(--border); margin: 30px 0; }
-.profile-card, .weight-card { background: var(--bg2); padding: 16px; border-radius: var(--r2); border: 1px solid var(--border); margin-bottom: 20px; }
+.profile-card, .weight-card { background: var(--bg2); padding: 16px; border-radius: var(--r2); border: 1px solid var(--card-border); box-shadow: var(--card-shadow); margin-bottom: 20px; }
 .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .modalities-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 12px; }
 .modality-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg3); border-radius: 10px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; position: relative; }

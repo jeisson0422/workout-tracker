@@ -71,9 +71,10 @@ function getGroupLabel(type: string) {
 </template>
 
 <style scoped>
-.day-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); margin: 0 16px 10px; overflow: hidden; }
-.day-header { display: flex; align-items: center; padding: 14px 16px; gap: 10px; cursor: pointer; user-select: none; }
-.day-num { width: 32px; height: 32px; border-radius: 8px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.day-card { background: var(--bg2); border: 1px solid var(--card-border); box-shadow: var(--card-shadow); border-radius: var(--r); margin: 0 16px 10px; overflow: hidden; }
+.day-header { display: flex; align-items: center; padding: 14px 16px; gap: 10px; cursor: pointer; user-select: none; transition: background .15s; }
+.day-header:active { background: var(--bg3); }
+.day-num { width: 32px; height: 32px; border-radius: 9px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; }
 .day-info { flex: 1; }
 .day-name { font-size: 15px; font-weight: 600; }
 .day-count { font-size: 12px; color: var(--text2); margin-top: 1px; }

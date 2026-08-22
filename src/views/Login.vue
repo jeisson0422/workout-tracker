@@ -128,8 +128,9 @@ async function handleSubmit() {
 .login-form {
   background: var(--bg2, #12121a);
   padding: 24px;
-  border-radius: var(--r, 14px);
-  border: 1px solid var(--border, #2a2a44);
+  border-radius: var(--r, 20px);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
 }
 
 .input-group {
@@ -150,7 +151,7 @@ async function handleSubmit() {
 input {
   background: var(--bg3, #1a1a26);
   border: 1px solid var(--border, #2a2a44);
-  border-radius: 8px;
+  border-radius: var(--r3, 10px);
   color: var(--text, #f0f0ff);
   font-size: 16px;
   padding: 12px 16px;
@@ -170,13 +171,16 @@ input:disabled {
   display: block;
   width: 100%;
   padding: 14px;
-  border-radius: 10px;
+  border-radius: var(--r3, 10px);
   border: none;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: all .2s;
+  transition: transform .1s, opacity .2s;
   text-align: center;
+}
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .btn-primary {

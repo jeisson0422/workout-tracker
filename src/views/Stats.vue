@@ -305,23 +305,23 @@ function prevDiff(current: number, prev: number | null): string {
 
 <style scoped>
 .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px 10px; margin-top: 12px; }
-.kpi-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); padding: 14px 12px; text-align: center; }
+.kpi-card { background: var(--bg2); border: 1px solid var(--card-border); box-shadow: var(--card-shadow); border-radius: var(--r2); padding: 14px 12px; text-align: center; }
 .kpi-val { font-size: 24px; font-weight: 700; color: var(--accent2); line-height: 1.1; }
 .kpi-lbl { font-size: 11px; color: var(--text2); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 
-.card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; }
+.card { background: var(--bg2); border: 1px solid var(--card-border); box-shadow: var(--card-shadow); border-radius: var(--r); padding: 16px; }
 .card-title { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; }
 .card-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px; }
 .card-title-row .card-title { margin-bottom: 0; }
 .empty { color: var(--text2); font-size: 13px; padding: 8px 0; text-align: center; }
 
 .day-filter {
-  background: var(--bg); color: var(--text); border: 1px solid var(--border);
-  border-radius: var(--r1); font-size: 12px; padding: 5px 8px; font-weight: 600;
+  background: var(--bg3); color: var(--text); border: 1px solid var(--border);
+  border-radius: 999px; font-size: 12px; padding: 5px 10px; font-weight: 600;
   max-width: 160px; outline: none;
 }
 
-.list-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); gap: 12px; }
+.list-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 0.5px solid var(--border); gap: 12px; }
 .list-item:last-child { border-bottom: none; padding-bottom: 0; }
 .list-info { flex: 1; min-width: 0; }
 .list-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

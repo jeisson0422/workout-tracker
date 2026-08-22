@@ -22,10 +22,10 @@ export const getSwalSettings = (type: 'default' | 'danger' | 'success' | 'warnin
     cancelButtonColor: grayColor,
     confirmButtonText: 'Aceptar',
     cancelButtonText: 'Cancelar',
-    padding: '1.5rem',
-    borderRadius: '16px',
+    buttonsStyling: false,
+    reverseButtons: true,
     customClass: {
-      popup: 'swal-custom-popup',
+      popup: type === 'danger' ? 'swal-custom-popup danger-popup' : 'swal-custom-popup',
       confirmButton: 'swal-confirm-btn',
       cancelButton: 'swal-cancel-btn'
     }
