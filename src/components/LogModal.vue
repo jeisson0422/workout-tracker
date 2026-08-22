@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { CheckIcon } from 'lucide-vue-next'
+import { CheckIcon, ChevronLeftIcon } from 'lucide-vue-next'
 import { useWorkoutStore } from '../stores/workout'
 import { usePlansStore } from '../stores/plans'
 import { dbService } from '../services/localDb'
@@ -218,15 +218,19 @@ function formatRest(sec: number) {
 </script>
 
 <template>
-  <div v-if="isOpen" class="overlay open">
-    <div class="modal" @click.stop>
-      <div class="modal-handle"></div>
-      <div class="modal-title">{{ data?.name }}</div>
-      <div class="modal-sub">
-        <span v-if="data?.exType === 'cardio'">{{ data?.duration_min }} min · {{ data?.incline_pct }}% · {{ data?.speed_kmh }} km/h</span>
-        <span v-else>{{ data?.sets }} series · RPE meta: {{ store.getWeekInfo(store.currentWeek).rpe_target || '?' }}</span>
+  <div v-if="isOpen" class="log-page">
+    <div class="log-header">
+      <button type="button" class="log-back" @click="emit('close')"><ChevronLeftIcon /></button>
+      <div class="log-header-text">
+        <div class="log-title">{{ data?.name }}</div>
+        <div class="log-sub">
+          <span v-if="data?.exType === 'cardio'">{{ data?.duration_min }} min · {{ data?.incline_pct }}% · {{ data?.speed_kmh }} km/h</span>
+          <span v-else>{{ data?.sets }} series · RPE meta: {{ store.getWeekInfo(store.currentWeek).rpe_target || '?' }}</span>
+        </div>
       </div>
+    </div>
 
+    <div class="log-body">
       <div v-if="data?.exType !== 'cardio'">
         <div class="input-row">
           <div class="input-group"><label>Series realizadas</label><input type="number" v-model="mSets" min="1" max="10"></div>
@@ -316,7 +320,9 @@ function formatRest(sec: number) {
       <div v-if="data?.restSec > 0" class="modal-rest">
         ⏱ Descanso recomendado: {{ formatRest(data.restSec) }}
       </div>
+    </div>
 
+    <div class="log-footer">
       <button class="btn btn-primary" @click="saveLog">✓ Registrar</button>
       <button class="btn btn-secondary" style="margin:0" @click="emit('close')">Cancelar</button>
     </div>
@@ -324,13 +330,61 @@ function formatRest(sec: number) {
 </template>
 
 <style scoped>
-.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 200; display: flex; align-items: flex-end; backdrop-filter: blur(4px); animation: fade-in .2s ease-out; }
-.modal { background: var(--bg2); border-radius: var(--r) var(--r) 0 0; padding: 8px 20px 24px; width: 100%; max-width: 430px; margin: 0 auto; max-height: 85vh; overflow-y: auto; padding-bottom: calc(24px + env(safe-area-inset-bottom,0px)); box-shadow: 0 -8px 40px rgba(0,0,0,.2); animation: sheet-up .28s cubic-bezier(.32,.72,0,1); }
-.modal-handle { width: 36px; height: 5px; border-radius: 3px; background: var(--border2); margin: 0 auto 16px; opacity: .6; }
-.modal-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; text-transform: capitalize; }
-@keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
-@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-.modal-sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
+.log-page {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  animation: slide-up .28s cubic-bezier(.32,.72,0,1);
+}
+@keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.log-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  padding: 12px 16px;
+  padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  border-bottom: 0.5px solid var(--border);
+  background: var(--bg);
+}
+.log-back {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg3);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: transform .1s;
+}
+.log-back:active { transform: scale(0.9); }
+.log-back :deep(svg) { width: 20px; height: 20px; }
+.log-header-text { min-width: 0; flex: 1; }
+.log-title { font-size: 17px; font-weight: 700; text-transform: capitalize; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.log-sub { font-size: 12px; color: var(--text2); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.log-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.log-footer {
+  flex-shrink: 0;
+  padding: 12px 20px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  border-top: 0.5px solid var(--border);
+  background: var(--bg);
+}
+
 .input-row { display: flex; gap: 10px; margin-bottom: 12px; }
 .input-group { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .input-group-narrow { flex: 0 0 64px; }

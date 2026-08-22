@@ -1,5 +1,6 @@
 import { reactive } from 'vue'
 import { haptic } from './haptics'
+import { playCountdownBeep, playRestDoneChime } from './sound'
 
 interface RestTimerState {
   active: boolean
@@ -57,10 +58,16 @@ function clearAutoDismiss() {
 function tick() {
   if (!restTimerState.active) return
   const remaining = Math.max(0, Math.round((restTimerState.endsAt - Date.now()) / 1000))
+  if (remaining !== restTimerState.remainingSec && !restTimerState.finished) {
+    if (remaining > 0 && remaining <= 5) {
+      playCountdownBeep()
+    }
+  }
   restTimerState.remainingSec = remaining
   if (remaining <= 0 && !restTimerState.finished) {
     restTimerState.finished = true
     haptic('success')
+    playRestDoneChime()
     stopInterval()
     clearAutoDismiss()
     autoDismissId = setTimeout(dismissRestTimer, 6000)

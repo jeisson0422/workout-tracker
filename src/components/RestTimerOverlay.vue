@@ -73,9 +73,10 @@ function dismiss() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  overflow-y: auto;
   padding: 24px;
   padding-top: calc(24px + env(safe-area-inset-top, 0px));
-  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
 }
 .rest-fs::before {
   content: '';
@@ -109,11 +110,12 @@ function dismiss() {
   align-items: center;
   max-width: 380px;
   width: 100%;
+  margin: auto 0;
 }
 .rest-fs-label { font-size: 15px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; }
 .rest-fs-sub { font-size: 20px; font-weight: 700; color: var(--text); text-transform: capitalize; margin-top: 4px; text-align: center; }
 
-.rest-fs-ring { position: relative; width: 260px; height: 260px; margin: 36px 0; }
+.rest-fs-ring { position: relative; width: clamp(180px, 45vh, 260px); height: clamp(180px, 45vh, 260px); margin: clamp(16px, 4vh, 36px) 0; flex-shrink: 0; }
 .ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
 .ring-bg { fill: none; stroke: var(--bg3); stroke-width: 14; }
 .ring-progress {
@@ -129,7 +131,7 @@ function dismiss() {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 56px;
+  font-size: clamp(38px, 11vh, 56px);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: var(--text);
@@ -144,9 +146,9 @@ function dismiss() {
   color: var(--green);
   animation: pop-in .35s cubic-bezier(.32,1.5,.5,1);
 }
-.rest-fs-check :deep(svg) { width: 110px; height: 110px; stroke-width: 1.5; }
+.rest-fs-check :deep(svg) { width: clamp(70px, 20vh, 110px); height: clamp(70px, 20vh, 110px); stroke-width: 1.5; }
 
-.rest-fs-actions { display: flex; gap: 14px; margin-bottom: 28px; }
+.rest-fs-actions { display: flex; gap: 14px; margin-bottom: clamp(16px, 3vh, 28px); }
 .rest-fs-adjust {
   display: flex;
   align-items: center;
