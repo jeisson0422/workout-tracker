@@ -6,6 +6,7 @@ import { usePlansStore } from '../stores/plans'
 import { dbService } from '../services/localDb'
 import { haptic } from '../services/haptics'
 import { startRestTimer, dismissRestTimer } from '../services/restTimer'
+import { showToast } from '../services/toast'
 
 const props = defineProps<{
   isOpen: boolean
@@ -165,6 +166,23 @@ function getWeightKg() {
   return mWeight.value
 }
 
+function checkAndCelebratePR(exerciseName: string, newMaxWeight: number, excludeLogSyncId: string) {
+  if (!newMaxWeight) return
+  const planId = plansStore.activePlan?.id
+  const r = dbService.q(`
+    SELECT MAX(best_kg) FROM (
+      SELECT COALESCE((SELECT MAX(s.weight_kg) FROM workout_log_sets s WHERE s.log_sync_id = wl.sync_id AND s.deleted = 0), wl.weight_kg) as best_kg
+      FROM workout_log wl
+      WHERE wl.exercise = ? AND wl.plan_id = ? AND wl.weight_kg > 0 AND wl.sync_id != ?
+    )
+  `, [exerciseName, planId, excludeLogSyncId])
+  const prevMax = r.length && r[0].values.length ? r[0].values[0][0] : null
+  if (prevMax != null && newMaxWeight > Number(prevMax)) {
+    haptic('success')
+    showToast(`🏆 ¡Nuevo récord en ${exerciseName}! ${newMaxWeight}kg (antes ${prevMax}kg)`, 'success', 3500)
+  }
+}
+
 function saveLog() {
   const d = props.data
   const isCardio = d.exType === 'cardio'
@@ -221,6 +239,11 @@ function saveLog() {
         [logSyncId, store.currentWeek, d.dayLabel, d.name, mSets.value, mReps.value, weight, mRpe.value, logNotes, planId])
     }
     dbService.saveLogSets(logSyncId, setRecords.value)
+
+    if (!isIsometric) {
+      const newMaxWeight = setRecords.value.length > 0 ? Math.max(weight, ...setRecords.value.map(s => s.weight)) : weight
+      checkAndCelebratePR(d.name, newMaxWeight, logSyncId)
+    }
   }
 
   store.loggedThisSession.add(d.logId)
