@@ -176,6 +176,29 @@ export const usePlansStore = defineStore('plans', {
       this.loadData();
     },
 
+    duplicatePlan(planId: string): string {
+      const source = this.plans.find(p => p.id === planId);
+      if (!source) return '';
+
+      const newPlanId = crypto.randomUUID();
+      dbService.run("INSERT INTO plans (id, name, is_active, synced, deleted) VALUES (?, ?, 0, 0, 0)", [newPlanId, source.name + ' (copia)']);
+
+      const days = this.trainingDays.filter(d => d.plan_id === planId && !d.deleted).sort((a, b) => a.day_number - b.day_number);
+      for (const day of days) {
+        const newDayId = this.addDay(newPlanId, day.session_name);
+        for (const ex of this.exercisesForDay(day.id)) {
+          this.addExercise(newDayId, ex);
+        }
+      }
+
+      for (const prog of this.progressionsForPlan(planId)) {
+        this.addProgression(newPlanId, prog);
+      }
+
+      this.loadData();
+      return newPlanId;
+    },
+
     importFullPlan(data: any): string {
       // 1. Validation
       if (!data || typeof data !== 'object') throw new Error('Cuerpo de JSON inválido.');
@@ -263,6 +286,31 @@ export const usePlansStore = defineStore('plans', {
       this.loadData();
     },
 
+    moveDay(planId: string, dayId: string, direction: 'up' | 'down') {
+      const days = this.trainingDays.filter(d => d.plan_id === planId && !d.deleted).sort((a, b) => a.day_number - b.day_number);
+      const idx = days.findIndex(d => d.id === dayId);
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (idx === -1 || swapIdx < 0 || swapIdx >= days.length) return;
+
+      const a = days[idx], b = days[swapIdx];
+      dbService.run("UPDATE training_days SET day_number = ?, synced = 0 WHERE id = ?", [b.day_number, a.id]);
+      dbService.run("UPDATE training_days SET day_number = ?, synced = 0 WHERE id = ?", [a.day_number, b.id]);
+      this.dbUpdateTrigger++;
+      this.loadData();
+    },
+
+    duplicateDay(dayId: string): string {
+      const day = this.trainingDays.find(d => d.id === dayId && !d.deleted);
+      if (!day) return '';
+
+      const newDayId = this.addDay(day.plan_id, day.session_name + ' (copia)');
+      for (const ex of this.exercisesForDay(dayId)) {
+        this.addExercise(newDayId, ex);
+      }
+      this.loadData();
+      return newDayId;
+    },
+
     addExercise(dayId: string, ex: Partial<PlanExercise>) {
       const id = crypto.randomUUID();
       const dayExercises = this.planExercises.filter(e => e.training_day_id === dayId && !e.deleted);
@@ -323,6 +371,25 @@ export const usePlansStore = defineStore('plans', {
       dbService.run("UPDATE plan_exercises SET deleted = 1, synced = 0 WHERE id = ?", [id]);
       this.dbUpdateTrigger++;
       this.loadData();
+    },
+
+    moveExercise(dayId: string, exId: string, direction: 'up' | 'down') {
+      const exs = this.exercisesForDay(dayId);
+      const idx = exs.findIndex(e => e.id === exId);
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (idx === -1 || swapIdx < 0 || swapIdx >= exs.length) return;
+
+      const a = exs[idx], b = exs[swapIdx];
+      dbService.run("UPDATE plan_exercises SET order_index = ?, synced = 0 WHERE id = ?", [b.order_index, a.id]);
+      dbService.run("UPDATE plan_exercises SET order_index = ?, synced = 0 WHERE id = ?", [a.order_index, b.id]);
+      this.dbUpdateTrigger++;
+      this.loadData();
+    },
+
+    duplicateExercise(exId: string): string {
+      const ex = this.planExercises.find(e => e.id === exId && !e.deleted);
+      if (!ex) return '';
+      return this.addExercise(ex.training_day_id, { ...ex, exercise_name: ex.exercise_name + ' (copia)' });
     },
 
     addProgression(planId: string, prog: Partial<PlanProgression>) {

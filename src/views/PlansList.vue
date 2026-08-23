@@ -61,6 +61,10 @@ async function copyAiPrompt() {
   }
 }
 
+async function duplicatePlan(id: string) {
+  plansStore.duplicatePlan(id)
+}
+
 async function handleActivate(id: string) {
   const { errors, warnings } = plansStore.validatePlan(id)
 
@@ -134,6 +138,7 @@ function importPlan() {
         <div class="plan-actions">
           <button class="btn btn-secondary btn-sm" v-if="!plan.is_active" @click="handleActivate(plan.id)">Activar</button>
           <button class="btn btn-secondary btn-sm" @click="router.push(`/plans/${plan.id}`)">Editar</button>
+          <button class="btn btn-secondary btn-sm" @click="duplicatePlan(plan.id)">Duplicar</button>
           <button class="btn btn-danger btn-sm" @click="deletePlan(plan.id)">Borrar</button>
         </div>
       </div>

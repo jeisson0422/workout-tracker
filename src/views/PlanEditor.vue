@@ -49,6 +49,18 @@ async function addDay() {
   }
 }
 
+function moveDayUp(dayId: string) {
+  plansStore.moveDay(planId, dayId, 'up')
+}
+
+function moveDayDown(dayId: string) {
+  plansStore.moveDay(planId, dayId, 'down')
+}
+
+function handleDuplicateDay(dayId: string) {
+  plansStore.duplicateDay(dayId)
+}
+
 async function deleteDay(id: string) {
   const result = await Swal.fire({
     ...getSwalSettings('danger'),
@@ -132,6 +144,23 @@ function saveExercise() {
     plansStore.addExercise(targetDayId.value, newEx.value)
   }
   showExModal.value = false
+}
+
+function moveExerciseUp(dayId: string, exId: string) {
+  plansStore.moveExercise(dayId, exId, 'up')
+}
+
+function moveExerciseDown(dayId: string, exId: string) {
+  plansStore.moveExercise(dayId, exId, 'down')
+}
+
+function handleDuplicateExercise(exId: string) {
+  plansStore.duplicateExercise(exId)
+  showExModal.value = false
+}
+
+function totalSets(dayId: string): number {
+  return plansStore.exercisesForDay(dayId).reduce((sum, ex) => sum + (ex.sets || 0), 0)
 }
 
 async function deleteExercise(id: string) {
@@ -235,11 +264,31 @@ async function deleteProgression(id: string) {
 
     <!-- Pestaña: Ejercicios -->
     <div style="padding:12px 16px" v-if="activeTab === 'exercises'">
-      <div v-for="day in days" :key="day.id" class="day-card">
+      <div class="week-overview" v-if="days.length > 0">
+        <div class="week-overview-title">Vista Semanal</div>
+        <div class="week-overview-grid">
+          <div v-for="day in days" :key="'ov-'+day.id" class="week-overview-card">
+            <div class="wo-day">D{{ day.day_number }}</div>
+            <div class="wo-name">{{ day.session_name }}</div>
+            <div class="wo-stats">{{ plansStore.exercisesForDay(day.id).length }} ej. · {{ totalSets(day.id) }} sets</div>
+          </div>
+        </div>
+      </div>
+
+      <div v-for="(day, di) in days" :key="day.id" class="day-card">
         <div class="day-header" @click="toggleDay(day.id)">
           <div style="font-weight: 700; font-size: 16px;">Día {{ day.day_number }}: {{ day.session_name }}</div>
-          <div style="color: var(--text2); font-size: 12px; display:flex; gap: 10px; align-items: center;">
-            <span>{{ plansStore.exercisesForDay(day.id).length }} ej.</span>
+          <div style="color: var(--text2); font-size: 12px; display:flex; gap: 6px; align-items: center;">
+            <span style="margin-right: 4px;">{{ plansStore.exercisesForDay(day.id).length }} ej.</span>
+            <button class="btn-icon" :disabled="di === 0" @click.stop="moveDayUp(day.id)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+            </button>
+            <button class="btn-icon" :disabled="di === days.length - 1" @click.stop="moveDayDown(day.id)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <button class="btn-icon" @click.stop="handleDuplicateDay(day.id)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
             <button class="btn-icon" @click.stop="deleteDay(day.id)">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
             </button>
@@ -247,11 +296,11 @@ async function deleteProgression(id: string) {
         </div>
 
         <div :id="'day-content-' + day.id" class="day-content" style="display: none;">
-          <div v-for="ex in plansStore.exercisesForDay(day.id)" :key="ex.id" class="ex-row" :style="getGroupStyle(ex.group_type)" @click="openEditExercise(ex.id, ex)">
-            <div style="margin-right: 12px; display:flex; align-items:center;">
+          <div v-for="(ex, exi) in plansStore.exercisesForDay(day.id)" :key="ex.id" class="ex-row" :style="getGroupStyle(ex.group_type)">
+            <div style="margin-right: 12px; display:flex; align-items:center;" @click="openEditExercise(ex.id, ex)">
               <ExerciseIcon :name="ex.exercise_name" :type="ex.exercise_type" />
             </div>
-            <div style="flex:1">
+            <div style="flex:1" @click="openEditExercise(ex.id, ex)">
               <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
                 {{ ex.exercise_name }}
                 <span v-if="ex.group_type" class="group-badge" :class="'badge-' + ex.group_type">{{ ex.group_type.replace('_', ' ') }}</span>
@@ -262,6 +311,14 @@ async function deleteProgression(id: string) {
                 <span v-else-if="ex.exercise_type === 'isometric'">{{ ex.sets }} sets x {{ ex.reps || 0 }} reps x {{ ex.duration_sec }}s</span>
                 • {{ ex.rest_seconds }}s rest
               </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap: 2px;">
+              <button class="btn-icon" :disabled="exi === 0" @click.stop="moveExerciseUp(day.id, ex.id)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+              </button>
+              <button class="btn-icon" :disabled="exi === plansStore.exercisesForDay(day.id).length - 1" @click.stop="moveExerciseDown(day.id, ex.id)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </button>
             </div>
           </div>
           <button class="btn btn-secondary btn-sm" style="width:100%; margin-top: 12px;" @click="openAddExerciseFlow(day.id)">+ Añadir Ejercicio</button>
@@ -428,6 +485,7 @@ async function deleteProgression(id: string) {
           <button class="btn btn-secondary" @click="showExModal = false">Cancelar</button>
           <button class="btn btn-primary" @click="saveExercise">Guardar</button>
         </div>
+        <button v-if="editingExId" class="btn btn-secondary" style="margin-top: 10px;" @click="handleDuplicateExercise(editingExId)">Duplicar Ejercicio</button>
         <button v-if="editingExId" class="btn btn-danger" style="margin-top: 10px;" @click="deleteExercise(editingExId)">Borrar Ejercicio</button>
       </div>
     </div>
@@ -502,6 +560,14 @@ async function deleteProgression(id: string) {
 .btn-danger { background: var(--danger-bg); color: var(--red); border: 1px solid var(--danger-border); }
 .btn-sm { padding: 8px 12px; font-size: 13px; border-radius: 999px; }
 .btn-icon { background: transparent; border: none; color: var(--text2); cursor: pointer; padding: 4px; display: flex; }
+.btn-icon:disabled { opacity: .25; pointer-events: none; }
+.week-overview { margin-bottom: 16px; }
+.week-overview-title { font-size: 12px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+.week-overview-grid { display: flex; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+.week-overview-card { background: var(--bg2); border: 1px solid var(--card-border); border-radius: var(--r2); padding: 10px 12px; min-width: 110px; flex-shrink: 0; }
+.wo-day { font-size: 11px; font-weight: 700; color: var(--accent2); }
+.wo-name { font-size: 13px; font-weight: 600; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wo-stats { font-size: 11px; color: var(--text2); margin-top: 4px; }
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.4); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; z-index: 1000; animation: fade-in .2s ease-out; }
 .modal-content { background: var(--bg2); padding: 8px 20px 24px; border-radius: var(--r) var(--r) 0 0; width: 100%; max-width: 430px; box-shadow: 0 -8px 40px rgba(0,0,0,.2); padding-bottom: calc(24px + env(safe-area-inset-bottom,0px)); animation: sheet-up .28s cubic-bezier(.32,.72,0,1); }
 .modal-content::before { content: ''; display: block; width: 36px; height: 5px; border-radius: 3px; background: var(--border2); margin: 0 auto 16px; opacity: .6; }
