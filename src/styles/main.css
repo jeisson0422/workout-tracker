@@ -106,8 +106,10 @@ body {
   margin: 0 !important;
   padding: 11px 0 !important;
 }
-.swal-confirm-btn { font-weight: 700 !important; }
-.swal-cancel-btn { border-top: 1px solid var(--border) !important; color: var(--text2) !important; border-radius: 0 !important; }
+/* Swal is always called with reverseButtons: true, so Cancel renders first
+   and Confirm renders second — the divider belongs on Confirm, not Cancel. */
+.swal-confirm-btn { font-weight: 700 !important; border-top: 1px solid var(--border) !important; border-radius: 0 !important; }
+.swal-cancel-btn { color: var(--text2) !important; }
 .swal-custom-popup.danger-popup .swal-confirm-btn { color: var(--red) !important; }
 
 /* Translucent glass surface (tab bar, sheets, sticky headers) */
