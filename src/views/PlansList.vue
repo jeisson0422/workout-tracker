@@ -45,19 +45,20 @@ async function deletePlan(id: string) {
 async function copyAiPrompt() {
   await userStore.loadProfile()
   const prompt = generateMasterPrompt()
-  
+
   try {
     await navigator.clipboard.writeText(prompt)
+    window.open('https://claude.ai/new', '_blank')
     Swal.fire({
       ...getSwalSettings('success'),
       title: '¡Prompt Copiado!',
-      text: 'Pégalo en Gemini para generar tu plan.',
+      text: 'Pégalo en Claude para generar tu plan.',
       icon: 'success',
       timer: 2000
     })
     showAiModal.value = false
   } catch (err) {
-    Swal.fire('Error', 'No se pudo copiar al portapapeles', 'error')
+    Swal.fire({ ...getSwalSettings('danger'), title: 'Error', text: 'No se pudo copiar al portapapeles', icon: 'error' })
   }
 }
 
@@ -94,13 +95,37 @@ async function handleActivate(id: string) {
   workoutStore.loadConfig()
 }
 
-function importPlan() {
+function cleanJsonInput(raw: string): string {
+  return raw.trim().replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '').trim()
+}
+
+async function pasteFromClipboard() {
   try {
-    const data = JSON.parse(aiJsonInput.value)
+    aiJsonInput.value = await navigator.clipboard.readText()
+  } catch (err) {
+    Swal.fire({ ...getSwalSettings('danger'), title: 'Error', text: 'No se pudo leer el portapapeles. Pégalo manualmente.', icon: 'error' })
+  }
+}
+
+function importPlan() {
+  let data: any
+  try {
+    data = JSON.parse(cleanJsonInput(aiJsonInput.value))
+  } catch (err: any) {
+    Swal.fire({
+      ...getSwalSettings('danger'),
+      title: 'JSON inválido',
+      text: 'El texto pegado no es JSON válido. Revisa que copiaste la respuesta completa, sin texto extra antes o después.',
+      icon: 'error'
+    })
+    return
+  }
+
+  try {
     const id = plansStore.importFullPlan(data)
     aiJsonInput.value = ''
     showImportModal.value = false
-    Swal.fire('¡Éxito!', 'Plan importado correctamente', 'success')
+    Swal.fire({ ...getSwalSettings('success'), title: '¡Éxito!', text: 'Plan importado correctamente', icon: 'success' })
     router.push(`/plans/${id}`)
   } catch (err: any) {
     Swal.fire({
@@ -145,7 +170,7 @@ function importPlan() {
 
       <div class="ai-box">
         <div class="ai-box-title">🤖 Generación con IA</div>
-        <div class="ai-box-desc">Usa el poder de Gemini para crear planes basados en tu perfil y equipo.</div>
+        <div class="ai-box-desc">Usa el poder de Claude para crear planes basados en tu perfil y equipo.</div>
         <div style="display:flex;gap:10px">
           <button class="btn btn-ai" style="flex:1" @click="showAiModal = true">Obtener Prompt</button>
           <button class="btn btn-ai-alt" style="flex:1" @click="showImportModal = true">Importar JSON</button>
@@ -158,16 +183,16 @@ function importPlan() {
     <!-- Modal AI Prompt -->
     <div v-if="showAiModal" class="modal-overlay">
       <div class="modal-content ai-modal">
-        <h3>Prompt para Gemini</h3>
+        <h3>Prompt para Claude</h3>
         <p style="font-size: 13px; color: var(--text2); margin-bottom: 15px;">
-          Copia este prompt y pégalo en Gemini. La IA generará un plan basado en tu perfil (peso, equipo, metas).
+          Copia este prompt y pégalo en Claude. La IA generará un plan basado en tu perfil (peso, equipo, metas).
         </p>
         <div class="prompt-preview">
           {{ generateMasterPrompt() }}
         </div>
         <div style="display:flex;gap:10px;margin-top:20px;">
           <button class="btn btn-secondary" @click="showAiModal = false">Cerrar</button>
-          <button class="btn btn-ai" @click="copyAiPrompt">Copiar y Abrir Gemini</button>
+          <button class="btn btn-ai" @click="copyAiPrompt">Copiar y Abrir Claude</button>
         </div>
       </div>
     </div>
@@ -176,7 +201,8 @@ function importPlan() {
     <div v-if="showImportModal" class="modal-overlay">
       <div class="modal-content">
         <h3>Importar Plan de IA</h3>
-        <p style="font-size: 13px; color: var(--text2); margin-bottom: 10px;">Pega aquí el código JSON que generó Gemini:</p>
+        <p style="font-size: 13px; color: var(--text2); margin-bottom: 10px;">Pega aquí el código JSON que generó Claude:</p>
+        <button class="btn btn-secondary btn-sm" style="margin-bottom: 10px;" @click="pasteFromClipboard">📋 Pegar desde portapapeles</button>
         <textarea v-model="aiJsonInput" placeholder='{ "name": "Mi Plan...", "training_days": [...] }' class="import-area"></textarea>
         <div style="display:flex;gap:10px;margin-top:20px;">
           <button class="btn btn-secondary" @click="showImportModal = false">Cancelar</button>
