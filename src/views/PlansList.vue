@@ -61,7 +61,31 @@ async function copyAiPrompt() {
   }
 }
 
-function handleActivate(id: string) {
+async function handleActivate(id: string) {
+  const { errors, warnings } = plansStore.validatePlan(id)
+
+  if (errors.length > 0) {
+    await Swal.fire({
+      ...getSwalSettings('danger'),
+      title: 'No se puede activar',
+      html: errors.map(e => `• ${e}`).join('<br>'),
+      icon: 'error'
+    })
+    return
+  }
+
+  if (warnings.length > 0) {
+    const result = await Swal.fire({
+      ...getSwalSettings('warning'),
+      title: '¿Activar de todos modos?',
+      html: warnings.map(w => `• ${w}`).join('<br>'),
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Activar de todos modos'
+    })
+    if (!result.isConfirmed) return
+  }
+
   plansStore.setActivePlan(id)
   workoutStore.loadConfig()
 }

@@ -85,6 +85,30 @@ export const usePlansStore = defineStore('plans', {
       return state.planProgressions
         .filter(p => p.plan_id === planId && !p.deleted)
         .sort((a, b) => a.week_number - b.week_number);
+    },
+    validatePlan: (state) => (planId: string) => {
+      const days = state.trainingDays.filter(d => d.plan_id === planId && !d.deleted);
+      const errors: string[] = [];
+      const warnings: string[] = [];
+
+      if (days.length === 0) {
+        errors.push('El plan no tiene ningún día de entrenamiento.');
+      } else {
+        const emptyDays = days.filter(d => !state.planExercises.some(e => e.training_day_id === d.id && !e.deleted));
+        if (emptyDays.length > 0) {
+          const names = emptyDays.map(d => d.session_name).join(', ');
+          errors.push(emptyDays.length === 1
+            ? `El día "${names}" no tiene ejercicios.`
+            : `Los días "${names}" no tienen ejercicios.`);
+        }
+      }
+
+      const progs = state.planProgressions.filter(p => p.plan_id === planId && !p.deleted);
+      if (progs.length === 0) {
+        warnings.push('El plan no tiene progresión semanal definida (fase, RPE objetivo, % de peso). Se usarán valores genéricos y las sugerencias de peso no serán precisas.');
+      }
+
+      return { errors, warnings };
     }
   },
   actions: {
