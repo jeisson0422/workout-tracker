@@ -3,6 +3,8 @@ import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWorkoutStore } from '../stores/workout'
 import { useUserStore } from '../stores/user'
+import { usePlansStore } from '../stores/plans'
+import { dbService } from '../services/localDb'
 import { getSwalSettings } from '../services/swalHelper'
 import { haptic } from '../services/haptics'
 import Swal from 'sweetalert2'
@@ -10,9 +12,37 @@ import Swal from 'sweetalert2'
 const router = useRouter()
 const store = useWorkoutStore()
 const userStore = useUserStore()
+const plansStore = usePlansStore()
 
 onMounted(async () => {
   store.dbUpdateTrigger; // forzar reactividad
+})
+
+const streakWeeks = computed(() => {
+  store.dbUpdateTrigger;
+  const planId = plansStore.activePlan?.id;
+  const targetDays = userStore.profile.days_per_week || 0;
+  const current = store.currentWeek;
+  if (!planId || !targetDays || current <= 1) return 0;
+
+  const r = dbService.q(`
+    SELECT week, COUNT(DISTINCT day_label)
+    FROM workout_log
+    WHERE exercise = '_day_complete' AND plan_id = ? AND week < ?
+    GROUP BY week
+  `, [planId, current]);
+
+  const completedMap = new Map<number, number>();
+  if (r.length && r[0].values) {
+    for (const row of r[0].values as any[]) completedMap.set(Number(row[0]), Number(row[1]));
+  }
+
+  let streak = 0;
+  for (let w = current - 1; w >= 1; w--) {
+    if ((completedMap.get(w) || 0) >= targetDays) streak++;
+    else break;
+  }
+  return streak;
 })
 
 const currentWeek = computed(() => {
@@ -132,8 +162,11 @@ async function quickWeightEntry() {
         Semana <span>{{ currentWeek }}</span>
         <span style="color:var(--text2);font-size:20px;font-weight:400"> / {{ totalWeeks }}</span>
       </div>
-      <div style="font-size:13px;color:var(--accent2);margin-top:4px;font-weight:600">
-        {{ (info.phase || '').toUpperCase() }} · {{ (info.system_focus || '').replace(/_/g,' ') }}
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap">
+        <span style="font-size:13px;color:var(--accent2);font-weight:600">
+          {{ (info.phase || '').toUpperCase() }} · {{ (info.system_focus || '').replace(/_/g,' ') }}
+        </span>
+        <span v-if="streakWeeks > 0" class="streak-badge">🔥 {{ streakWeeks }} {{ streakWeeks === 1 ? 'semana' : 'semanas' }}</span>
       </div>
     </div>
 
@@ -406,4 +439,6 @@ async function quickWeightEntry() {
 .weight-val { font-size: 18px; font-weight: 800; color: var(--accent); }
 .weight-val .unit { font-size: 10px; margin-left: 2px; color: var(--text2); }
 .weight-btn { font-size: 12px; font-weight: 700; color: var(--accent2); text-transform: uppercase; border: 1px solid var(--accent2); padding: 4px 10px; border-radius: 12px; }
+
+.streak-badge { font-size: 11px; font-weight: 700; color: var(--amber, #d97706); background: rgba(251,191,36,.12); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
 </style>
