@@ -147,6 +147,14 @@ class LocalDbService {
       plan_duration_weeks INTEGER DEFAULT 4,
       synced INTEGER DEFAULT 0
     )`);
+    this.run(`CREATE TABLE IF NOT EXISTS user_stats (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      weight_kg REAL,
+      body_fat_pct REAL,
+      notes TEXT DEFAULT '',
+      recorded_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M','now','localtime')),
+      synced INTEGER DEFAULT 0
+    )`);
     
     this.runMigrations();
     this.persistDB();
