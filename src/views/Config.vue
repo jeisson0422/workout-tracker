@@ -11,12 +11,68 @@ import { injectDefaultPlan } from '../services/planUtils'
 import { getSwalSettings } from '../services/swalHelper'
 import { showToast } from '../services/toast'
 import { haptic } from '../services/haptics'
+import { exportBackup, importBackup } from '../services/backup'
 import Swal from 'sweetalert2'
 
 const store = useWorkoutStore()
 const authStore = useAuthStore()
 const userStore = useUserStore()
 const router = useRouter()
+
+const importFileInput = ref<HTMLInputElement | null>(null)
+
+function handleExportBackup() {
+  exportBackup()
+  haptic('success')
+  showToast('Respaldo descargado', 'success')
+}
+
+function triggerImportFile() {
+  importFileInput.value?.click()
+}
+
+async function handleImportFile(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
+
+  const result = await Swal.fire({
+    ...getSwalSettings('danger'),
+    title: '¿Restaurar este respaldo?',
+    text: 'Esto reemplazará TODOS tus datos actuales (planes, entrenamientos, perfil) con los del archivo. Esta acción no se puede deshacer.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, restaurar'
+  })
+
+  if (!result.isConfirmed) {
+    if (importFileInput.value) importFileInput.value.value = ''
+    return
+  }
+
+  try {
+    const text = await file.text()
+    const data = JSON.parse(text)
+    importBackup(data)
+    await Swal.fire({
+      ...getSwalSettings('success'),
+      title: '¡Restaurado!',
+      text: 'Tus datos fueron restaurados. La app se recargará.',
+      icon: 'success',
+      timer: 1500,
+      showConfirmButton: false
+    })
+    window.location.reload()
+  } catch (err: any) {
+    Swal.fire({
+      ...getSwalSettings('danger'),
+      title: 'Error al restaurar',
+      text: err.message || 'El archivo no es un respaldo válido.',
+      icon: 'error'
+    })
+  } finally {
+    if (importFileInput.value) importFileInput.value.value = ''
+  }
+}
 
 const weekInput = ref(store.currentWeek)
 const themeInput = ref(store.themeMode || 'system')
@@ -267,6 +323,13 @@ async function handleSignOut() {
 
 
       <div class="separator"></div>
+
+      <div class="cfg-lbl">Respaldo de Datos</div>
+      <div style="display:flex; gap:10px; margin-bottom: 12px;">
+        <button class="btn btn-secondary" style="margin:0; flex:1" @click="handleExportBackup">Exportar datos</button>
+        <button class="btn btn-secondary" style="margin:0; flex:1" @click="triggerImportFile">Importar backup</button>
+      </div>
+      <input ref="importFileInput" type="file" accept="application/json" style="display:none" @change="handleImportFile">
 
       <button class="btn btn-danger mt-6" @click="resetAll">Borrar todos los datos locales</button>
     </div>
