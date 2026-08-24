@@ -24,13 +24,17 @@ const isGrouped = computed(() => !!props.exercise.group_id)
 
 const prev = computed(() => store.getPrevLog(props.dayLabel, name.value))
 
+const usesSetTracker = computed(() => exType.value !== 'cardio' && props.exercise.group_type !== 'pyramid')
 const targetSets = computed(() => (prev.value && prev.value[0]) || calculatedSets.value)
 const todaysSetsCount = computed(() => {
-  if (exType.value === 'cardio' || props.exercise.group_type === 'pyramid') return 0
+  if (!usesSetTracker.value) return 0
   return store.getTodaysLoggedSets(props.dayLabel, name.value).length
 })
-const isPartiallyLogged = computed(() => todaysSetsCount.value > 0 && todaysSetsCount.value < targetSets.value)
-const isEffectivelyLogged = computed(() => props.isLogged || (!!prev.value && !isPartiallyLogged.value))
+const isPartiallyLogged = computed(() => usesSetTracker.value && todaysSetsCount.value > 0 && todaysSetsCount.value < targetSets.value)
+const isEffectivelyLogged = computed(() => {
+  if (usesSetTracker.value) return todaysSetsCount.value > 0 && todaysSetsCount.value >= targetSets.value
+  return props.isLogged || !!prev.value
+})
 
 const calculatedSets = computed(() => {
   const ex = props.exercise
