@@ -23,7 +23,14 @@ const exType = computed(() => props.exercise.exercise_type || (props.exercise.du
 const isGrouped = computed(() => !!props.exercise.group_id)
 
 const prev = computed(() => store.getPrevLog(props.dayLabel, name.value))
-const isEffectivelyLogged = computed(() => props.isLogged || !!prev.value)
+
+const targetSets = computed(() => (prev.value && prev.value[0]) || calculatedSets.value)
+const todaysSetsCount = computed(() => {
+  if (exType.value === 'cardio' || props.exercise.group_type === 'pyramid') return 0
+  return store.getTodaysLoggedSets(props.dayLabel, name.value).length
+})
+const isPartiallyLogged = computed(() => todaysSetsCount.value > 0 && todaysSetsCount.value < targetSets.value)
+const isEffectivelyLogged = computed(() => props.isLogged || (!!prev.value && !isPartiallyLogged.value))
 
 const calculatedSets = computed(() => {
   const ex = props.exercise
@@ -209,8 +216,8 @@ function handleLogClick() {
       <div v-if="fmtRest" class="ex-rest">⏱ descanso: {{ fmtRest }}</div>
     </div>
     
-    <button class="ex-log-btn" :class="{ 'logged': isEffectivelyLogged }" @click="handleLogClick">
-      {{ isEffectivelyLogged ? '✓' : 'Log' }}
+    <button class="ex-log-btn" :class="{ 'logged': isEffectivelyLogged, 'partial': isPartiallyLogged }" @click="handleLogClick">
+      {{ isEffectivelyLogged ? '✓' : (isPartiallyLogged ? `${todaysSetsCount}/${targetSets}` : 'Log') }}
     </button>
   </div>
 </template>
@@ -226,6 +233,7 @@ function handleLogClick() {
 .ex-log-btn { background: var(--bg3); border: none; color: var(--accent2); border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: transform .1s, background .15s; }
 .ex-log-btn:active { transform: scale(0.92); }
 .ex-log-btn.logged { background: var(--accent); color: #fff; }
+.ex-log-btn.partial { background: var(--amber); color: #fff; }
 .ex-hint { font-size: 11px; color: var(--accent2); margin-top: 3px; font-style: italic; opacity: .8; }
 .ex-rest { font-size: 11px; color: var(--text3); margin-top: 2px; }
 .ex-suggested { font-size: 11px; color: var(--green); margin-top: 2px; font-weight: 600; }

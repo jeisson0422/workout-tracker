@@ -262,6 +262,28 @@ export const useWorkoutStore = defineStore('workout', {
       return prevLog.length && prevLog[0].values.length ? prevLog[0].values[0] : null;
     },
 
+    getTodaysLoggedSets(dayLabel: string, exName: string) {
+      this.dbUpdateTrigger; // trigger reactivity
+      const plansStore = usePlansStore();
+      const planId = plansStore.activePlan?.id;
+      const log = dbService.q(
+        `SELECT sync_id FROM workout_log
+         WHERE week=? AND day_label=? AND exercise=? AND exercise != '_day_complete' AND plan_id = ?
+         ORDER BY id DESC LIMIT 1`,
+        [this.currentWeek, dayLabel, exName, planId]
+      );
+      if (!log.length || !log[0].values.length) return [];
+      const syncId = log[0].values[0][0];
+      const setsRes = dbService.q(
+        `SELECT set_number, weight_kg, reps, rpe, duration_sec FROM workout_log_sets WHERE log_sync_id=? AND deleted=0 ORDER BY set_number`,
+        [syncId]
+      );
+      if (!setsRes.length || !setsRes[0].values.length) return [];
+      return setsRes[0].values.map((row: any) => ({
+        setNumber: row[0], weight: row[1], reps: row[2], rpe: row[3], durationSec: row[4]
+      }));
+    },
+
     getExerciseHistory(exName: string, limit: number = 3) {
       this.dbUpdateTrigger; // trigger reactivity
       const plansStore = usePlansStore();

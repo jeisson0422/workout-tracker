@@ -48,8 +48,25 @@ watch(() => props.isOpen, (newVal) => {
     doneSets.value = 0
     setRecords.value = []
     initModalData()
+    hydrateTodaysSets()
   }
 })
+
+function hydrateTodaysSets() {
+  const d = props.data
+  if (d.exType === 'cardio' || d.pyramid_reps) return
+  const loggedSets = store.getTodaysLoggedSets(d.dayLabel, d.name)
+  if (!loggedSets.length) return
+  setRecords.value = loggedSets.map((s: any) => ({
+    setNumber: s.setNumber,
+    weight: s.weight,
+    reps: s.reps,
+    rpe: s.rpe,
+    durationSec: s.durationSec
+  }))
+  doneSets.value = setRecords.value.length
+  if (doneSets.value > mSets.value) mSets.value = doneSets.value
+}
 
 watch(mSets, (val) => {
   if (doneSets.value > val) doneSets.value = val
@@ -66,6 +83,7 @@ function markSetDone() {
     durationSec: props.data?.exType === 'isometric' ? mDurationSec.value : null
   })
   haptic('success')
+  persistCurrentSets()
   const d = props.data
   if (d?.restSec > 0 && doneSets.value < mSets.value) {
     startRestTimer(d.restSec, d.name)
@@ -78,6 +96,35 @@ function undoSet(n: number) {
   doneSets.value = n - 1
   setRecords.value = setRecords.value.slice(0, n - 1)
   dismissRestTimer()
+  persistCurrentSets()
+}
+
+function persistCurrentSets() {
+  const d = props.data
+  if (d.exType === 'cardio' || d.pyramid_reps) return
+  const isIsometric = d.exType === 'isometric'
+  const weight = getWeightKg()
+  const planId = plansStore.activePlan?.id
+  const logNotes = isIsometric
+    ? `duration_sec:${mDurationSec.value}${mNotes.value ? ' ' + mNotes.value : ''}`
+    : mNotes.value
+  const existing = dbService.q(
+    "SELECT id, sync_id FROM workout_log WHERE week=? AND day_label=? AND exercise=? ORDER BY id DESC LIMIT 1",
+    [store.currentWeek, d.dayLabel, d.name]
+  )
+  let logSyncId: string
+  if (existing.length && existing[0].values.length) {
+    logSyncId = existing[0].values[0][1]
+    dbService.run(`UPDATE workout_log SET sets=?,reps=?,weight_kg=?,rpe=?,notes=?,synced=0 WHERE id=?`,
+      [mSets.value, mReps.value, weight, mRpe.value, logNotes, existing[0].values[0][0]])
+  } else {
+    logSyncId = crypto.randomUUID()
+    dbService.run(`INSERT INTO workout_log (sync_id,week,day_label,exercise,sets,reps,weight_kg,rpe,notes,synced,plan_id) VALUES (?,?,?,?,?,?,?,?,?,0,?)`,
+      [logSyncId, store.currentWeek, d.dayLabel, d.name, mSets.value, mReps.value, weight, mRpe.value, logNotes, planId])
+  }
+  dbService.saveLogSets(logSyncId, setRecords.value)
+  store.dbUpdateTrigger++
+  return logSyncId
 }
 
 function initModalData() {
@@ -221,24 +268,7 @@ function saveLog() {
       haptic('warning')
       if (!confirm(`⚠ ${weight}kg supera el límite de seguridad de ${d.safetyLimit}kg. ¿Continuar?`)) return
     }
-    const logNotes = isIsometric
-      ? `duration_sec:${mDurationSec.value}${mNotes.value ? ' ' + mNotes.value : ''}`
-      : mNotes.value
-    const existing = dbService.q(
-      "SELECT id, sync_id FROM workout_log WHERE week=? AND day_label=? AND exercise=? ORDER BY id DESC LIMIT 1",
-      [store.currentWeek, d.dayLabel, d.name]
-    )
-    let logSyncId: string
-    if (existing.length && existing[0].values.length) {
-      logSyncId = existing[0].values[0][1]
-      dbService.run(`UPDATE workout_log SET sets=?,reps=?,weight_kg=?,rpe=?,notes=?,synced=0 WHERE id=?`,
-        [mSets.value, mReps.value, weight, mRpe.value, logNotes, existing[0].values[0][0]])
-    } else {
-      logSyncId = crypto.randomUUID()
-      dbService.run(`INSERT INTO workout_log (sync_id,week,day_label,exercise,sets,reps,weight_kg,rpe,notes,synced,plan_id) VALUES (?,?,?,?,?,?,?,?,?,0,?)`,
-        [logSyncId, store.currentWeek, d.dayLabel, d.name, mSets.value, mReps.value, weight, mRpe.value, logNotes, planId])
-    }
-    dbService.saveLogSets(logSyncId, setRecords.value)
+    const logSyncId = persistCurrentSets()!
 
     if (!isIsometric) {
       const newMaxWeight = setRecords.value.length > 0 ? Math.max(weight, ...setRecords.value.map(s => s.weight)) : weight
