@@ -181,6 +181,8 @@ async function handleSignOut() {
   await authStore.signOut()
   router.push('/login')
 }
+
+const appVersion = __APP_VERSION__
 </script>
 
 <template>
@@ -332,6 +334,8 @@ async function handleSignOut() {
       <input ref="importFileInput" type="file" accept="application/json" style="display:none" @change="handleImportFile">
 
       <button class="btn btn-danger mt-6" @click="resetAll">Borrar todos los datos locales</button>
+
+      <div class="app-version">{{ appVersion }}</div>
     </div>
   </div>
 </template>
@@ -372,4 +376,5 @@ input:focus, .custom-select:focus { outline: none; border-color: var(--accent); 
 .mt-4 { margin-top: 16px; }
 .mt-6 { margin-top: 24px; }
 .mt-8 { margin-top: 32px; }
+.app-version { text-align: center; font-size: 11px; color: var(--text3); margin-top: 20px; }
 </style>
