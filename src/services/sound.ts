@@ -1,11 +1,20 @@
 let audioCtx: AudioContext | null = null
 
+function configureAudioSession() {
+  if ('audioSession' in navigator) {
+    try {
+      (navigator as any).audioSession.type = 'playback'
+    } catch {}
+  }
+}
+
 function getContext(): AudioContext | null {
   if (typeof window === 'undefined') return null
   const Ctx = window.AudioContext || (window as any).webkitAudioContext
   if (!Ctx) return null
   if (!audioCtx) {
     audioCtx = new Ctx()
+    configureAudioSession()
   }
   return audioCtx
 }
@@ -18,11 +27,7 @@ export function unlockAudio() {
 }
 
 if (typeof document !== 'undefined') {
-  const unlock = () => {
-    unlockAudio()
-    document.removeEventListener('pointerdown', unlock)
-  }
-  document.addEventListener('pointerdown', unlock)
+  document.addEventListener('pointerdown', unlockAudio)
 }
 
 function playTone(ctx: AudioContext, freq: number, startTime: number, duration: number, peak = 0.2, type: OscillatorType = 'sine') {
