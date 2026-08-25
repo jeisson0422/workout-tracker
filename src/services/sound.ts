@@ -3,7 +3,7 @@ let audioCtx: AudioContext | null = null
 function configureAudioSession() {
   if ('audioSession' in navigator) {
     try {
-      (navigator as any).audioSession.type = 'ambient'
+      (navigator as any).audioSession.type = 'playback'
     } catch {}
   }
 }

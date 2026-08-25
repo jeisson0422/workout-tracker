@@ -113,6 +113,7 @@ function dismiss() {
   margin: auto 0;
 }
 .rest-fs-label { font-size: 15px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; }
+.finished .rest-fs-label { color: var(--green); font-size: 17px; }
 .rest-fs-sub { font-size: 20px; font-weight: 700; color: var(--text); text-transform: capitalize; margin-top: 4px; text-align: center; }
 
 .rest-fs-ring { position: relative; width: clamp(180px, 45vh, 260px); height: clamp(180px, 45vh, 260px); margin: clamp(16px, 4vh, 36px) 0; flex-shrink: 0; }
@@ -137,6 +138,10 @@ function dismiss() {
   color: var(--text);
   letter-spacing: -1px;
 }
+.rest-fs.finished {
+  animation: flash-bg .7s ease-in-out 4;
+}
+
 .rest-fs-check {
   position: absolute;
   inset: 0;
@@ -144,7 +149,7 @@ function dismiss() {
   align-items: center;
   justify-content: center;
   color: var(--green);
-  animation: pop-in .35s cubic-bezier(.32,1.5,.5,1);
+  animation: pop-in .35s cubic-bezier(.32,1.5,.5,1), pulse-glow 1s ease-in-out .35s infinite;
 }
 .rest-fs-check :deep(svg) { width: clamp(70px, 20vh, 110px); height: clamp(70px, 20vh, 110px); stroke-width: 1.5; }
 
@@ -189,5 +194,15 @@ function dismiss() {
 @keyframes pop-in {
   from { transform: scale(0.6); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes flash-bg {
+  0%, 100% { background: var(--bg); }
+  50% { background: color-mix(in srgb, var(--green) 35%, var(--bg)); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 transparent); }
+  50% { transform: scale(1.12); filter: drop-shadow(0 0 18px color-mix(in srgb, var(--green) 60%, transparent)); }
 }
 </style>
