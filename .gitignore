@@ -28,3 +28,4 @@ dist-ssr
 .claude
 /.agents
 .mcp.json
+pnpm-lock.yaml
