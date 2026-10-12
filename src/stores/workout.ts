@@ -210,12 +210,30 @@ export const useWorkoutStore = defineStore('workout', {
 
       const plansStore = usePlansStore();
       const planId = plansStore.activePlan?.id;
-      const r = dbService.q(
+      const pct = weekInfo.weight_change_pct || '0%';
+
+      // Las semanas de descarga no sirven de base: sus cargas están reducidas
+      // a propósito y arrastrarlas bajaría toda la fase siguiente.
+      const deloadWeeks: number[] = [];
+      for (let w = 1; w < this.currentWeek; w++) {
+        if (this.getWeekInfo(w).phase === 'deload') deloadWeeks.push(w);
+      }
+      const notDeload = deloadWeeks.length
+        ? ` AND week NOT IN (${deloadWeeks.map(() => '?').join(',')})`
+        : '';
+
+      const findLast = (extraSql: string, extraParams: any[]) => dbService.q(
         `SELECT weight_kg, week, sync_id FROM workout_log
-         WHERE exercise=? AND week < ? AND weight_kg > 0 AND plan_id = ?
+         WHERE exercise=? AND week < ? AND weight_kg > 0 AND plan_id = ?${notDeload}${extraSql}
          ORDER BY week DESC, id DESC LIMIT 1`,
-        [exName, this.currentWeek, planId]
+        [exName, this.currentWeek, planId, ...deloadWeeks, ...extraParams]
       );
+
+      // Si la progresión dice "vs semana N", esa semana es la base explícita.
+      const refMatch = String(pct).match(/vs\.?\s*semana\s*(\d+)/i);
+      const refWeek = refMatch ? parseInt(refMatch[1]) : null;
+      let r = refWeek ? findLast(' AND week = ?', [refWeek]) : [];
+      if (!r.length || !r[0].values.length) r = findLast('', []);
 
       if (!r.length || !r[0].values.length) return null;
       let lastWeight = parseFloat(r[0].values[0][0]);
@@ -236,17 +254,17 @@ export const useWorkoutStore = defineStore('workout', {
 
       if (!lastWeight) return null;
 
-      const pct = weekInfo.weight_change_pct || '0%';
-      if (pct === 'maintain' || pct === '0%') return { kg: lastWeight, change: '=' };
+      if (pct === 'maintain' || pct === '0%') return { kg: lastWeight, change: '=', from: lastWeight, fromWeek: lastWeek };
 
-      const match = pct.match(/([+-]?[\d.]+)%/);
-      if (!match) return { kg: lastWeight, change: '=' };
+      const match = String(pct).match(/([+-]?[\d.]+)%/);
+      if (!match) return { kg: lastWeight, change: '=', from: lastWeight, fromWeek: lastWeek };
 
       const delta = parseFloat(match[1]) / 100;
+      if (delta === 0) return { kg: lastWeight, change: '=', from: lastWeight, fromWeek: lastWeek };
       const raw = lastWeight * (1 + delta);
       const rounded = Math.round(raw / 2.5) * 2.5;
       const kg = rounded > lastWeight ? rounded : parseFloat(raw.toFixed(2));
-      return { kg, change: pct, from: lastWeight, fromWeek: lastWeek };
+      return { kg, change: match[0], from: lastWeight, fromWeek: lastWeek };
     },
 
     getPrevLog(dayLabel: string, exName: string) {
