@@ -181,7 +181,7 @@ async function deleteExercise(id: string) {
 function toggleDay(dayId: string) {
   const el = document.getElementById('day-content-' + dayId)
   if (el) {
-    el.style.display = el.style.display === 'none' ? 'block' : 'none'
+    el.classList.toggle('is-open')
   }
 }
 
@@ -264,7 +264,7 @@ async function deleteProgression(id: string) {
     <!-- Pestaña: Ejercicios -->
     <div class="s-8e86e5" v-if="activeTab === 'exercises'">
       <div class="week-overview" v-if="days.length > 0">
-        <div class="week-overview-title">Vista Semanal</div>
+        <div class="week-overview-title">Vista semanal</div>
         <div class="week-overview-grid">
           <div v-for="day in days" :key="'ov-'+day.id" class="week-overview-card">
             <div class="wo-day">D{{ day.day_number }}</div>
@@ -301,7 +301,7 @@ async function deleteProgression(id: string) {
             </div>
             <div class="s-da5cd6" @click="openEditExercise(ex.id, ex)" role="button" tabindex="0" @keydown.enter.self.prevent="openEditExercise(ex.id, ex)" @keydown.space.self.prevent="openEditExercise(ex.id, ex)">
               <div class="s-2a2dba">
-                {{ ex.exercise_name }}
+                {{ (ex.exercise_name || '').replace(/_/g, ' ') }}
                 <span v-if="ex.group_type" class="group-badge" :class="'badge-' + ex.group_type">{{ ex.group_type.replace('_', ' ') }}</span>
               </div>
               <div class="s-5c8a6f">
@@ -561,7 +561,7 @@ async function deleteProgression(id: string) {
 .btn-icon { background: transparent; border: none; color: var(--text2); cursor: pointer; padding: 4px; display: flex; }
 .btn-icon:disabled { opacity: .25; pointer-events: none; }
 .week-overview { margin-bottom: 16px; }
-.week-overview-title { font-size: 12px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+.week-overview-title { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 8px; }
 .week-overview-grid { display: flex; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
 .week-overview-card { background: var(--bg2); border: 1px solid var(--card-border); border-radius: var(--r2); padding: 10px 12px; min-width: 110px; flex-shrink: 0; }
 .wo-day { font-size: 12px; font-weight: 700; color: var(--accent2); }
@@ -598,6 +598,7 @@ select.modal-input { appearance: none; }
 .s-77f4f8 { color: var(--text2); font-size: 12px; display:flex; gap: 6px; align-items: center; }
 .s-68d89b { margin-right: 4px; }
 .s-9c7663 { display: none; }
+.s-9c7663.is-open { display: block; }
 .s-88d9ac { margin-right: 12px; display:flex; align-items:center; }
 .s-da5cd6 { flex:1; }
 .s-2a2dba { font-weight: 600; font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }

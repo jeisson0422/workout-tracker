@@ -32,6 +32,7 @@ function stopInterval() {
 }
 
 async function acquireWakeLock() {
+  releaseWakeLock()
   try {
     if (typeof navigator !== 'undefined' && 'wakeLock' in navigator) {
       wakeLock = await (navigator as any).wakeLock.request('screen')
@@ -57,7 +58,7 @@ function clearAutoDismiss() {
 
 function tick() {
   if (!restTimerState.active) return
-  const remaining = Math.max(0, Math.round((restTimerState.endsAt - Date.now()) / 1000))
+  const remaining = Math.max(0, Math.ceil((restTimerState.endsAt - Date.now()) / 1000))
   if (remaining !== restTimerState.remainingSec && !restTimerState.finished) {
     if (remaining > 0 && remaining <= 5) {
       playCountdownBeep()

@@ -29,10 +29,10 @@ function dismiss() {
 <template>
   <Transition name="rest-fs">
     <div v-if="restTimerState.active" class="rest-fs" :class="{ finished: restTimerState.finished }">
-      <button type="button" class="rest-fs-close" @click="dismiss"><XIcon /></button>
+      <button type="button" class="rest-fs-close" aria-label="Cerrar temporizador" @click="dismiss"><XIcon aria-hidden="true" /></button>
 
       <div class="rest-fs-body">
-        <div class="rest-fs-label">{{ restTimerState.finished ? '¡Descanso terminado!' : 'Descansando' }}</div>
+        <div class="rest-fs-label" role="status" aria-live="polite">{{ restTimerState.finished ? '¡Descanso terminado!' : 'Descansando' }}</div>
         <div class="rest-fs-sub" v-if="restTimerState.label">{{ restTimerState.label }}</div>
 
         <div class="rest-fs-ring">
@@ -46,13 +46,13 @@ function dismiss() {
               :stroke-dashoffset="dashOffset"
             />
           </svg>
-          <div class="rest-fs-time" v-if="!restTimerState.finished">{{ mm }}:{{ ss }}</div>
+          <div class="rest-fs-time display" v-if="!restTimerState.finished" role="timer" :aria-label="`${mm} minutos ${ss} segundos`">{{ mm }}:{{ ss }}</div>
           <div class="rest-fs-check" v-else><CheckIcon /></div>
         </div>
 
         <div v-if="!restTimerState.finished" class="rest-fs-actions">
-          <button type="button" class="rest-fs-adjust" @click="addTime(-15)"><MinusIcon /> 15s</button>
-          <button type="button" class="rest-fs-adjust" @click="addTime(15)"><PlusIcon /> 15s</button>
+          <button type="button" class="rest-fs-adjust" aria-label="Restar 15 segundos" @click="addTime(-15)"><MinusIcon aria-hidden="true" /> 15 s</button>
+          <button type="button" class="rest-fs-adjust" aria-label="Sumar 15 segundos" @click="addTime(15)"><PlusIcon aria-hidden="true" /> 15 s</button>
         </div>
 
         <button type="button" class="rest-fs-skip" @click="dismiss">
@@ -78,13 +78,6 @@ function dismiss() {
   padding-top: calc(24px + env(safe-area-inset-top, 0px));
   padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
 }
-.rest-fs::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 65%);
-  pointer-events: none;
-}
 .rest-fs-close {
   position: absolute;
   top: calc(20px + env(safe-area-inset-top, 0px));
@@ -92,8 +85,8 @@ function dismiss() {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: none;
-  background: var(--bg3);
+  border: 1.5px solid var(--border2);
+  background: transparent;
   color: var(--text2);
   display: flex;
   align-items: center;
@@ -112,7 +105,7 @@ function dismiss() {
   width: 100%;
   margin: auto 0;
 }
-.rest-fs-label { font-size: 15px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; }
+.rest-fs-label { font-size: 16px; font-weight: 600; color: var(--text2); }
 .finished .rest-fs-label { color: var(--green); font-size: 17px; }
 .rest-fs-sub { font-size: 20px; font-weight: 700; color: var(--text); text-transform: capitalize; margin-top: 4px; text-align: center; }
 
@@ -121,9 +114,9 @@ function dismiss() {
 .ring-bg { fill: none; stroke: var(--bg3); stroke-width: 14; }
 .ring-progress {
   fill: none;
-  stroke: var(--accent2);
+  stroke: var(--accent);
   stroke-width: 14;
-  stroke-linecap: round;
+  stroke-linecap: butt;
   transition: stroke-dashoffset .25s linear;
 }
 .rest-fs-time {
@@ -132,11 +125,8 @@ function dismiss() {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(38px, 11vh, 56px);
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
+  font-size: clamp(72px, 20vh, 112px);
   color: var(--text);
-  letter-spacing: -1px;
 }
 .rest-fs.finished {
   animation: flash-bg .7s ease-in-out 4;
@@ -158,8 +148,8 @@ function dismiss() {
   display: flex;
   align-items: center;
   gap: 4px;
-  background: var(--bg3);
-  border: none;
+  background: transparent;
+  border: 1.5px solid var(--border2);
   color: var(--text);
   font-size: 15px;
   font-weight: 700;

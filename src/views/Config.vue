@@ -342,7 +342,7 @@ const appVersion = __APP_VERSION__
 </template>
 
 <style scoped>
-.cfg-body { padding: 4px 16px 28px; }
+.cfg-body { padding: 4px 16px 56px; }
 .cfg-lbl { font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 8px; }
 .cfg-lbl.sub { font-size: 13px; color: var(--text2); font-weight: 600; }
 .panel, .profile-card, .weight-card { background: var(--bg2); padding: 16px; border-radius: var(--r2); border: 1.5px solid var(--border); margin-bottom: 22px; }

@@ -186,7 +186,9 @@ function handleLogClick() {
     pyramid_weights: props.exercise.pyramid_weights_kg || null,
     restSec: restSeconds.value,
     suggestedKg: sugForModal ? sugForModal.kg : null,
-    suggestedChange: sugForModal ? sugForModal.change : null
+    suggestedChange: sugForModal ? sugForModal.change : null,
+    notes: props.exercise.special_notes || '',
+    tempo: props.exercise.tempo && props.exercise.tempo !== 'normal' ? props.exercise.tempo : ''
   })
 }
 </script>

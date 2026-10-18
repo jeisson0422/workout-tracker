@@ -34,6 +34,17 @@ const mPyrW = ref<number[]>([])
 const mPyrR = ref<number[]>([])
 
 const doneSets = ref(0)
+const TEMPO_LABELS = ['Bajar', 'Pausa abajo', 'Subir', 'Pausa arriba']
+const tempoSteps = computed(() => {
+  const t = String(props.data?.tempo || '').toUpperCase()
+  if (!/^[0-9X]{4}$/.test(t)) return []
+  return [...t].map((c, i) => ({ label: TEMPO_LABELS[i], value: c === 'X' ? 'explosivo' : `${c} s` }))
+})
+const noteText = computed(() => {
+  const n = String(props.data?.notes || '').replace(/_/g, ' ').trim()
+  return n ? n.charAt(0).toUpperCase() + n.slice(1) : ''
+})
+
 const showsSetTracker = computed(() => props.data?.exType !== 'cardio' && !props.data?.pyramid_reps)
 const exerciseHistory = computed(() => {
   if (!props.isOpen || !props.data?.name || props.data?.exType === 'cardio') return []
@@ -303,6 +314,16 @@ function formatRest(sec: number) {
     </div>
 
     <div class="log-body">
+      <div v-if="noteText || data?.tempo" class="guide-card">
+        <p v-if="noteText" class="guide-note">{{ noteText }}</p>
+        <div v-if="data?.tempo" class="guide-tempo">
+          <span class="guide-tempo-title">Tempo {{ data.tempo }}</span>
+          <ul v-if="tempoSteps.length" class="guide-steps">
+            <li v-for="s in tempoSteps" :key="s.label"><b>{{ s.value }}</b><span>{{ s.label }}</span></li>
+          </ul>
+        </div>
+      </div>
+
       <div v-if="exerciseHistory.length > 0" class="history-card">
         <div class="history-title">Historial reciente</div>
         <div v-for="h in exerciseHistory" :key="h.week" class="history-row">
@@ -416,6 +437,16 @@ function formatRest(sec: number) {
 </template>
 
 <style scoped>
+.guide-card { margin-bottom: 16px; padding: 12px 14px; background: var(--bg2); border: 1.5px solid var(--border); border-left: 4px solid var(--accent); border-radius: var(--r3); }
+.guide-note { margin: 0; font-size: 15px; line-height: 1.45; color: var(--text); }
+.guide-tempo { margin-top: 10px; }
+.guide-note + .guide-tempo { padding-top: 10px; border-top: 1px solid var(--border); }
+.guide-tempo-title { font-size: 13px; font-weight: 700; color: var(--text2); }
+.guide-steps { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.guide-steps li { display: flex; flex-direction: column; gap: 2px; }
+.guide-steps b { font-size: 15px; font-weight: 700; color: var(--text); }
+.guide-steps span { font-size: 12px; color: var(--text2); line-height: 1.2; }
+
 .log-page {
   position: fixed;
   inset: 0;
