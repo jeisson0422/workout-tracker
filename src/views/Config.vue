@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getTimerSoundMode, setTimerSoundMode, playRestDoneChime, unlockAudio, type TimerSoundMode } from '../services/sound'
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWorkoutStore } from '../stores/workout'
@@ -105,6 +106,18 @@ function saveWeek() {
     haptic('warning')
     showToast('La semana debe estar entre 1 y ' + totalWeeks.value, 'error')
   }
+}
+
+const soundMode = ref<TimerSoundMode>(getTimerSoundMode())
+const SOUND_OPTIONS: { v: TimerSoundMode; label: string }[] = [
+  { v: 'mix', label: 'Sobre la música' },
+  { v: 'interrupt', label: 'Pausa la música' }
+]
+function saveSoundMode(v: TimerSoundMode) {
+  soundMode.value = v
+  setTimerSoundMode(v)
+  unlockAudio()
+  playRestDoneChime()
 }
 
 function saveTheme() {
@@ -215,6 +228,17 @@ const appVersion = __APP_VERSION__
           @click="themeInput = o.v; saveTheme()"
         >{{ o.label }}</button>
       </div>
+
+      <h2 class="cfg-lbl">Sonido del timer</h2>
+      <div class="segmented seg-2" role="radiogroup" aria-label="Sonido del timer">
+        <button
+          v-for="o in SOUND_OPTIONS" :key="o.v"
+          type="button" role="radio" :aria-checked="soundMode === o.v"
+          :class="{ on: soundMode === o.v }"
+          @click="saveSoundMode(o.v)"
+        >{{ o.label }}</button>
+      </div>
+      <p class="hint">Al elegir una opción suena el aviso para que lo pruebes. Si con música no se oye, prueba la otra.</p>
 
       <h2 class="cfg-lbl">Semana actual</h2>
       <div class="row-field gap-below">
@@ -358,6 +382,8 @@ const appVersion = __APP_VERSION__
 
 .segmented { display: grid; grid-template-columns: repeat(3, 1fr); border: 1.5px solid var(--border2); border-radius: var(--r2); overflow: hidden; }
 .segmented button { padding: 11px 4px; background: transparent; color: var(--text2); border: none; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.seg-2 { grid-template-columns: repeat(2, 1fr); }
+.hint { margin: 8px 0 22px; font-size: 13px; line-height: 1.4; color: var(--text2); }
 .segmented button + button { border-left: 1.5px solid var(--border2); }
 .segmented button.on { background: var(--accent); color: var(--accent-text); font-weight: 700; }
 
