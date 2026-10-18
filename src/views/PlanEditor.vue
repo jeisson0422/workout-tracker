@@ -241,18 +241,17 @@ async function deleteProgression(id: string) {
 
 <template>
   <div class="pb-6" v-if="plan">
-    <div style="padding:calc(24px + env(safe-area-inset-top,0px)) 20px 10px; display: flex; align-items: center; gap: 10px;">
+    <div class="s-c403cd">
       <button class="back-btn" @click="router.push('/plans')">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
       </button>
-      <div style="flex: 1">
-        <div style="font-size:12px;color:var(--text2);font-weight:600;letter-spacing:.5px">EDITAR PLAN</div>
-        <div v-if="!editingPlanName" style="font-size:28px;font-weight:800;letter-spacing:-.5px;margin-top:4px; display: flex; align-items: center; gap: 8px;" @click="editPlanName" role="button" tabindex="0" @keydown.enter.self.prevent="editPlanName" @keydown.space.self.prevent="editPlanName">
+      <div class="s-d2dc0a">
+        <div class="s-92fc55" v-if="!editingPlanName" @click="editPlanName" role="button" tabindex="0" @keydown.enter.self.prevent="editPlanName" @keydown.space.self.prevent="editPlanName">
           {{ plan.name }}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="16 3 21 8 8 21 3 21 3 16 16 3"></polygon></svg>
         </div>
-        <div v-else style="margin-top: 4px; display: flex; gap: 8px;">
-          <input type="text" v-model="tempPlanName" class="modal-input" style="padding: 8px;" @keyup.enter="savePlanName" @blur="savePlanName" ref="nameInput" autofocus>
+        <div class="s-c3028e" v-else>
+          <input type="text" v-model="tempPlanName" class="modal-input s-8cd4e7" @keyup.enter="savePlanName" @blur="savePlanName" ref="nameInput" autofocus>
         </div>
       </div>
     </div>
@@ -263,7 +262,7 @@ async function deleteProgression(id: string) {
     </div>
 
     <!-- Pestaña: Ejercicios -->
-    <div style="padding:12px 16px" v-if="activeTab === 'exercises'">
+    <div class="s-8e86e5" v-if="activeTab === 'exercises'">
       <div class="week-overview" v-if="days.length > 0">
         <div class="week-overview-title">Vista Semanal</div>
         <div class="week-overview-grid">
@@ -277,9 +276,9 @@ async function deleteProgression(id: string) {
 
       <div v-for="(day, di) in days" :key="day.id" class="day-card">
         <div class="day-header" @click="toggleDay(day.id)" role="button" tabindex="0" @keydown.enter.self.prevent="toggleDay(day.id)" @keydown.space.self.prevent="toggleDay(day.id)">
-          <div style="font-weight: 700; font-size: 16px;">Día {{ day.day_number }}: {{ day.session_name }}</div>
-          <div style="color: var(--text2); font-size: 12px; display:flex; gap: 6px; align-items: center;">
-            <span style="margin-right: 4px;">{{ plansStore.exercisesForDay(day.id).length }} ej.</span>
+          <div class="s-8be3ff">Día {{ day.day_number }}: {{ day.session_name }}</div>
+          <div class="s-77f4f8">
+            <span class="s-68d89b">{{ plansStore.exercisesForDay(day.id).length }} ej.</span>
             <button class="btn-icon" :disabled="di === 0" @click.stop="moveDayUp(day.id)">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
             </button>
@@ -295,24 +294,24 @@ async function deleteProgression(id: string) {
           </div>
         </div>
 
-        <div :id="'day-content-' + day.id" class="day-content" style="display: none;">
+        <div :id="'day-content-' + day.id" class="day-content s-9c7663">
           <div v-for="(ex, exi) in plansStore.exercisesForDay(day.id)" :key="ex.id" class="ex-row" :style="getGroupStyle(ex.group_type)">
-            <div style="margin-right: 12px; display:flex; align-items:center;" @click="openEditExercise(ex.id, ex)" role="button" tabindex="0" @keydown.enter.self.prevent="openEditExercise(ex.id, ex)" @keydown.space.self.prevent="openEditExercise(ex.id, ex)">
+            <div class="s-88d9ac" @click="openEditExercise(ex.id, ex)" role="button" tabindex="0" @keydown.enter.self.prevent="openEditExercise(ex.id, ex)" @keydown.space.self.prevent="openEditExercise(ex.id, ex)">
               <ExerciseIcon :name="ex.exercise_name" :type="ex.exercise_type" />
             </div>
-            <div style="flex:1" @click="openEditExercise(ex.id, ex)" role="button" tabindex="0" @keydown.enter.self.prevent="openEditExercise(ex.id, ex)" @keydown.space.self.prevent="openEditExercise(ex.id, ex)">
-              <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+            <div class="s-da5cd6" @click="openEditExercise(ex.id, ex)" role="button" tabindex="0" @keydown.enter.self.prevent="openEditExercise(ex.id, ex)" @keydown.space.self.prevent="openEditExercise(ex.id, ex)">
+              <div class="s-2a2dba">
                 {{ ex.exercise_name }}
                 <span v-if="ex.group_type" class="group-badge" :class="'badge-' + ex.group_type">{{ ex.group_type.replace('_', ' ') }}</span>
               </div>
-              <div style="font-size: 12px; color: var(--text2)">
+              <div class="s-5c8a6f">
                 <span v-if="ex.exercise_type === 'strength'">{{ ex.sets }} sets x {{ ex.reps }} reps</span>
                 <span v-else-if="ex.exercise_type === 'cardio'">{{ ex.duration_min }} min • Incline: {{ ex.incline_pct }}%</span>
                 <span v-else-if="ex.exercise_type === 'isometric'">{{ ex.sets }} sets x {{ ex.reps || 0 }} reps x {{ ex.duration_sec }}s</span>
                 • {{ ex.rest_seconds }}s rest
               </div>
             </div>
-            <div style="display:flex; flex-direction:column; gap: 2px;">
+            <div class="s-14e527">
               <button class="btn-icon" :disabled="exi === 0" @click.stop="moveExerciseUp(day.id, ex.id)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
               </button>
@@ -321,50 +320,50 @@ async function deleteProgression(id: string) {
               </button>
             </div>
           </div>
-          <button class="btn btn-secondary btn-sm" style="width:100%; margin-top: 12px;" @click="openAddExerciseFlow(day.id)">+ Añadir Ejercicio</button>
+          <button class="btn btn-secondary btn-sm s-6573f5" @click="openAddExerciseFlow(day.id)">+ Añadir Ejercicio</button>
         </div>
       </div>
 
-      <button class="btn btn-primary" style="margin-top: 20px;" @click="addDay">+ Añadir Día</button>
+      <button class="btn btn-primary s-0de1f9" @click="addDay">+ Añadir Día</button>
     </div>
 
     <!-- Pestaña: Progresión -->
-    <div style="padding:12px 16px" v-if="activeTab === 'progression'">
-      <div v-for="prog in progressions" :key="prog.id" class="day-card" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;" @click="openEditProgression(prog)" role="button" tabindex="0" @keydown.enter.self.prevent="openEditProgression(prog)" @keydown.space.self.prevent="openEditProgression(prog)">
+    <div class="s-8e86e5" v-if="activeTab === 'progression'">
+      <div v-for="prog in progressions" :key="prog.id" class="day-card s-ec4e3d" @click="openEditProgression(prog)" role="button" tabindex="0" @keydown.enter.self.prevent="openEditProgression(prog)" @keydown.space.self.prevent="openEditProgression(prog)">
         <div>
-          <div style="font-weight: 700; font-size: 16px; margin-bottom: 4px;">Semana {{ prog.week_number }} <span style="font-size: 12px; font-weight: normal; color: var(--text2)">({{ prog.phase }})</span></div>
-          <div style="font-size: 13px; color: var(--text2);">
-            Peso: <strong style="color:var(--accent)">{{ prog.weight_change_pct }}</strong> | RPE: {{ prog.rpe_target }} | Reps: {{ prog.reps_change }}
+          <div class="s-e52a53">Semana {{ prog.week_number }} <span class="s-15f086">({{ prog.phase }})</span></div>
+          <div class="s-d51410">
+            Peso: <strong class="s-0970ea">{{ prog.weight_change_pct }}</strong> | RPE: {{ prog.rpe_target }} | Reps: {{ prog.reps_change }}
           </div>
         </div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
       </div>
 
-      <button class="btn btn-primary" style="margin-top: 20px;" @click="addProgression">+ Añadir Semana</button>
+      <button class="btn btn-primary s-0de1f9" @click="addProgression">+ Añadir Semana</button>
     </div>
 
     <!-- Modal Seleccion de Tipo -->
     <div v-if="showTypeSelectModal" class="modal-overlay">
-      <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
-        <h3 style="text-align: center; margin-bottom: 24px;">Tipo de Ejercicio</h3>
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-          <button class="btn btn-secondary" style="display:flex; align-items:center; justify-content:center; gap:10px; padding:20px;" @click="selectExerciseType('strength')">
-            <span style="font-size: 24px;">🏋️‍♂️</span> Fuerza
+      <div class="modal-content s-b6f919">
+        <h3 class="s-883d6e">Tipo de Ejercicio</h3>
+        <div class="s-bb5495">
+          <button class="btn btn-secondary s-71eef3" @click="selectExerciseType('strength')">
+            <span class="s-3ba4f4">🏋️‍♂️</span> Fuerza
           </button>
-          <button class="btn btn-secondary" style="display:flex; align-items:center; justify-content:center; gap:10px; padding:20px;" @click="selectExerciseType('cardio')">
-            <span style="font-size: 24px;">🏃‍♂️</span> Cardio
+          <button class="btn btn-secondary s-71eef3" @click="selectExerciseType('cardio')">
+            <span class="s-3ba4f4">🏃‍♂️</span> Cardio
           </button>
-          <button class="btn btn-secondary" style="display:flex; align-items:center; justify-content:center; gap:10px; padding:20px;" @click="selectExerciseType('isometric')">
-            <span style="font-size: 24px;">⏱️</span> Isométrico
+          <button class="btn btn-secondary s-71eef3" @click="selectExerciseType('isometric')">
+            <span class="s-3ba4f4">⏱️</span> Isométrico
           </button>
         </div>
-        <button class="btn btn-secondary" style="margin-top: 24px; background: transparent; border: none;" @click="showTypeSelectModal = false">Cancelar</button>
+        <button class="btn btn-secondary s-64aadb" @click="showTypeSelectModal = false">Cancelar</button>
       </div>
     </div>
 
     <!-- Modal Ejercicio -->
     <div v-if="showExModal" class="modal-overlay">
-      <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+      <div class="modal-content s-b6f919">
         <h3>
           {{ editingExId ? 'Editar' : 'Nuevo' }} 
           {{ newEx.exercise_type === 'strength' ? 'Fuerza' : newEx.exercise_type === 'cardio' ? 'Cardio' : 'Isométrico' }}
@@ -377,12 +376,12 @@ async function deleteProgression(id: string) {
 
         <!-- Campos para FUERZA -->
         <template v-if="newEx.exercise_type === 'strength'">
-          <div style="display: flex; gap: 10px;">
-            <div class="form-group" style="flex: 1">
+          <div class="s-2be0d8">
+            <div class="form-group s-d2dc0a">
               <label>Series</label>
               <input type="number" v-model="newEx.sets" class="modal-input">
             </div>
-            <div class="form-group" style="flex: 1">
+            <div class="form-group s-d2dc0a">
               <label>Reps</label>
               <input type="number" v-model="newEx.reps" class="modal-input">
             </div>
@@ -422,22 +421,22 @@ async function deleteProgression(id: string) {
 
         <!-- Campos para CARDIO -->
         <template v-if="newEx.exercise_type === 'cardio'">
-          <div style="display: flex; gap: 10px;">
-            <div class="form-group" style="flex: 1">
+          <div class="s-2be0d8">
+            <div class="form-group s-d2dc0a">
               <label>Duración (min)</label>
               <input type="number" v-model="newEx.duration_min" class="modal-input">
             </div>
-            <div class="form-group" style="flex: 1">
+            <div class="form-group s-d2dc0a">
               <label>Inclinación (%)</label>
               <input type="number" v-model="newEx.incline_pct" class="modal-input">
             </div>
           </div>
-          <div style="display: flex; gap: 10px;">
-            <div class="form-group" style="flex: 1">
+          <div class="s-2be0d8">
+            <div class="form-group s-d2dc0a">
               <label>Velocidad (km/h)</label>
               <input type="number" step="0.1" v-model="newEx.speed_kmh" class="modal-input">
             </div>
-            <div class="form-group" style="flex: 1">
+            <div class="form-group s-d2dc0a">
               <label>FC Objetivo (bpm)</label>
               <input type="number" v-model="newEx.target_heart_rate_bpm" class="modal-input">
             </div>
@@ -454,16 +453,16 @@ async function deleteProgression(id: string) {
 
         <!-- Campos para ISOMÉTRICO -->
         <template v-if="newEx.exercise_type === 'isometric'">
-          <div style="display: flex; gap: 10px;">
-            <div class="form-group" style="flex: 1">
+          <div class="s-2be0d8">
+            <div class="form-group s-d2dc0a">
               <label>Series</label>
               <input type="number" v-model="newEx.sets" class="modal-input">
             </div>
-            <div class="form-group" style="flex: 1">
+            <div class="form-group s-d2dc0a">
               <label>Reps</label>
               <input type="number" v-model="newEx.reps" class="modal-input">
             </div>
-            <div class="form-group" style="flex: 1">
+            <div class="form-group s-d2dc0a">
               <label>Duración (seg)</label>
               <input type="number" v-model="newEx.duration_sec" class="modal-input">
             </div>
@@ -481,18 +480,18 @@ async function deleteProgression(id: string) {
           <input type="text" v-model="newEx.special_notes" class="modal-input" placeholder="ej. Pausa 1s abajo">
         </div>
 
-        <div style="display:flex; gap:10px; margin-top:20px;">
+        <div class="s-543cac">
           <button class="btn btn-secondary" @click="showExModal = false">Cancelar</button>
           <button class="btn btn-primary" @click="saveExercise">Guardar</button>
         </div>
-        <button v-if="editingExId" class="btn btn-secondary" style="margin-top: 10px;" @click="handleDuplicateExercise(editingExId)">Duplicar Ejercicio</button>
-        <button v-if="editingExId" class="btn btn-danger" style="margin-top: 10px;" @click="deleteExercise(editingExId)">Borrar Ejercicio</button>
+        <button v-if="editingExId" class="btn btn-secondary s-8ced3a" @click="handleDuplicateExercise(editingExId)">Duplicar Ejercicio</button>
+        <button v-if="editingExId" class="btn btn-danger s-8ced3a" @click="deleteExercise(editingExId)">Borrar Ejercicio</button>
       </div>
     </div>
 
     <!-- Modal Progresion -->
     <div v-if="showProgModal" class="modal-overlay">
-      <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+      <div class="modal-content s-b6f919">
         <h3>{{ editingProgId ? 'Editar Semana ' + newProg.week_number : 'Nueva Semana' }}</h3>
         
         <div class="form-group" v-if="!editingProgId">
@@ -505,12 +504,12 @@ async function deleteProgression(id: string) {
           <input type="text" v-model="newProg.phase" class="modal-input" placeholder="ej. adaptation, intensity">
         </div>
 
-        <div style="display: flex; gap: 10px;">
-          <div class="form-group" style="flex: 1">
+        <div class="s-2be0d8">
+          <div class="form-group s-d2dc0a">
             <label>% Cambio Peso</label>
             <input type="text" v-model="newProg.weight_change_pct" class="modal-input" placeholder="ej. +2.5%">
           </div>
-          <div class="form-group" style="flex: 1">
+          <div class="form-group s-d2dc0a">
             <label>RPE Objetivo</label>
             <input type="number" v-model="newProg.rpe_target" step="0.5" class="modal-input">
           </div>
@@ -526,16 +525,16 @@ async function deleteProgression(id: string) {
           <input type="text" v-model="newProg.system_focus" class="modal-input" placeholder="ej. strength_peak">
         </div>
 
-        <div style="display:flex; gap:10px; margin-top:20px;">
+        <div class="s-543cac">
           <button class="btn btn-secondary" @click="showProgModal = false">Cancelar</button>
           <button class="btn btn-primary" @click="saveProgression">Guardar</button>
         </div>
-        <button v-if="editingProgId" class="btn btn-danger" style="margin-top: 10px;" @click="deleteProgression(editingProgId)">Borrar Semana</button>
+        <button v-if="editingProgId" class="btn btn-danger s-8ced3a" @click="deleteProgression(editingProgId)">Borrar Semana</button>
       </div>
     </div>
 
   </div>
-  <div v-else style="padding: 100px 20px; text-align: center; color: var(--text2);">
+  <div class="s-018b2d" v-else>
     Plan no encontrado
   </div>
 </template>
@@ -586,4 +585,39 @@ select.modal-input { appearance: none; }
 .badge-pyramid { background: #ffe57f; color: #000; }
 .badge-drop_set { background: #ff8a80; color: #000; }
 .badge-finisher { background: #ffd180; color: #000; }
+
+/* estilos extraídos de atributos inline */
+.s-c403cd { padding:calc(24px + env(safe-area-inset-top,0px)) 20px 10px; display: flex; align-items: center; gap: 10px; }
+.s-d2dc0a { flex: 1; }
+.s-fbe64e { font-size:12px;color:var(--text2);font-weight:600;letter-spacing:.5px; }
+.s-92fc55 { font-family:var(--font-display);font-weight:800;font-size:40px;line-height:.95;letter-spacing:.005em; display: flex; align-items: center; gap: 8px; }
+.s-c3028e { margin-top: 4px; display: flex; gap: 8px; }
+.s-8cd4e7 { padding: 8px; }
+.s-8e86e5 { padding:12px 16px; }
+.s-8be3ff { font-weight: 700; font-size: 16px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 8px; }
+.s-77f4f8 { color: var(--text2); font-size: 12px; display:flex; gap: 6px; align-items: center; }
+.s-68d89b { margin-right: 4px; }
+.s-9c7663 { display: none; }
+.s-88d9ac { margin-right: 12px; display:flex; align-items:center; }
+.s-da5cd6 { flex:1; }
+.s-2a2dba { font-weight: 600; font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+.s-5c8a6f { font-size: 12px; color: var(--text2); }
+.s-14e527 { display:flex; flex-direction:column; gap: 2px; }
+.s-6573f5 { width:100%; margin-top: 12px; }
+.s-0de1f9 { margin-top: 20px; }
+.s-ec4e3d { padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
+.s-e52a53 { font-weight: 700; font-size: 16px; margin-bottom: 4px; }
+.s-15f086 { font-size: 12px; font-weight: normal; color: var(--text2); }
+.s-d51410 { font-size: 13px; color: var(--text2); }
+.s-0970ea { color:var(--accent2); }
+.s-b6f919 { max-height: 80vh; overflow-y: auto; }
+.s-883d6e { text-align: center; margin-bottom: 24px; }
+.s-bb5495 { display: flex; flex-direction: column; gap: 12px; }
+.s-71eef3 { display:flex; align-items:center; justify-content:center; gap:10px; padding:20px; }
+.s-3ba4f4 { font-size: 24px; }
+.s-64aadb { margin-top: 24px; background: transparent; border: none; }
+.s-2be0d8 { display: flex; gap: 10px; }
+.s-543cac { display:flex; gap:10px; margin-top:20px; }
+.s-8ced3a { margin-top: 10px; }
+.s-018b2d { padding: 100px 20px; text-align: center; color: var(--text2); }
 </style>

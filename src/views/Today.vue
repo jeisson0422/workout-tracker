@@ -53,6 +53,19 @@ function advanceDay() {
   })
 }
 
+const loggedCount = computed(() => {
+  store.dbUpdateTrigger;
+  const exs = dayObj.value?.exercises || []
+  return exs.filter((_: any, i: number) => store.loggedThisSession.has(`${dayIndex.value}-${i}`)).length
+})
+const totalExercises = computed(() => (dayObj.value?.exercises || []).length)
+const allLogged = computed(() => totalExercises.value > 0 && loggedCount.value >= totalExercises.value)
+
+const PHASE_LABELS: Record<string, string> = {
+  adaptation: 'Adaptación', density: 'Densidad', intensity: 'Intensidad', deload: 'Descarga', peaking: 'Pico'
+}
+const phaseKey = computed(() => (info.value.phase || 'density').toLowerCase())
+
 const nextDayLabel = computed(() => {
   const days = store.getDays()
   const nextIdx = (dayIndex.value + 1) % days.length
@@ -61,19 +74,18 @@ const nextDayLabel = computed(() => {
 </script>
 
 <template>
-  <div class="pb-6">
-    <div style="padding:calc(24px + env(safe-area-inset-top,0px)) 20px 10px">
-      <div style="font-size:12px;color:var(--text2);font-weight:600;letter-spacing:.5px">HOY</div>
-      <div style="font-size:28px;font-weight:800;letter-spacing:-.5px;margin-top:4px">
-        {{ dayLabel || '—' }}
-      </div>
-      <div style="font-size:12px;color:var(--accent2);margin-top:3px;font-weight:600">
-        Semana {{ currentWeek }} · {{ (info.phase||'').toUpperCase() }} · RPE {{ info.rpe_target||'?' }}
-      </div>
-    </div>
+  <div class="today">
+    <header class="screen-head">
+      <p class="when" :class="'ph-' + phaseKey">
+        <span class="phase-swatch" aria-hidden="true"></span>
+        Semana {{ currentWeek }} · {{ PHASE_LABELS[phaseKey] || phaseKey }} · RPE {{ info.rpe_target || '?' }}
+      </p>
+      <h1 class="display screen-title">{{ dayLabel || '—' }}</h1>
+      <p v-if="totalExercises" class="screen-sub">{{ loggedCount }} de {{ totalExercises }} ejercicios registrados</p>
+    </header>
 
     <div v-if="dayObj">
-      <DayCard 
+      <DayCard
         :day-index="dayIndex"
         :day-label="dayLabel"
         :exercises="dayObj.exercises || []"
@@ -81,24 +93,28 @@ const nextDayLabel = computed(() => {
         :start-open="true"
         @open-modal="openModal"
       />
-      
-      <div style="padding:12px 16px">
-        <button class="btn btn-secondary w-full" @click="advanceDay">
-          Marcar día completo → {{ nextDayLabel }}
+
+      <div class="finish">
+        <button class="btn finish-btn" :class="allLogged ? 'btn-primary' : 'btn-secondary'" @click="advanceDay">
+          <span>{{ allLogged ? 'Terminé el día' : 'Marcar día como completo' }}</span>
+          <small>Sigue: {{ nextDayLabel }}</small>
         </button>
       </div>
     </div>
 
-    <LogModal 
-      :is-open="isModalOpen" 
-      :data="modalData" 
-      @close="isModalOpen = false" 
+    <LogModal
+      :is-open="isModalOpen"
+      :data="modalData"
+      @close="isModalOpen = false"
     />
   </div>
 </template>
 
 <style scoped>
-.btn { padding: 14px; border-radius: var(--r2); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform .1s, opacity .2s; text-align: center; }
-.btn:active { transform: scale(0.97); }
-.btn-secondary { background: var(--bg2); color: var(--text); border: 1px solid var(--border2); }
+.today { padding-bottom: 24px; }
+.when { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 14px; color: var(--text2); }
+.phase-swatch { width: 14px; height: 14px; border-radius: 50%; background: var(--ph); box-shadow: inset 0 0 0 3px var(--bg), 0 0 0 1.5px var(--ph); flex-shrink: 0; }
+.finish { padding: 8px 16px 0; }
+.finish-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 14px 16px; }
+.finish-btn small { font-size: 13px; font-weight: 500; opacity: .75; }
 </style>

@@ -17,17 +17,20 @@ function openModal(data: any) {
   modalData.value = data
   isModalOpen.value = true
 }
+
+const PHASE_LABELS: Record<string, string> = {
+  adaptation: 'Adaptación', density: 'Densidad', intensity: 'Intensidad', deload: 'Descarga', peaking: 'Pico'
+}
 </script>
 
 <template>
   <div class="pb-6">
-    <div style="padding:calc(24px + env(safe-area-inset-top,0px)) 20px 10px">
-      <div style="font-size:12px;color:var(--text2);font-weight:600;letter-spacing:.5px">ENTRENAMIENTO</div>
-      <div style="font-size:28px;font-weight:800;letter-spacing:-.5px;margin-top:4px">
+    <div class="s-7b0125">
+      <div class="s-de89cf">
         Semana {{ currentWeek }}
       </div>
-      <div style="font-size:12px;color:var(--accent2);margin-top:3px;font-weight:600">
-        {{ (info.phase||'').toUpperCase() }} · RPE {{ info.rpe_target||'?' }}
+      <div class="s-eb5388">
+        {{ PHASE_LABELS[(info.phase||'').toLowerCase()] || info.phase }} · RPE {{ info.rpe_target||'?' }}
       </div>
     </div>
 
@@ -50,3 +53,11 @@ function openModal(data: any) {
     />
   </div>
 </template>
+
+<style scoped>
+/* estilos extraídos de atributos inline */
+.s-7b0125 { padding:calc(22px + env(safe-area-inset-top,0px)) 20px 14px; }
+.s-fbe64e { font-size:12px;color:var(--text2);font-weight:600;letter-spacing:.5px; }
+.s-de89cf { font-family:var(--font-display);font-weight:800;font-size:40px;line-height:.95;letter-spacing:.005em; }
+.s-eb5388 { font-size:14px;color:var(--text2);margin-top:6px; }
+</style>

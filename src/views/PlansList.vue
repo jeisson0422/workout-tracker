@@ -140,18 +140,17 @@ function importPlan() {
 
 <template>
   <div class="pb-6">
-    <div style="padding:calc(24px + env(safe-area-inset-top,0px)) 20px 10px; display: flex; align-items: center; gap: 10px;">
+    <div class="s-c403cd">
       <button class="back-btn" @click="router.push('/config')">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
       </button>
       <div>
-        <div style="font-size:12px;color:var(--text2);font-weight:600;letter-spacing:.5px">MIS RUTINAS</div>
-        <div style="font-size:28px;font-weight:800;letter-spacing:-.5px;margin-top:4px">Planes</div>
+        <div class="s-de89cf">Planes</div>
       </div>
     </div>
     
-    <div style="padding:12px 16px">
-      <div v-if="plansStore.plans.length === 0" style="text-align: center; color: var(--text2); padding: 40px 0;">
+    <div class="s-8e86e5">
+      <div class="s-7bce90" v-if="plansStore.plans.length === 0">
         No tienes ningún plan creado.
       </div>
       
@@ -169,28 +168,28 @@ function importPlan() {
       </div>
 
       <div class="ai-box">
-        <div class="ai-box-title">🤖 Generación con IA</div>
+        <div class="ai-box-title">Generar con IA</div>
         <div class="ai-box-desc">Usa el poder de Claude para crear planes basados en tu perfil y equipo.</div>
-        <div style="display:flex;gap:10px">
-          <button class="btn btn-ai" style="flex:1" @click="showAiModal = true">Obtener Prompt</button>
-          <button class="btn btn-ai-alt" style="flex:1" @click="showImportModal = true">Importar JSON</button>
+        <div class="s-871a87">
+          <button class="btn btn-ai s-da5cd6" @click="showAiModal = true">Obtener Prompt</button>
+          <button class="btn btn-ai-alt s-da5cd6" @click="showImportModal = true">Importar JSON</button>
         </div>
       </div>
 
-      <button class="btn btn-primary" style="margin-top: 20px;" @click="showNewPlanModal = true">+ Crear Nuevo Plan Manual</button>
+      <button class="btn btn-primary s-0de1f9" @click="showNewPlanModal = true">+ Crear Nuevo Plan Manual</button>
     </div>
 
     <!-- Modal AI Prompt -->
     <div v-if="showAiModal" class="modal-overlay">
       <div class="modal-content ai-modal">
         <h3>Prompt para Claude</h3>
-        <p style="font-size: 13px; color: var(--text2); margin-bottom: 15px;">
+        <p class="s-97c796">
           Copia este prompt y pégalo en Claude. La IA generará un plan basado en tu perfil (peso, equipo, metas).
         </p>
         <div class="prompt-preview">
           {{ generateMasterPrompt() }}
         </div>
-        <div style="display:flex;gap:10px;margin-top:20px;">
+        <div class="s-6bf5e5">
           <button class="btn btn-secondary" @click="showAiModal = false">Cerrar</button>
           <button class="btn btn-ai" @click="copyAiPrompt">Copiar y Abrir Claude</button>
         </div>
@@ -201,10 +200,10 @@ function importPlan() {
     <div v-if="showImportModal" class="modal-overlay">
       <div class="modal-content">
         <h3>Importar Plan de IA</h3>
-        <p style="font-size: 13px; color: var(--text2); margin-bottom: 10px;">Pega aquí el código JSON que generó Claude:</p>
-        <button class="btn btn-secondary btn-sm" style="margin-bottom: 10px;" @click="pasteFromClipboard">📋 Pegar desde portapapeles</button>
+        <p class="s-822f63">Pega aquí el código JSON que generó Claude:</p>
+        <button class="btn btn-secondary btn-sm s-273e41" @click="pasteFromClipboard">📋 Pegar desde portapapeles</button>
         <textarea v-model="aiJsonInput" placeholder='{ "name": "Mi Plan...", "training_days": [...] }' class="import-area"></textarea>
-        <div style="display:flex;gap:10px;margin-top:20px;">
+        <div class="s-6bf5e5">
           <button class="btn btn-secondary" @click="showImportModal = false">Cancelar</button>
           <button class="btn btn-primary" @click="importPlan">Importar Plan</button>
         </div>
@@ -216,7 +215,7 @@ function importPlan() {
       <div class="modal-content">
         <h3>Nuevo Plan</h3>
         <input type="text" v-model="newPlanName" placeholder="Nombre del plan (ej. Volumen 2024)" class="modal-input" @keyup.enter="createPlan" />
-        <div style="display:flex;gap:10px;margin-top:20px;">
+        <div class="s-6bf5e5">
           <button class="btn btn-secondary" @click="showNewPlanModal = false">Cancelar</button>
           <button class="btn btn-primary" @click="createPlan">Crear</button>
         </div>
@@ -229,7 +228,7 @@ function importPlan() {
 .back-btn { background: var(--bg2); border: 1px solid var(--card-border); box-shadow: var(--card-shadow); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: var(--text); cursor: pointer; padding: 0; transition: transform .1s; }
 .back-btn:active { transform: scale(0.9); }
 .plan-card { background: var(--bg2); border: 1px solid var(--card-border); box-shadow: var(--card-shadow); border-radius: var(--r2); padding: 16px; margin-bottom: 12px; transition: border-color 0.2s; }
-.plan-card.active { border-color: var(--accent); background: linear-gradient(180deg, rgba(200,255,0,0.05) 0%, rgba(200,255,0,0) 100%), var(--bg2); }
+.plan-card.active { border-color: var(--accent); border-width: 2px; background: var(--bg2); }
 .plan-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; cursor: pointer; }
 .plan-title { font-size: 18px; font-weight: 700; color: var(--text); }
 .plan-badge { background: var(--accent); color: var(--accent-text); font-size: 12px; font-weight: 800; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; }
@@ -249,13 +248,27 @@ function importPlan() {
 @keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
-.ai-box { background: linear-gradient(135deg, rgba(200,255,0,0.1) 0%, rgba(200,255,0,0) 100%); border: 1px dashed var(--accent); padding: 16px; border-radius: var(--r2); margin-top: 24px; }
-.ai-box-title { font-weight: 800; font-size: 14px; margin-bottom: 4px; color: var(--accent); }
+.ai-box { background: var(--bg2); border: 1.5px dashed var(--border2); padding: 16px; border-radius: var(--r2); margin-top: 24px; }
+.ai-box-title { font-weight: 800; font-size: 14px; margin-bottom: 4px; color: var(--text); }
 .ai-box-desc { font-size: 12px; color: var(--text2); margin-bottom: 12px; }
 .btn-ai { background: var(--accent); color: var(--accent-text); font-size: 13px; padding: 10px; }
-.btn-ai-alt { background: var(--bg3); color: var(--accent); border: 1px solid var(--accent); font-size: 13px; padding: 10px; }
+.btn-ai-alt { background: var(--bg3); color: var(--text); border: 1px solid var(--border2); font-size: 13px; padding: 10px; }
 
 .ai-modal { max-width: 500px !important; }
 .prompt-preview { background: var(--bg3); padding: 12px; border-radius: var(--r3); font-size: 12px; font-family: monospace; height: 200px; overflow-y: auto; color: var(--text2); border: 1px solid var(--border); white-space: pre-wrap; }
 .import-area { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r3); color: var(--text); padding: 12px; font-size: 12px; font-family: monospace; height: 200px; resize: none; }
+
+/* estilos extraídos de atributos inline */
+.s-c403cd { padding:calc(24px + env(safe-area-inset-top,0px)) 20px 10px; display: flex; align-items: center; gap: 10px; }
+.s-fbe64e { font-size:12px;color:var(--text2);font-weight:600;letter-spacing:.5px; }
+.s-de89cf { font-family:var(--font-display);font-weight:800;font-size:40px;line-height:.95;letter-spacing:.005em; }
+.s-8e86e5 { padding:12px 16px; }
+.s-7bce90 { text-align: center; color: var(--text2); padding: 40px 0; }
+.s-871a87 { display:flex;gap:10px; }
+.s-da5cd6 { flex:1; }
+.s-0de1f9 { margin-top: 20px; }
+.s-97c796 { font-size: 13px; color: var(--text2); margin-bottom: 15px; }
+.s-6bf5e5 { display:flex;gap:10px;margin-top:20px; }
+.s-822f63 { font-size: 13px; color: var(--text2); margin-bottom: 10px; }
+.s-273e41 { margin-bottom: 10px; }
 </style>

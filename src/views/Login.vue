@@ -113,10 +113,19 @@ async function handleSubmit() {
 }
 
 .brand {
-  font-size: 32px;
-  font-weight: 800;
-  letter-spacing: -1px;
-  color: var(--accent, #6c63ff);
+  font-family: var(--font-display);
+  font-size: 64px;
+  font-weight: 900;
+  line-height: .9;
+  color: var(--text);
+}
+.brand::after {
+  content: '';
+  display: block;
+  width: 56px;
+  height: 6px;
+  margin: 12px auto 0;
+  background: var(--accent);
 }
 
 .subtitle {
@@ -128,8 +137,8 @@ async function handleSubmit() {
 .login-form {
   background: var(--bg2, #12121a);
   padding: 24px;
-  border-radius: var(--r, 20px);
-  border: 1px solid var(--card-border);
+  border-radius: var(--r);
+  border: 1.5px solid var(--border);
   box-shadow: var(--card-shadow);
 }
 
@@ -144,8 +153,6 @@ async function handleSubmit() {
   font-size: 12px;
   color: var(--text2, #9898b8);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 input {
@@ -160,7 +167,7 @@ input {
 
 input:focus {
   outline: none;
-  border-color: var(--accent, #6c63ff);
+  border-color: var(--text);
 }
 
 input:disabled {
@@ -184,8 +191,9 @@ input:disabled {
 }
 
 .btn-primary {
-  background: var(--accent, #6c63ff);
-  color: var(--accent-text, #ffffff);
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 700;
 }
 
 .btn-primary:disabled {

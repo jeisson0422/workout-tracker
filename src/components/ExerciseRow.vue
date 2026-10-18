@@ -214,13 +214,13 @@ function handleLogClick() {
       <div v-if="suggestedWeight" class="ex-suggested">
         {{ suggestedWeight.change === '=' ? '→' : (suggestedWeight.change.startsWith('+') ? '↑' : '↓') }} 
         Peso sugerido: {{ suggestedWeight.kg }}kg
-        <span style="opacity:.6;font-weight:400">({{ suggestedWeight.change }} vs sem. {{ suggestedWeight.fromWeek||'ant.' }})</span>
+        <span class="s-1efd9a">({{ suggestedWeight.change }} vs sem. {{ suggestedWeight.fromWeek||'ant.' }})</span>
       </div>
       
       <div v-if="fmtRest" class="ex-rest">⏱ descanso: {{ fmtRest }}</div>
     </div>
     
-    <button class="ex-log-btn" :aria-label="`Registrar ${rawName}`" :class="{ 'logged': isEffectivelyLogged, 'partial': isPartiallyLogged }" @click="handleLogClick">
+    <button class="ex-log-btn" :aria-label="`Registrar ${rawName.replace(/_/g, ' ')}`" :class="{ 'logged': isEffectivelyLogged, 'partial': isPartiallyLogged }" @click="handleLogClick">
       {{ isEffectivelyLogged ? '✓' : (isPartiallyLogged ? `${todaysSetsCount}/${targetSets}` : 'Log') }}
     </button>
   </div>
@@ -236,7 +236,7 @@ function handleLogClick() {
 .ex-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
 .ex-log-btn { background: var(--bg3); border: none; color: var(--accent2); border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: transform .1s, background .15s; }
 .ex-log-btn:active { transform: scale(0.92); }
-.ex-log-btn.logged { background: var(--accent); color: #fff; }
+.ex-log-btn.logged { background: var(--accent); color: var(--accent-text); }
 .ex-log-btn.partial { background: var(--amber); color: #fff; }
 .ex-hint { font-size: 12px; color: var(--accent2); margin-top: 3px; font-style: italic; opacity: .8; }
 .ex-rest { font-size: 12px; color: var(--text3); margin-top: 2px; }
@@ -256,4 +256,7 @@ function handleLogClick() {
 .ex-tag.group-finisher { background: rgba(251,146,60,.12); color: #fb923c; border-color: rgba(251,146,60,.3); }
 .ex-tag.type-cardio { background: rgba(52,211,153,.1); color: var(--green); border-color: rgba(52,211,153,.25); }
 .ex-tag.type-isometric { background: rgba(96,165,250,.1); color: var(--blue); border-color: rgba(96,165,250,.25); }
+
+/* estilos extraídos de atributos inline */
+.s-1efd9a { opacity:.6;font-weight:400; }
 </style>

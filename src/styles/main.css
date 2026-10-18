@@ -1,58 +1,79 @@
 @import "tailwindcss";
 
+/*
+  Sistema visual "disco de barra": superficies planas de grafito/hueso,
+  amarillo de disco de 15 kg como único acento y los colores IPF de los
+  discos (gris, azul, rojo, verde, amarillo) para marcar las fases.
+  --accent es el relleno; --accent2 es la versión segura para texto.
+*/
 :root {
-  --bg:#ffffff;
-  --bg2:#f3f4f6;
-  --bg3:#e5e7eb;
-  --bg4:#d1d5db;
-  --accent:#4f46e5;
-  --accent2:#7c3aed;
-  --accent-text:#ffffff;
-  --green:#047857;
-  --amber:#b45309;
-  --red:#dc2626;
-  --blue:#2563eb;
-  --text:#111827;
-  --text2:#4b5563;
+  --bg:#eceeef;
+  --bg2:#ffffff;
+  --bg3:#e3e6e8;
+  --bg4:#d3d7db;
+  --accent:#f2c200;
+  --accent2:#7a5a00;
+  --accent-text:#16150f;
+  --green:#177a45;
+  --amber:#9a5b00;
+  --red:#c62f2f;
+  --blue:#2257b8;
+  --text:#15171a;
+  --text2:#454b53;
   --text3:#5b6472;
-  --border:#d1d5db;
-  --border2:#9ca3af;
-  --danger-bg: #fee2e2;
-  --danger-border: #fca5a5;
-  --success-bg: #d1fae5;
-  --success-border: #6ee7b7;
-  --r:20px;--r2:14px;--r3:10px;
-  --card-border: rgba(0,0,0,.06);
-  --card-shadow: 0 1px 2px rgba(0,0,0,.04), 0 1px 8px rgba(0,0,0,.03);
-  --glass-bg: rgba(255,255,255,.72);
-  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',system-ui,sans-serif;
+  --border:#cdd1d6;
+  --border2:#98a0a9;
+  --danger-bg: #fbe4e4;
+  --danger-border: #eaa5a5;
+  --success-bg: #dcf3e5;
+  --success-border: #9bd5b2;
+  --r:12px;--r2:10px;--r3:8px;
+  --card-border: var(--border);
+  --card-shadow: none;
+  --glass-bg: var(--bg2);
+
+  /* Fases = colores de disco */
+  --ph-adaptation:#7c838c;
+  --ph-density:#2f6fd8;
+  --ph-intensity:#d1382d;
+  --ph-deload:#1f9254;
+  --ph-peaking:#f2c200;
+
+  --font-body:'Hanken Grotesk',system-ui,-apple-system,sans-serif;
+  --font-display:'Big Shoulders Display','Arial Narrow',Impact,sans-serif;
+  font-family: var(--font-body);
   color-scheme: light;
 }
 
 :root[data-theme="dark"] {
-  --bg:#0a0a0f;
-  --bg2:#12121a;
-  --bg3:#1a1a26;
-  --bg4:#22223a;
-  --accent:#6c63ff;
-  --accent2:#a78bfa;
-  --accent-text:#ffffff;
-  --green:#34d399;
-  --amber:#fbbf24;
-  --red:#f87171;
-  --blue:#60a5fa;
-  --text:#f0f0ff;
-  --text2:#9898b8;
-  --text3:#8a8aab;
-  --border:#2a2a44;
-  --border2:#3a3a5a;
-  --danger-bg: #2a1a1a;
-  --danger-border: #3a2222;
-  --success-bg: #0d2a1f;
-  --success-border: #1a4a35;
-  --card-border: rgba(255,255,255,.08);
-  --card-shadow: 0 1px 2px rgba(0,0,0,.3), 0 1px 10px rgba(0,0,0,.25);
-  --glass-bg: rgba(18,18,26,.72);
+  --bg:#141517;
+  --bg2:#1d1e21;
+  --bg3:#27292d;
+  --bg4:#33363b;
+  --accent:#f5c800;
+  --accent2:#f5c800;
+  --accent-text:#16150f;
+  --green:#3ec27a;
+  --amber:#f0a030;
+  --red:#f06a6a;
+  --blue:#6ea2f5;
+  --text:#eceef0;
+  --text2:#a7adb5;
+  --text3:#8a9099;
+  --border:#34373d;
+  --border2:#4a4e56;
+  --danger-bg: #2c1a1a;
+  --danger-border: #4a2525;
+  --success-bg: #12291e;
+  --success-border: #1f4a35;
+  --card-border: var(--border);
+  --card-shadow: none;
+  --glass-bg: var(--bg2);
+  --ph-adaptation:#8d949d;
+  --ph-density:#3d7de6;
+  --ph-intensity:#e0463a;
+  --ph-deload:#2aa862;
+  --ph-peaking:#f5c800;
   color-scheme: dark;
 }
 
@@ -74,15 +95,44 @@
 body {
   background: var(--bg);
   color: var(--text);
+  font-family: var(--font-body);
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Tipografía de marcador: títulos y cifras grandes */
+.display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: .005em;
+  line-height: .95;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Color de fase (disco) disponible como --ph en cualquier elemento */
+.ph-adaptation { --ph: var(--ph-adaptation); --ph-ink:#fff; }
+.ph-density    { --ph: var(--ph-density);    --ph-ink:#fff; }
+.ph-intensity  { --ph: var(--ph-intensity);  --ph-ink:#fff; }
+.ph-deload     { --ph: var(--ph-deload);     --ph-ink:#fff; }
+.ph-peaking    { --ph: var(--ph-peaking);    --ph-ink:#16150f; }
+
+/* Pantallas: cabecera y contenedor comunes */
+.screen-head { padding: calc(22px + env(safe-area-inset-top,0px)) 20px 14px; }
+.screen-title { font-size: 40px; margin: 0; }
+.screen-sub { font-size: 14px; color: var(--text2); margin: 6px 0 0; }
+
+/* Botones base reutilizables */
+.btn { display: block; width: 100%; padding: 14px; border-radius: var(--r2); border: 1.5px solid transparent; font-size: 15px; font-weight: 700; cursor: pointer; transition: transform .1s, opacity .2s; text-align: center; font-family: inherit; }
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: var(--accent); color: var(--accent-text); }
+.btn-secondary { background: transparent; color: var(--text); border-color: var(--border2); }
+.btn-danger { background: var(--danger-bg); color: var(--red); border-color: var(--danger-border); }
+
 /* iOS-style alert (SweetAlert2 overrides) */
 .swal2-container { backdrop-filter: blur(6px); background: rgba(0,0,0,.28) !important; }
 .swal-custom-popup {
-  border-radius: 20px !important;
+  border-radius: 16px !important;
   box-shadow: 0 20px 50px rgba(0,0,0,.25) !important;
   padding: 20px 8px !important;
 }
@@ -130,9 +180,7 @@ body {
   }
 }
 
-/* Translucent glass surface (tab bar, sheets, sticky headers) */
+/* Superficie sólida (barra inferior, hojas, cabeceras fijas) */
 .ios-glass {
-  background: var(--glass-bg);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  backdrop-filter: saturate(180%) blur(20px);
+  background: var(--bg2);
 }

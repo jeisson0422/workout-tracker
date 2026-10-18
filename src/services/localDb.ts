@@ -1,4 +1,4 @@
-declare const initSqlJs: any;
+import wasmUrl from 'sql.js/dist/sql-wasm.wasm?url'
 
 class LocalDbService {
   db: any = null;
@@ -9,9 +9,9 @@ class LocalDbService {
   async init() {
     if (this.initialized) return;
     try {
-      this.SQL = await initSqlJs({
-        locateFile: () => 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.wasm'
-      });
+      const mod: any = await import('sql.js/dist/sql-wasm.js')
+      const initSqlJs = mod.default ?? mod
+      this.SQL = await initSqlJs({ locateFile: () => wasmUrl });
       this.restoreDB();
       this.createSchema();
       this.initialized = true;

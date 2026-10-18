@@ -331,7 +331,7 @@ function formatRest(sec: number) {
         <div class="input-row">
           <div class="input-group">
             <label>Peso</label>
-            <div style="display:flex;gap:8px;align-items:stretch">
+            <div class="s-71422e">
               <div class="weight-stepper">
                 <button type="button" class="stepper-btn" @click="adjustWeight(-1)">−</button>
                 <input type="number" v-model="mWeight" min="0" :step="weightUnit === 'kg' ? 0.5 : 0.25">
@@ -342,9 +342,9 @@ function formatRest(sec: number) {
                 <button class="unit-btn" :class="{active: weightUnit === 'lbs'}" @click="setWeightUnit('lbs')">lbs</button>
               </div>
             </div>
-            <div v-if="weightUnit === 'lbs'" style="font-size: 12px;color:var(--text3);margin-top:4px">= {{ Math.round(mWeight / 2.2046 * 100) / 100 }} kg guardado</div>
-            <div v-if="weightUnit === 'kg' && mWeight > 0" style="font-size: 12px;color:var(--text3);margin-top:4px">= {{ Math.round(mWeight * 2.2046 * 10) / 10 }} lbs</div>
-            <div style="font-size: 12px;color:var(--text3);margin-top:3px">📌 Registra el peso <b>por mancuerna</b></div>
+            <div class="s-97acc4" v-if="weightUnit === 'lbs'">= {{ Math.round(mWeight / 2.2046 * 100) / 100 }} kg guardado</div>
+            <div class="s-97acc4" v-if="weightUnit === 'kg' && mWeight > 0">= {{ Math.round(mWeight * 2.2046 * 10) / 10 }} lbs</div>
+            <div class="s-65d08b">Registra el peso <b>por mancuerna</b></div>
           </div>
         </div>
 
@@ -374,9 +374,9 @@ function formatRest(sec: number) {
           <div v-else class="set-tracker-done-hint">Toca "Registrar" para guardar el ejercicio</div>
         </div>
 
-        <div v-if="data?.pyramid_reps" style="margin-bottom:12px">
-          <div style="font-size:12px;color:var(--text2);font-weight:600;margin-bottom:6px">Series piramidales</div>
-          <div v-for="(_, i) in data.pyramid_reps" :key="i" class="input-row" style="margin-bottom:6px">
+        <div class="s-fa3e1c" v-if="data?.pyramid_reps">
+          <div class="s-9ceed4">Series piramidales</div>
+          <div v-for="(_, i) in data.pyramid_reps" :key="i" class="input-row s-2937bf">
             <div class="input-group"><label>Serie {{Number(i)+1}} kg</label><input type="number" v-model="mPyrW[Number(i)]" min="0" step="2.5"></div>
             <div class="input-group"><label>Reps</label><input type="number" v-model="mPyrR[Number(i)]" min="1"></div>
           </div>
@@ -394,11 +394,11 @@ function formatRest(sec: number) {
         </div>
       </div>
 
-      <div v-if="data?.safetyLimit > 0" style="font-size:12px;color:var(--amber);background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:8px;padding:8px 12px;margin-bottom:12px">
+      <div class="s-cbbd42" v-if="data?.safetyLimit > 0">
         ⚠ Límite de seguridad: {{ data.safetyLimit }} kg
       </div>
 
-      <div class="input-group" style="margin-bottom:20px">
+      <div class="input-group s-301969">
         <label>Notas (opcional)</label>
         <input type="text" v-model="mNotes" placeholder="Ej: bajé el peso, buena forma...">
       </div>
@@ -410,7 +410,7 @@ function formatRest(sec: number) {
 
     <div class="log-footer">
       <button class="btn btn-primary" @click="saveLog">✓ Registrar</button>
-      <button class="btn btn-secondary" style="margin:0" @click="emit('close')">Cancelar</button>
+      <button class="btn btn-secondary s-1386d5" @click="emit('close')">Cancelar</button>
     </div>
   </div>
 </template>
@@ -512,16 +512,27 @@ input:focus { outline: none; border-color: var(--accent); }
 .set-dot :deep(svg) { width: 18px; height: 18px; }
 .set-dot.done { background: var(--green); color: #fff; cursor: pointer; }
 .set-dot.done:active { transform: scale(0.88); }
-.set-dot.next { background: var(--accent); color: #fff; cursor: pointer; box-shadow: 0 0 0 4px rgba(108,99,255,.25); }
+.set-dot.next { background: var(--accent); color: var(--accent-text); cursor: pointer; box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent); }
 .set-dot.next:active { transform: scale(0.88); }
 .set-undo-hint { text-align: center; font-size: 12px; color: var(--text3); margin-bottom: 10px; }
 .btn-set-done { background: var(--accent); color: var(--accent-text); margin-bottom: 0; }
 .set-tracker-done-hint { text-align: center; font-size: 12px; color: var(--green); font-weight: 600; }
 .unit-toggle { display: flex; border: 1px solid var(--border2); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
 .unit-btn { padding: 0 12px; height: 100%; border: none; background: transparent; color: var(--text2); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
-.unit-btn.active { background: var(--accent); color: #fff; }
+.unit-btn.active { background: var(--accent); color: var(--accent-text); }
 .btn { display: block; width: 100%; padding: 14px; border-radius: var(--r2); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform .1s, opacity .2s; text-align: center; margin-bottom: 10px; }
 .btn:active { transform: scale(0.97); }
 .btn-primary { background: var(--accent); color: var(--accent-text); }
 .btn-secondary { background: var(--bg2); color: var(--text); border: 1px solid var(--border2); }
+
+/* estilos extraídos de atributos inline */
+.s-71422e { display:flex;gap:8px;align-items:stretch; }
+.s-97acc4 { font-size: 12px;color:var(--text3);margin-top:4px; }
+.s-65d08b { font-size: 12px;color:var(--text3);margin-top:3px; }
+.s-fa3e1c { margin-bottom:12px; }
+.s-9ceed4 { font-size:12px;color:var(--text2);font-weight:600;margin-bottom:6px; }
+.s-2937bf { margin-bottom:6px; }
+.s-cbbd42 { font-size:12px;color:var(--amber);background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:8px;padding:8px 12px;margin-bottom:12px; }
+.s-301969 { margin-bottom:20px; }
+.s-1386d5 { margin:0; }
 </style>

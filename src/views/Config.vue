@@ -76,6 +76,11 @@ async function handleImportFile(event: Event) {
 
 const weekInput = ref(store.currentWeek)
 const themeInput = ref(store.themeMode || 'system')
+const THEME_OPTIONS = [
+  { v: 'system', label: 'Sistema' },
+  { v: 'light', label: 'Claro' },
+  { v: 'dark', label: 'Oscuro' }
+]
 
 const newWeight = ref<number | null>(null)
 
@@ -187,61 +192,55 @@ const appVersion = __APP_VERSION__
 
 <template>
   <div class="pb-6">
-    <div style="padding:calc(24px + env(safe-area-inset-top,0px)) 20px 10px">
-      <div style="font-size:12px;color:var(--text2);font-weight:600;letter-spacing:.5px">CONFIGURACIÓN</div>
-      <div style="font-size:28px;font-weight:800;letter-spacing:-.5px;margin-top:4px">Ajustes</div>
-    </div>
-    
-    <div style="padding:12px 16px">
-      <div class="cfg-lbl">Cuenta</div>
-      <div style="background:var(--bg2); padding: 16px; border-radius: var(--r2); border: 1px solid var(--card-border); box-shadow: var(--card-shadow); margin-bottom: 20px;">
-        <div style="font-size: 14px; margin-bottom: 12px; word-break: break-all;">
-          Sesión iniciada como:<br><strong style="color:var(--accent2)">{{ authStore.user?.email }}</strong>
-        </div>
-        <button class="btn btn-secondary" style="margin:0; padding:10px" @click="handleSignOut">Cerrar Sesión</button>
+    <header class="screen-head">
+      <h1 class="display screen-title">Ajustes</h1>
+    </header>
+
+    <div class="cfg-body">
+      <h2 class="cfg-lbl">Cuenta</h2>
+      <div class="panel">
+        <p class="account-line">Sesión iniciada como<br><strong>{{ authStore.user?.email }}</strong></p>
+        <button class="btn btn-secondary btn-compact" @click="handleSignOut">Cerrar sesión</button>
       </div>
 
-      <div class="cfg-lbl">Mis Rutinas</div>
-      <button class="btn btn-primary" style="margin-bottom: 20px;" @click="router.push('/plans')">Gestionar mis planes</button>
+      <h2 class="cfg-lbl">Mis rutinas</h2>
+      <button class="btn btn-primary gap-below" @click="router.push('/plans')">Gestionar mis planes</button>
 
-      <div class="cfg-lbl">Tema</div>
-      <div style="display:flex;gap:10px;margin-bottom:20px">
-        <div class="input-group" style="flex:1">
-          <select v-model="themeInput" class="custom-select" @change="saveTheme">
-            <option value="system">Igual que el sistema</option>
-            <option value="light">Claro</option>
-            <option value="dark">Oscuro</option>
-          </select>
-        </div>
+      <h2 class="cfg-lbl">Tema</h2>
+      <div class="segmented gap-below" role="radiogroup" aria-label="Tema">
+        <button
+          v-for="o in THEME_OPTIONS" :key="o.v"
+          type="button" role="radio" :aria-checked="themeInput === o.v"
+          :class="{ on: themeInput === o.v }"
+          @click="themeInput = o.v; saveTheme()"
+        >{{ o.label }}</button>
       </div>
 
-      <div class="cfg-lbl">Semana actual</div>
-      <div style="display:flex;gap:10px;margin-bottom:20px">
-        <div class="input-group" style="flex:1">
-          <label>Número (1–{{ totalWeeks }})</label>
-          <input type="number" v-model="weekInput" min="1" :max="totalWeeks">
+      <h2 class="cfg-lbl">Semana actual</h2>
+      <div class="row-field gap-below">
+        <div class="input-group grow">
+          <label for="week-input">Número (1–{{ totalWeeks }})</label>
+          <input id="week-input" type="number" v-model="weekInput" min="1" :max="totalWeeks">
         </div>
-        <div style="display:flex;align-items:flex-end">
-          <button class="btn btn-primary" style="margin:0;padding:12px 20px;width:auto" @click="saveWeek">Guardar</button>
-        </div>
+        <button class="btn btn-primary btn-inline" @click="saveWeek">Guardar</button>
       </div>
 
       <div class="separator"></div>
 
-      <div class="cfg-lbl">Seguimiento de Peso</div>
+      <h2 class="cfg-lbl">Seguimiento de peso</h2>
       <div class="weight-card">
-        <div style="display:flex; gap:10px; align-items: flex-end;">
-          <div class="input-group" style="flex:1">
-            <label>Registrar peso hoy (kg)</label>
-            <input type="number" v-model="newWeight" step="0.1" placeholder="0.0">
+        <div class="row-field">
+          <div class="input-group grow">
+            <label for="weight-input">Peso de hoy (kg)</label>
+            <input id="weight-input" type="number" v-model="newWeight" step="0.1" placeholder="0.0">
           </div>
-          <button class="btn btn-primary" style="margin:0; width: auto; padding: 12px 20px" @click="registerWeight">Anotar</button>
+          <button class="btn btn-primary btn-inline" @click="registerWeight">Anotar</button>
         </div>
 
         <div v-if="userStore.stats_history.length > 0" class="history-list">
           <div v-for="(entry, b) in userStore.stats_history" :key="b" class="history-item">
             <div class="history-date">{{ new Date(entry.recorded_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) }}</div>
-            <div class="history-val">{{ entry.weight_kg }}<span style="font-size: 12px; margin-left: 2px;">kg</span></div>
+            <div class="history-val">{{ entry.weight_kg }}<span class="unit">kg</span></div>
             <div class="history-diff" v-if="b < userStore.stats_history.length - 1">
               <span :class="entry.weight_kg < userStore.stats_history[b+1].weight_kg ? 'down' : 'up'">
                 {{ (entry.weight_kg - userStore.stats_history[b+1].weight_kg).toFixed(1) }}
@@ -253,7 +252,7 @@ const appVersion = __APP_VERSION__
 
       <div class="separator"></div>
 
-      <div class="cfg-lbl">Mi Perfil</div>
+      <h2 class="cfg-lbl">Mi perfil</h2>
       <div class="profile-card">
         <div class="input-grid">
           <div class="input-group">
@@ -263,14 +262,14 @@ const appVersion = __APP_VERSION__
             </select>
           </div>
           <div class="input-group">
-            <label>Nivel de Exp.</label>
+            <label>Nivel de experiencia</label>
             <select v-model="userStore.profile.training_level" class="custom-select" @change="userStore.saveProfile()">
               <option v-for="l in TRAINING_LEVELS" :key="l.id" :value="l.id">{{ l.label.split(' ')[0] }}</option>
             </select>
           </div>
 
-          <div class="input-group mt-4" style="grid-column: span 2;">
-            <label>Duración del Plan</label>
+          <div class="input-group mt-4 span-2">
+            <label>Duración del plan</label>
             <select v-model="userStore.profile.plan_duration_weeks" class="custom-select" @change="userStore.saveProfile()">
               <option :value="4">4 Semanas (1 Mes)</option>
               <option :value="8">8 Semanas (2 Meses)</option>
@@ -298,40 +297,42 @@ const appVersion = __APP_VERSION__
         </div>
 
         <div class="input-group mt-4">
-          <label>Objetivo Principal</label>
+          <label>Objetivo principal</label>
           <select v-model="userStore.profile.goal" class="custom-select" @change="saveProfile">
             <option value="">Seleccionar...</option>
             <option v-for="g in GOALS" :key="g.id" :value="g.id">{{ g.label }}</option>
           </select>
         </div>
 
-        <div class="cfg-lbl mt-6" style="font-size: 12px;">Equipamiento Disponible</div>
+        <h3 class="cfg-lbl sub mt-6">Equipamiento disponible</h3>
         <div class="modalities-grid">
-          <div 
-            v-for="m in TRAINING_MODALITIES" 
-            :key="m.id" 
+          <button
+            v-for="m in TRAINING_MODALITIES"
+            :key="m.id"
+            type="button"
             class="modality-item"
             :class="{ active: userStore.profile.modalities.includes(m.id) }"
+            :aria-pressed="userStore.profile.modalities.includes(m.id)"
             @click="toggleModality(m.id)"
           >
             <span class="modality-icon">{{ m.icon }}</span>
             <span class="modality-label">{{ m.label }}</span>
-            <div class="modality-check">
+            <span class="modality-check">
               <svg v-if="userStore.profile.modalities.includes(m.id)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            </div>
-          </div>
+            </span>
+          </button>
         </div>
       </div>
 
 
       <div class="separator"></div>
 
-      <div class="cfg-lbl">Respaldo de Datos</div>
-      <div style="display:flex; gap:10px; margin-bottom: 12px;">
-        <button class="btn btn-secondary" style="margin:0; flex:1" @click="handleExportBackup">Exportar datos</button>
-        <button class="btn btn-secondary" style="margin:0; flex:1" @click="triggerImportFile">Importar backup</button>
+      <h2 class="cfg-lbl">Respaldo de datos</h2>
+      <div class="row-field gap-below-s">
+        <button class="btn btn-secondary grow" @click="handleExportBackup">Exportar datos</button>
+        <button class="btn btn-secondary grow" @click="triggerImportFile">Importar copia</button>
       </div>
-      <input ref="importFileInput" type="file" accept="application/json" style="display:none" @change="handleImportFile">
+      <input ref="importFileInput" type="file" accept="application/json" hidden @change="handleImportFile">
 
       <button class="btn btn-danger mt-6" @click="resetAll">Borrar todos los datos locales</button>
 
@@ -341,35 +342,47 @@ const appVersion = __APP_VERSION__
 </template>
 
 <style scoped>
-.cfg-lbl { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .4px; }
-textarea { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); color: var(--text); font-size: 12px; font-family: monospace; padding: 12px; resize: vertical; min-height: 100px; line-height: 1.5; }
-textarea:focus { outline: none; border-color: var(--accent); }
-.input-group { display: flex; flex-direction: column; gap: 6px; }
-.input-group label { font-size: 12px; color: var(--text2); font-weight: 500; }
-input[type=number], .custom-select { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 16px; padding: 12px; width: 100%; box-sizing: border-box; appearance: none; }
-input:focus, .custom-select:focus { outline: none; border-color: var(--accent); }
-.btn { display: block; width: 100%; padding: 14px; border-radius: var(--r2); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform .1s, opacity .2s; text-align: center; }
-.btn:active { transform: scale(0.97); }
-.btn-primary { background: var(--accent); color: var(--accent-text); }
-.btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border2); }
-.btn-danger { background: var(--danger-bg); color: var(--red); border: 1px solid var(--danger-border); }
+.cfg-body { padding: 4px 16px 28px; }
+.cfg-lbl { font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 8px; }
+.cfg-lbl.sub { font-size: 13px; color: var(--text2); font-weight: 600; }
+.panel, .profile-card, .weight-card { background: var(--bg2); padding: 16px; border-radius: var(--r2); border: 1.5px solid var(--border); margin-bottom: 22px; }
+.account-line { margin: 0 0 12px; font-size: 14px; color: var(--text2); word-break: break-all; }
+.account-line strong { color: var(--text); font-weight: 600; }
+.btn-compact { padding: 10px; }
+.btn-inline { width: auto; padding: 12px 20px; flex-shrink: 0; }
+.gap-below { margin-bottom: 22px; }
+.gap-below-s { margin-bottom: 12px; }
+.row-field { display: flex; gap: 10px; align-items: flex-end; }
+.grow { flex: 1; }
+.span-2 { grid-column: span 2; }
 
-.separator { height: 1px; background: var(--border); margin: 30px 0; }
-.profile-card, .weight-card { background: var(--bg2); padding: 16px; border-radius: var(--r2); border: 1px solid var(--card-border); box-shadow: var(--card-shadow); margin-bottom: 20px; }
+.segmented { display: grid; grid-template-columns: repeat(3, 1fr); border: 1.5px solid var(--border2); border-radius: var(--r2); overflow: hidden; }
+.segmented button { padding: 11px 4px; background: transparent; color: var(--text2); border: none; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.segmented button + button { border-left: 1.5px solid var(--border2); }
+.segmented button.on { background: var(--accent); color: var(--accent-text); font-weight: 700; }
+
+.input-group { display: flex; flex-direction: column; gap: 6px; }
+.input-group label { font-size: 13px; color: var(--text2); font-weight: 500; }
+input[type=number], .custom-select { background: var(--bg3); border: 1.5px solid var(--border); border-radius: var(--r3); color: var(--text); font-size: 16px; padding: 12px; width: 100%; box-sizing: border-box; appearance: none; font-family: inherit; }
+input:focus, .custom-select:focus { outline: none; border-color: var(--text); }
+textarea { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); color: var(--text); font-size: 12px; font-family: monospace; padding: 12px; resize: vertical; min-height: 100px; line-height: 1.5; }
+
+.separator { height: 1.5px; background: var(--border); margin: 28px 0; }
 .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .modalities-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 12px; }
-.modality-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg3); border-radius: 10px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; position: relative; }
-.modality-item.active { border-color: var(--accent); background: rgba(200,255,0,0.05); }
+.modality-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg3); border-radius: var(--r3); border: 1.5px solid var(--border); cursor: pointer; text-align: left; font: inherit; color: var(--text); }
+.modality-item.active { border-color: var(--text); background: var(--bg2); }
 .modality-icon { font-size: 20px; }
 .modality-label { font-size: 14px; font-weight: 500; }
-.modality-check { width: 18px; height: 18px; border: 1px solid var(--border); border-radius: 4px; margin-left: auto; display: flex; align-items: center; justify-content: center; }
+.modality-check { width: 18px; height: 18px; border: 1.5px solid var(--border2); border-radius: 4px; margin-left: auto; display: flex; align-items: center; justify-content: center; }
 .modality-item.active .modality-check { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
 
 .history-list { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 10px; }
-.history-item { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.history-date { font-size: 12px; color: var(--text2); width: 60px; }
+.history-item { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.history-date { font-size: 13px; color: var(--text2); width: 60px; }
 .history-val { font-size: 16px; font-weight: 700; flex: 1; }
-.history-diff { font-size: 12px; font-weight: 600; }
+.history-val .unit { font-size: 12px; margin-left: 2px; font-weight: 500; color: var(--text2); }
+.history-diff { font-size: 13px; font-weight: 600; }
 .history-diff .up { color: var(--red); }
 .history-diff .up::before { content: '+'; }
 .history-diff .down { color: var(--green); }

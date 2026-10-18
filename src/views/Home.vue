@@ -8,6 +8,7 @@ import { dbService } from '../services/localDb'
 import { getSwalSettings } from '../services/swalHelper'
 import { haptic } from '../services/haptics'
 import Swal from 'sweetalert2'
+import { ArrowRightIcon, PencilIcon } from 'lucide-vue-next'
 
 const router = useRouter()
 const store = useWorkoutStore()
@@ -117,7 +118,7 @@ function startNextWorkout() {
 }
 
 function getCellClass(w: number, phase: string) {
-  let base = `week-cell phase-${phase || 'density'}`
+  let base = `week-cell ph-${phase || 'density'}`
   if (w === currentWeek.value) base += ' current'
   if (w < currentWeek.value) base += ' past'
   return base
@@ -152,293 +153,195 @@ async function quickWeightEntry() {
     })
   }
 }
+
+const PHASE_LABELS: Record<string, string> = {
+  adaptation: 'Adaptación', density: 'Densidad', intensity: 'Intensidad', deload: 'Descarga', peaking: 'Pico'
+}
+const phaseKey = computed(() => (info.value.phase || 'density').toLowerCase())
+const phaseLabel = computed(() => PHASE_LABELS[phaseKey.value] || phaseKey.value)
+const focusText = computed(() => {
+  const f = (info.value.system_focus || '').replace(/_/g, ' ')
+  return f ? f.charAt(0).toUpperCase() + f.slice(1) : ''
+})
+
+const weekCells = computed(() => {
+  store.dbUpdateTrigger;
+  return Array.from({ length: totalWeeks.value }, (_, i) => {
+    const w = i + 1
+    const phase = (store.getWeekInfo(w).phase || 'density').toLowerCase()
+    return { w, phase, label: PHASE_LABELS[phase] || phase }
+  })
+})
 </script>
 
 <template>
-  <div class="pb-6">
-    <div style="padding:calc(24px + env(safe-area-inset-top,0px)) 20px 10px">
-      <div style="font-size:12px;color:var(--text2);font-weight:600;letter-spacing:.5px">MACROCICLO {{ totalWeeks }} SEMANAS</div>
-      <div style="font-size:30px;font-weight:800;letter-spacing:-.5px;margin-top:4px">
-        Semana <span>{{ currentWeek }}</span>
-        <span style="color:var(--text2);font-size:20px;font-weight:400"> / {{ totalWeeks }}</span>
+  <div class="home">
+    <header class="head">
+      <div class="head-row">
+        <h1 class="display week-title">Semana {{ currentWeek }}<small>de {{ totalWeeks }}</small></h1>
+        <button class="weight-chip" @click="quickWeightEntry" aria-label="Registrar peso corporal">
+          <template v-if="userStore.profile.weight_kg">
+            <strong>{{ userStore.profile.weight_kg }}</strong> kg
+          </template>
+          <template v-else>Anotar peso</template>
+          <PencilIcon aria-hidden="true" />
+        </button>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap">
-        <span style="font-size:13px;color:var(--accent2);font-weight:600">
-          {{ (info.phase || '').toUpperCase() }} · {{ (info.system_focus || '').replace(/_/g,' ') }}
-        </span>
-        <span v-if="streakWeeks > 0" class="streak-badge">🔥 {{ streakWeeks }} {{ streakWeeks === 1 ? 'semana' : 'semanas' }}</span>
-      </div>
-    </div>
+      <p class="phase-line" :class="'ph-' + phaseKey">
+        <span class="phase-swatch" aria-hidden="true"></span>
+        <b>{{ phaseLabel }}</b><template v-if="focusText"> · {{ focusText }}</template>
+      </p>
+      <p v-if="streakWeeks > 0" class="streak">
+        {{ streakWeeks }} {{ streakWeeks === 1 ? 'semana seguida' : 'semanas seguidas' }} cumpliendo tus días
+      </p>
+    </header>
 
-    <!-- Acceso Rápido Peso -->
-    <div class="weight-quick-access" @click="quickWeightEntry" role="button" tabindex="0" @keydown.enter.self.prevent="quickWeightEntry" @keydown.space.self.prevent="quickWeightEntry">
-      <div class="weight-info">
-        <span class="weight-lbl">PESO ACTUAL:</span>
-        <span class="weight-val">{{ userStore.profile.weight_kg || '--' }}<span class="unit">kg</span></span>
-      </div>
-      <div class="weight-btn">Anotar</div>
-    </div>
+    <button v-if="nextWorkout" class="hero" @click="startNextWorkout">
+      <span class="hero-lbl">Siguiente sesión</span>
+      <span class="display hero-name">{{ nextWorkout.name }}</span>
+      <span class="hero-cta">Empezar <ArrowRightIcon aria-hidden="true" /></span>
+    </button>
+    <router-link v-else to="/stats" class="hero hero-done">
+      <span class="hero-lbl">Semana completa</span>
+      <span class="display hero-name">Buen trabajo</span>
+      <span class="hero-cta">Ver estadísticas <ArrowRightIcon aria-hidden="true" /></span>
+    </router-link>
 
-    <!-- 1. Próximo Entrenamiento (CTA Principal) -->
-    <div class="card next-workout-card" v-if="nextWorkout" @click="startNextWorkout" role="button" tabindex="0" @keydown.enter.self.prevent="startNextWorkout" @keydown.space.self.prevent="startNextWorkout">
-      <div class="next-info">
-        <div class="next-lbl">SIGUIENTE SESIÓN</div>
-        <div class="next-val">{{ nextWorkout.name }}</div>
+    <section class="block">
+      <div class="block-head">
+        <h2>Tu semana</h2>
+        <span class="display pct">{{ pct }}%</span>
       </div>
-      <button class="btn-start">Empezar</button>
-    </div>
-    <div class="card next-workout-card" v-else>
-      <div class="next-info">
-        <div class="next-lbl">¡FELICIDADES!</div>
-        <div class="next-val">Semana completada</div>
-      </div>
-    </div>
-
-    <!-- 2. Progreso de la Semana (Modificado con checklist) -->
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <span style="font-size:13px;color:var(--text2);font-weight:600">TU SEMANA</span>
-        <span style="font-size:14px;font-weight:700;color:var(--accent2)">{{ pct }}%</span>
-      </div>
-      
-      <!-- Checklist visual -->
-      <div class="days-checklist">
-        <div v-for="(day, idx) in daysStatus" :key="idx" class="day-check" :class="{ done: day.isComplete }">
-          <div class="check-circle">
-            <svg v-if="day.isComplete" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </div>
+      <ul class="days-checklist">
+        <li v-for="(day, idx) in daysStatus" :key="idx" class="day-check" :class="{ done: day.isComplete }">
+          <span class="check-box" aria-hidden="true">
+            <svg v-if="day.isComplete" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </span>
           <span class="day-name">{{ day.label }}</span>
-        </div>
+          <span class="sr-only">{{ day.isComplete ? '(completado)' : '(pendiente)' }}</span>
+        </li>
+      </ul>
+      <div class="prog-bar" role="progressbar" :aria-valuenow="pct" aria-valuemin="0" aria-valuemax="100" aria-label="Series completadas esta semana">
+        <div class="prog-fill" :style="{ width: pct + '%' }"></div>
       </div>
-
-      <div class="prog-bar"><div class="prog-fill" :style="{ width: pct + '%' }"></div></div>
-      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size: 12px;color:var(--text3)">
-        <span>{{ doneSets }} / {{ totalSets }} sets</span>
-        <span>RPE meta: <span style="color:var(--accent2);font-weight:600">{{ info.rpe_target ?? '—' }}</span></span>
+      <div class="prog-meta">
+        <span>{{ doneSets }} de {{ totalSets }} series</span>
+        <span>RPE meta <b>{{ info.rpe_target ?? '—' }}</b></span>
       </div>
-    </div>
+    </section>
 
-    <!-- 3. Consejo de Fase -->
-    <div class="card advice-card">
-      <div style="display:flex; gap:12px; align-items:flex-start;">
-        <div class="advice-icon">💡</div>
-        <div class="advice-text">
-          {{ phaseMessage }}
-        </div>
+    <p class="note" :class="'ph-' + phaseKey">{{ phaseMessage }}</p>
+
+    <section class="block">
+      <div class="block-head">
+        <h2>Macrociclo</h2>
       </div>
-    </div>
-
-    <div class="week-grid">
-      <div 
-        v-for="w in totalWeeks" 
-        :key="w"
-        :class="getCellClass(w, store.getWeekInfo(w).phase)"
-        @click="setWeek(w)"
-      >
-        {{ w }}
+      <div class="week-grid">
+        <button
+          v-for="c in weekCells"
+          :key="c.w"
+          :class="getCellClass(c.w, c.phase)"
+          :aria-label="`Semana ${c.w}, ${c.label}`"
+          :aria-current="c.w === currentWeek ? 'true' : undefined"
+          @click="setWeek(c.w)"
+        >
+          <span class="display cell-num">{{ c.w }}</span>
+          <span v-if="c.phase === 'deload'" class="cell-glyph" aria-hidden="true">▼</span>
+          <span v-else-if="c.phase === 'peaking'" class="cell-glyph" aria-hidden="true">▲</span>
+        </button>
       </div>
-    </div>
+      <ul class="legend">
+        <li v-for="(l, k) in PHASE_LABELS" :key="k" class="leg-item" :class="'ph-' + k">
+          <span class="leg-dot" aria-hidden="true"></span>{{ l }}
+        </li>
+      </ul>
+    </section>
 
-    <div class="legend">
-      <div class="leg-item"><div class="leg-dot" style="background:var(--accent)"></div>Adaptación</div>
-      <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Descarga</div>
-      <div class="leg-item"><div class="leg-dot" style="background:var(--amber)"></div>Pico</div>
-      <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div>Densidad</div>
-      <div class="leg-item"><div class="leg-dot" style="background:#fb923c"></div>Intensidad</div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">Parámetros de la fase</div>
-      <div style="font-size:13px;color:var(--text2);line-height:2">
-        <span><b style="color:var(--text)">Peso:</b> {{ info.weight_change_pct||'—' }}</span>&nbsp;&nbsp;
-        <span><b style="color:var(--text)">Reps:</b> {{ info.reps_change||'—' }}</span>&nbsp;&nbsp;
-        <span><b style="color:var(--text)">RPE:</b> {{ info.rpe_target||'—' }}</span>&nbsp;&nbsp;
-        <span><b style="color:var(--text)">Enfoque:</b> {{ (info.system_focus||'—').replace(/_/g,' ') }}</span>
-      </div>
-    </div>
+    <section class="block">
+      <div class="block-head"><h2>Parámetros de esta fase</h2></div>
+      <dl class="params">
+        <div><dt>Peso</dt><dd>{{ info.weight_change_pct || '—' }}</dd></div>
+        <div><dt>Reps</dt><dd>{{ info.reps_change || '—' }}</dd></div>
+        <div><dt>RPE</dt><dd>{{ info.rpe_target || '—' }}</dd></div>
+        <div><dt>Enfoque</dt><dd>{{ focusText || '—' }}</dd></div>
+      </dl>
+    </section>
   </div>
 </template>
 
 <style scoped>
-.card {
-  background: var(--bg2);
-  border: 1px solid var(--card-border);
-  box-shadow: var(--card-shadow);
-  border-radius: var(--r);
-  padding: 16px;
-  margin: 0 16px 12px;
-  transition: transform .15s;
-}
-.card-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text2);
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  margin-bottom: 12px;
-}
+.home { padding-bottom: 28px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-/* Nueva tarjeta CTA */
-.next-workout-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: linear-gradient(135deg, var(--bg2), var(--bg3));
-  border-left: 4px solid var(--accent);
-  cursor: pointer;
-  padding: 20px 16px;
+.head { padding: calc(22px + env(safe-area-inset-top,0px)) 20px 16px; }
+.head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.week-title { font-size: 52px; margin: 0; }
+.week-title small { font-size: 22px; font-weight: 600; color: var(--text3); margin-left: 8px; letter-spacing: 0; }
+.weight-chip {
+  display: inline-flex; align-items: center; gap: 5px; margin-top: 6px;
+  padding: 7px 11px; border: 1.5px solid var(--border2); border-radius: 999px;
+  background: transparent; color: var(--text2); font: inherit; font-size: 13px; cursor: pointer; white-space: nowrap;
 }
-.next-workout-card:active, .weight-quick-access:active {
-  transform: scale(0.98);
-}
-.next-info { display: flex; flex-direction: column; }
-.next-lbl { font-size: 12px; font-weight: 700; color: var(--text2); letter-spacing: 0.5px; margin-bottom: 4px; }
-.next-val { font-size: 18px; font-weight: 700; color: var(--text); }
-.btn-start {
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  border-radius: 20px;
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-.btn-start:active { opacity: 0.8; }
+.weight-chip strong { color: var(--text); font-size: 15px; }
+.weight-chip svg { width: 13px; height: 13px; }
+.phase-line { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-size: 15px; color: var(--text2); }
+.phase-line b { color: var(--text); }
+.phase-swatch { width: 14px; height: 14px; border-radius: 50%; background: var(--ph); box-shadow: inset 0 0 0 3px var(--bg), 0 0 0 1.5px var(--ph); flex-shrink: 0; }
+.streak { margin: 6px 0 0 22px; font-size: 13px; color: var(--text2); }
 
-/* Checklist de días */
-.days-checklist {
-  display: flex;
-  gap: 12px;
-  margin: 12px 0 16px;
-  flex-wrap: wrap;
+/* Pieza memorable: la sesión de hoy como marcador */
+.hero {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px; text-align: left;
+  width: calc(100% - 32px); margin: 0 16px 18px; padding: 18px 18px 16px;
+  background: var(--accent); color: var(--accent-text);
+  border: none; border-radius: var(--r); cursor: pointer; text-decoration: none; font-family: inherit;
 }
-.day-check {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  opacity: 0.5;
-}
-.day-check.done { opacity: 1; }
-.check-circle {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 2px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--bg);
-}
-.day-check.done .check-circle {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-.check-circle svg { width: 10px; height: 10px; }
-.day-name { font-size: 12px; font-weight: 600; color: var(--text); }
+.hero:active { transform: scale(0.985); }
+.hero-lbl { font-size: 13px; font-weight: 600; opacity: .8; }
+.hero-name { font-size: 44px; text-wrap: balance; }
+.hero-cta { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 9px 14px; background: var(--accent-text); color: var(--accent); border-radius: 999px; font-size: 14px; font-weight: 700; }
+.hero-cta svg { width: 16px; height: 16px; }
+.hero-done { background: var(--bg2); color: var(--text); border: 1.5px solid var(--border); }
+.hero-done .hero-cta { background: var(--accent); color: var(--accent-text); }
 
-/* Consejo dinámico */
-.advice-card { 
-  background: rgba(108, 99, 255, 0.05); 
-  border-color: rgba(108, 99, 255, 0.2); 
-}
-.advice-icon { font-size: 20px; }
-.advice-text { font-size: 13px; color: var(--text); line-height: 1.5; font-weight: 500; }
+.block { margin: 0 16px 18px; padding: 16px; background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--r); }
+.block-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
+.block-head h2 { margin: 0; font-size: 15px; font-weight: 700; }
+.pct { font-size: 30px; }
 
-.prog-bar {
-  height: 8px;
-  border-radius: 4px;
-  background: var(--bg3);
-  overflow: hidden;
-  margin-top: 8px;
-}
-.prog-fill {
-  height: 100%;
-  border-radius: 4px;
-  background: linear-gradient(90deg, var(--accent), var(--accent2));
-  transition: width .4s;
-}
+.days-checklist { list-style: none; margin: 0 0 14px; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+.day-check { display: flex; align-items: center; gap: 8px; color: var(--text3); }
+.day-check.done { color: var(--text); }
+.check-box { width: 18px; height: 18px; border: 1.5px solid var(--border2); border-radius: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.day-check.done .check-box { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.check-box svg { width: 11px; height: 11px; }
+.day-name { font-size: 13px; font-weight: 600; line-height: 1.25; }
 
-.week-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-  padding: 16px 16px 0;
-}
+.prog-bar { height: 10px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+.prog-fill { height: 100%; background: var(--accent); transition: width .4s; }
+.prog-meta { display: flex; justify-content: space-between; margin-top: 8px; font-size: 13px; color: var(--text2); }
+.prog-meta b { color: var(--text); }
+
+.note { margin: 0 16px 18px; padding: 2px 0 2px 14px; border-left: 4px solid var(--ph); font-size: 14px; line-height: 1.5; color: var(--text); }
+
+.week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
 .week-cell {
-  aspect-ratio: 1;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border);
-  background: var(--bg2);
-  cursor: pointer;
-  transition: all .2s;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text2);
+  position: relative; aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  border: 1.5px solid var(--border); border-bottom: 5px solid var(--ph); border-radius: 6px;
+  background: var(--bg2); color: var(--text2); cursor: pointer; padding: 0; font-family: inherit;
 }
+.cell-num { font-size: 20px; }
+.cell-glyph { position: absolute; top: 2px; right: 3px; font-size: 9px; line-height: 1; color: var(--ph); }
+.week-cell.past { background: var(--ph); border-color: var(--ph); color: var(--ph-ink); }
+.week-cell.past .cell-glyph { color: var(--ph-ink); }
+.week-cell.current { color: var(--text); border-color: var(--text); box-shadow: 0 0 0 2px var(--bg2), 0 0 0 4px var(--text); }
+.week-cell.current.past { color: var(--ph-ink); }
 
-.week-cell.phase-adaptation { background: rgba(108,99,255,.15); border-color: rgba(108,99,255,.35); color: var(--accent2); }
-.week-cell.phase-density { background: rgba(96,165,250,.1); border-color: rgba(96,165,250,.3); color: var(--blue); }
-.week-cell.phase-intensity { background: rgba(251,146,60,.1); border-color: rgba(251,146,60,.3); color: #fb923c; }
-.week-cell.phase-deload { background: rgba(52,211,153,.15); border-color: rgba(52,211,153,.4); color: var(--green); }
-.week-cell.phase-peaking { background: rgba(251,191,36,.15); border-color: rgba(251,191,36,.4); color: var(--amber); }
+.legend { list-style: none; display: flex; gap: 6px 14px; flex-wrap: wrap; margin: 14px 0 0; padding: 0; }
+.leg-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+.leg-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ph); }
 
-.week-cell.past.phase-adaptation { background: var(--accent); border-color: var(--accent); color: #fff; }
-.week-cell.past.phase-density { background: rgba(96,165,250,.3); border-color: var(--blue); color: var(--blue); }
-.week-cell.past.phase-intensity { background: rgba(251,146,60,.25); border-color: #fb923c; color: #fb923c; }
-.week-cell.past.phase-deload { background: var(--green); border-color: var(--green); color: #fff; }
-.week-cell.past.phase-peaking { background: var(--amber); border-color: var(--amber); color: #000; }
-
-.week-cell.current { border-width: 2px; box-shadow: 0 0 0 2px rgba(108,99,255,.25); }
-.week-cell.current.phase-adaptation { border-color: var(--accent2); }
-.week-cell.current.phase-density { border-color: var(--blue); }
-.week-cell.current.phase-intensity { border-color: #fb923c; }
-.week-cell.current.phase-deload { border-color: var(--green); }
-.week-cell.current.phase-peaking { border-color: var(--amber); }
-
-.legend {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding: 6px 16px 12px;
-}
-.leg-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 12px;
-  color: var(--text2);
-}
-.leg-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.weight-quick-access {
-  margin: 0 16px 12px;
-  background: var(--bg2);
-  border: 1px solid var(--card-border);
-  box-shadow: var(--card-shadow);
-  border-radius: var(--r);
-  padding: 12px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  transition: transform .15s;
-}
-.weight-info { display: flex; align-items: center; gap: 8px; }
-.weight-lbl { font-size: 12px; font-weight: 700; color: var(--text2); }
-.weight-val { font-size: 18px; font-weight: 800; color: var(--accent); }
-.weight-val .unit { font-size: 12px; margin-left: 2px; color: var(--text2); }
-.weight-btn { font-size: 12px; font-weight: 700; color: var(--accent2); text-transform: uppercase; border: 1px solid var(--accent2); padding: 4px 10px; border-radius: 12px; }
-
-.streak-badge { font-size: 12px; font-weight: 700; color: var(--amber, #d97706); background: rgba(251,191,36,.12); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.params { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px; margin: 0; }
+.params dt { font-size: 12px; color: var(--text3); }
+.params dd { margin: 2px 0 0; font-size: 15px; font-weight: 600; }
 </style>

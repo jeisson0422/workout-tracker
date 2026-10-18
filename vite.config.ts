@@ -23,13 +23,23 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,wasm}'],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: { cacheName: 'google-fonts', expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 } }
+          }
+        ]
+      },
       includeAssets: ['favicon.svg', 'img/workout-tracker-192x192.png'],
       manifest: {
         name: 'Workout Tracker',
         short_name: 'Workout',
         display: 'standalone',
-        background_color: '#0a0a0f',
-        theme_color: '#6c63ff',
+        background_color: '#141517',
+        theme_color: '#f5c800',
         icons: [
           {
             src: '/img/workout-tracker-192x192.png',

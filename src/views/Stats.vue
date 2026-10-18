@@ -481,12 +481,11 @@ function closeDetail() {
 
 <template>
   <div class="pb-6">
-    <div style="padding:calc(24px + env(safe-area-inset-top,0px)) 20px 10px">
-      <div style="font-size:12px;color:var(--text2);font-weight:600;letter-spacing:.5px">ESTADÍSTICAS</div>
-      <div style="font-size:28px;font-weight:800;letter-spacing:-.5px;margin-top:4px">Tu Progreso</div>
-    </div>
+    <header class="screen-head">
+      <h1 class="display screen-title">Tu progreso</h1>
+    </header>
 
-    <div v-if="!planId" class="card mt-4 mx-4" style="text-align:center">
+    <div v-if="!planId" class="card mt-4 mx-4 s-13076d">
       <div class="empty">Activa un plan de entrenamiento para ver tus estadísticas.</div>
     </div>
 
@@ -495,13 +494,14 @@ function closeDetail() {
         <div class="kpi-card"><div class="kpi-val">{{ kpis.workouts }}</div><div class="kpi-lbl">Entrenos</div></div>
         <div class="kpi-card"><div class="kpi-val">{{ Math.round(kpis.totalVolume).toLocaleString() }}</div><div class="kpi-lbl">Volumen (kg)</div></div>
         <div class="kpi-card"><div class="kpi-val">{{ kpis.activeWeeks }}</div><div class="kpi-lbl">Semanas</div></div>
-        <div class="kpi-card"><div class="kpi-val">{{ kpis.avgRpe }}</div><div class="kpi-lbl">RPE Prom.</div></div>
+        <div class="kpi-card"><div class="kpi-val">{{ kpis.avgRpe }}</div><div class="kpi-lbl">RPE promedio</div></div>
       </div>
 
       <div class="card mt-4 mx-4">
-        <div class="card-title">Volumen Semanal (kg)</div>
+        <div class="card-title">Volumen semanal (kg)</div>
         <div v-if="weeklyVolume.length === 0" class="empty">Registra series para ver tu volumen real.</div>
-        <div v-else class="chart-container">
+        <div v-else-if="weeklyVolume.length === 1" class="empty">Con una segunda semana registrada verás la tendencia.</div>
+        <div v-if="weeklyVolume.length > 0" class="chart-container">
           <div v-for="item in weeklyVolume" :key="item.week" class="chart-bar-wrap">
             <div class="chart-bar" :style="{ height: `${Math.max((item.vol / maxVolume) * 100, 5)}%` }">
               <span class="bar-val" v-if="item.vol > 0">{{ formatVol(item.vol) }}</span>
@@ -516,7 +516,7 @@ function closeDetail() {
           <div class="card-title">Consistencia</div>
           <div v-if="adherencePct !== null" class="adherence-badge" :class="{ low: adherencePct < 70 }">{{ adherencePct }}% cumplimiento</div>
         </div>
-        <div v-if="heatmapWeeks.length === 0" class="empty">Registra días completos para ver tu progreso.</div>
+        <div v-if="heatmapWeeks.length === 0 || kpis.workouts === 0" class="empty">Aquí verás qué días entrenaste. Marca tu primer día como completo para empezar.</div>
         <div v-else class="heatmap-grid">
           <div v-for="week in heatmapWeeks" :key="week.label" class="heatmap-row">
             <span class="heatmap-lbl">{{ week.label }}</span>
@@ -534,28 +534,28 @@ function closeDetail() {
       </div>
 
       <div class="card mt-4 mx-4" v-if="rpeWeekly.length > 0">
-        <div class="card-title">RPE vs Objetivo</div>
+        <div class="card-title">RPE contra la meta</div>
         <div class="rpe-row" v-for="item in rpeWeekly" :key="item.week">
           <span class="rpe-week">S{{ item.week }}</span>
           <span class="rpe-values">{{ item.actual }} <span class="rpe-vs">/ meta {{ item.target ?? '?' }}</span></span>
           <span class="rpe-status" :class="item.status">
-            <template v-if="item.status === 'low'">⬆ subí peso</template>
-            <template v-else-if="item.status === 'high'">⚠ posible fatiga</template>
-            <template v-else>✓ en rango</template>
+            <template v-if="item.status === 'low'">Sube el peso</template>
+            <template v-else-if="item.status === 'high'">Posible fatiga</template>
+            <template v-else>En rango</template>
           </span>
         </div>
       </div>
 
       <div class="card mt-4 mx-4">
         <div class="card-title-row">
-          <div class="card-title">Progresión de Pesos (kg)</div>
+          <div class="card-title">Progresión de pesos (kg)</div>
           <select v-model="selectedDay" class="day-filter" @change="loadProgression">
             <option v-for="opt in dayOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
         </div>
 
         <div v-if="stalledCount > 0" class="stall-warning">
-          ⚠ {{ stalledCount }} {{ stalledCount === 1 ? 'ejercicio estancado' : 'ejercicios estancados' }} (3+ semanas sin aumento)
+          {{ stalledCount }} {{ stalledCount === 1 ? 'ejercicio estancado' : 'ejercicios estancados' }} (3+ semanas sin aumento)
         </div>
 
         <div v-if="sortedRows.length === 0" class="empty">Registra pesos para ver tu progresión.</div>
@@ -571,7 +571,7 @@ function closeDetail() {
             <tbody>
               <tr v-for="row in sortedRows" :key="row.exercise">
                 <td class="ex-name" @click="openDetail(row.exercise)">
-                  <span v-if="rowStallScore(row) >= 2" class="stall-icon" title="Estancado">⚠</span>
+                  <span v-if="rowStallScore(row) >= 2" class="stall-icon" title="Estancado" aria-label="Estancado"></span>
                   {{ row.exercise }}
                   <ChevronRightIcon class="ex-chevron" />
                 </td>
@@ -604,7 +604,7 @@ function closeDetail() {
       </div>
 
       <div class="card mt-4 mx-4" v-if="repsCompliance.length > 0">
-        <div class="card-title">Cumplimiento de Reps</div>
+        <div class="card-title">Cumplimiento de reps</div>
         <div class="list-item" v-for="item in repsCompliance" :key="item.exercise">
           <div class="list-info">
             <div class="list-name">{{ item.exercise }}</div>
@@ -615,7 +615,7 @@ function closeDetail() {
       </div>
 
       <div class="card mt-4 mx-4">
-        <div class="card-title">Records Personales (Top 5)</div>
+        <div class="card-title">Mejores marcas (top 5)</div>
         <div v-if="topPrs.length === 0" class="empty">Añade peso a tus ejercicios para ver récords.</div>
         <div class="list-item" v-for="(pr, idx) in topPrs" :key="idx">
           <div class="list-info">
@@ -629,7 +629,7 @@ function closeDetail() {
 
     <div v-if="showDetail" class="detail-page">
       <div class="detail-header">
-        <button type="button" class="detail-back" @click="closeDetail"><XIcon /></button>
+        <button type="button" class="detail-back" aria-label="Cerrar detalle" @click="closeDetail"><XIcon /></button>
         <div class="detail-header-text">
           <div class="detail-title">{{ detailExercise }}</div>
           <div class="detail-sub">Últimas sesiones · serie a serie</div>
@@ -663,13 +663,14 @@ function closeDetail() {
 </template>
 
 <style scoped>
+.text-center { text-align: center; }
 .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px 10px; margin-top: 12px; }
-.kpi-card { background: var(--bg2); border: 1px solid var(--card-border); box-shadow: var(--card-shadow); border-radius: var(--r2); padding: 14px 12px; text-align: center; }
-.kpi-val { font-size: 24px; font-weight: 700; color: var(--accent2); line-height: 1.1; }
-.kpi-lbl { font-size: 12px; color: var(--text2); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.kpi-card { background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--r2); padding: 12px 14px; }
+.kpi-val { font-family: var(--font-display); font-weight: 800; font-size: 40px; color: var(--text); line-height: .95; font-variant-numeric: tabular-nums; }
+.kpi-lbl { font-size: 13px; color: var(--text2); margin-top: 6px; }
 
-.card { background: var(--bg2); border: 1px solid var(--card-border); box-shadow: var(--card-shadow); border-radius: var(--r); padding: 16px; }
-.card-title { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; }
+.card { background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--r); padding: 16px; }
+.card-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
 .card-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px; }
 .card-title-row .card-title { margin-bottom: 0; }
 .empty { color: var(--text2); font-size: 13px; padding: 8px 0; text-align: center; }
@@ -681,22 +682,22 @@ function closeDetail() {
 }
 
 .adherence-badge {
-  font-size: 12px; font-weight: 700; color: var(--green); background: rgba(34,197,94,.12);
+  font-size: 12px; font-weight: 700; color: var(--green); background: var(--success-bg);
   padding: 4px 10px; border-radius: 999px; white-space: nowrap;
 }
-.adherence-badge.low { color: var(--amber, #d97706); background: rgba(251,191,36,.12); }
+.adherence-badge.low { color: var(--amber); background: var(--bg3); }
 
 .list-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 0.5px solid var(--border); gap: 12px; }
 .list-item:last-child { border-bottom: none; padding-bottom: 0; }
 .list-info { flex: 1; min-width: 0; }
 .list-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: capitalize; }
 .list-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
-.list-val { font-size: 14px; font-weight: 700; color: var(--accent); flex-shrink: 0; }
-.list-val.reps-short { color: var(--amber, #d97706); }
+.list-val { font-size: 14px; font-weight: 700; color: var(--accent2); flex-shrink: 0; }
+.list-val.reps-short { color: var(--amber); }
 
 .chart-container { display: flex; align-items: flex-end; justify-content: space-between; height: 120px; padding-top: 20px; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 8px; }
 .chart-bar-wrap { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; width: 100%; max-width: 32px; flex: 1; }
-.chart-bar { width: 100%; max-width: 24px; background: var(--accent); border-radius: 4px 4px 0 0; position: relative; min-height: 4px; display: flex; justify-content: center; opacity: 0.9; transition: height 0.3s ease; }
+.chart-bar { width: 100%; max-width: 24px; background: var(--accent); border-radius: 2px 2px 0 0; position: relative; min-height: 4px; display: flex; justify-content: center; transition: height 0.3s ease; }
 .bar-val { position: absolute; top: -18px; font-size: 12px; font-weight: 600; color: var(--text); }
 .chart-lbl { font-size: 12px; color: var(--text2); margin-top: 8px; font-weight: 600; }
 
@@ -734,15 +735,15 @@ function closeDetail() {
 .diff-up { color: var(--green); }
 .diff-down { color: var(--red); }
 .weight-empty { color: var(--text3); }
-.suggest-cell { background: rgba(99,102,241,.06); border-radius: var(--r1); }
+.suggest-cell { background: var(--bg3); }
 .suggest-val { font-weight: 700; color: var(--accent2); }
 
 .stall-warning {
-  background: rgba(251,191,36,.12); color: var(--amber, #d97706);
-  font-size: 12px; font-weight: 600; padding: 8px 12px; border-radius: var(--r1);
+  background: var(--bg3); color: var(--amber); border-left: 4px solid var(--amber);
+  font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 4px;
   margin-bottom: 10px; text-align: center;
 }
-.stall-icon { margin-right: 3px; }
+.stall-icon { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--amber); margin-right: 5px; }
 .stalled-cell .weight-val { color: var(--text3); }
 .stalled-cell .weight-diff { opacity: 0.4; }
 
@@ -767,7 +768,7 @@ function closeDetail() {
 .detail-sub { font-size: 12px; color: var(--text2); margin-top: 1px; }
 .detail-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
 
-.session-card { background: var(--bg2); border: 1px solid var(--card-border); border-radius: var(--r2); padding: 12px; margin-bottom: 12px; }
+.session-card { background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--r2); padding: 12px; margin-bottom: 12px; }
 .session-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .session-week { font-size: 13px; font-weight: 700; }
 .session-date { font-size: 12px; color: var(--text3); }
@@ -776,4 +777,7 @@ function closeDetail() {
 .set-num { color: var(--text2); width: 56px; flex-shrink: 0; }
 .set-detail { font-weight: 600; flex: 1; text-align: center; }
 .set-rpe { color: var(--text2); width: 56px; text-align: right; flex-shrink: 0; }
+
+/* estilos extraídos de atributos inline */
+.s-13076d { text-align:center; }
 </style>

@@ -88,7 +88,7 @@ const showBottomNav = computed(() => !route.meta.hideNav)
 }
 .update-banner {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-text);
   text-align: center;
   padding: 12px 16px;
   font-size: 14px;
@@ -99,9 +99,9 @@ const showBottomNav = computed(() => !route.meta.hideNav)
   gap: 12px;
 }
 .update-btn {
-  background: rgba(255,255,255,.2);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,.3);
+  background: transparent;
+  color: var(--accent-text);
+  border: 1.5px solid var(--accent-text);
   padding: 6px 14px;
   border-radius: 8px;
   font-size: 13px;
