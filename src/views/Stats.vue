@@ -666,7 +666,7 @@ function closeDetail() {
 .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px 10px; margin-top: 12px; }
 .kpi-card { background: var(--bg2); border: 1px solid var(--card-border); box-shadow: var(--card-shadow); border-radius: var(--r2); padding: 14px 12px; text-align: center; }
 .kpi-val { font-size: 24px; font-weight: 700; color: var(--accent2); line-height: 1.1; }
-.kpi-lbl { font-size: 11px; color: var(--text2); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.kpi-lbl { font-size: 12px; color: var(--text2); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 
 .card { background: var(--bg2); border: 1px solid var(--card-border); box-shadow: var(--card-shadow); border-radius: var(--r); padding: 16px; }
 .card-title { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; }
@@ -681,7 +681,7 @@ function closeDetail() {
 }
 
 .adherence-badge {
-  font-size: 11px; font-weight: 700; color: var(--green); background: rgba(34,197,94,.12);
+  font-size: 12px; font-weight: 700; color: var(--green); background: rgba(34,197,94,.12);
   padding: 4px 10px; border-radius: 999px; white-space: nowrap;
 }
 .adherence-badge.low { color: var(--amber, #d97706); background: rgba(251,191,36,.12); }
@@ -697,12 +697,12 @@ function closeDetail() {
 .chart-container { display: flex; align-items: flex-end; justify-content: space-between; height: 120px; padding-top: 20px; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 8px; }
 .chart-bar-wrap { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; width: 100%; max-width: 32px; flex: 1; }
 .chart-bar { width: 100%; max-width: 24px; background: var(--accent); border-radius: 4px 4px 0 0; position: relative; min-height: 4px; display: flex; justify-content: center; opacity: 0.9; transition: height 0.3s ease; }
-.bar-val { position: absolute; top: -18px; font-size: 10px; font-weight: 600; color: var(--text); }
-.chart-lbl { font-size: 10px; color: var(--text2); margin-top: 8px; font-weight: 600; }
+.bar-val { position: absolute; top: -18px; font-size: 12px; font-weight: 600; color: var(--text); }
+.chart-lbl { font-size: 12px; color: var(--text2); margin-top: 8px; font-weight: 600; }
 
 .heatmap-grid { display: flex; flex-direction: column; gap: 4px; }
 .heatmap-row { display: flex; align-items: center; gap: 8px; }
-.heatmap-lbl { font-size: 10px; color: var(--text3); width: 34px; flex-shrink: 0; }
+.heatmap-lbl { font-size: 12px; color: var(--text3); width: 34px; flex-shrink: 0; }
 .heatmap-cells { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; flex: 1; }
 .heatmap-cell { aspect-ratio: 1; border-radius: 3px; background: var(--bg3); }
 .heatmap-cell.trained { background: var(--accent); }
@@ -712,15 +712,15 @@ function closeDetail() {
 .rpe-row:last-child { border-bottom: none; padding-bottom: 0; }
 .rpe-week { font-weight: 600; width: 32px; flex-shrink: 0; }
 .rpe-values { flex: 1; }
-.rpe-vs { color: var(--text2); font-size: 11px; }
-.rpe-status { font-size: 11px; font-weight: 600; white-space: nowrap; }
+.rpe-vs { color: var(--text2); font-size: 12px; }
+.rpe-status { font-size: 12px; font-weight: 600; white-space: nowrap; }
 .rpe-status.ok { color: var(--green); }
 .rpe-status.low { color: var(--accent2); }
 .rpe-status.high { color: var(--red); }
 
 .prog-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; }
 .prog-table { width: 100%; border-collapse: collapse; font-size: 13px; white-space: nowrap; }
-.prog-table th { color: var(--text2); font-weight: 600; font-size: 11px; padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: center; }
+.prog-table th { color: var(--text2); font-weight: 600; font-size: 12px; padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: center; }
 .prog-table th:first-child { text-align: left; padding-left: 4px; }
 .prog-table td { padding: 8px; border-bottom: 1px solid var(--border); text-align: center; }
 .prog-table td:first-child { padding-left: 4px; }
@@ -730,7 +730,7 @@ function closeDetail() {
 
 .weight-cell { position: relative; }
 .weight-val { font-weight: 700; color: var(--text); }
-.weight-diff { display: block; font-size: 10px; margin-top: 1px; }
+.weight-diff { display: block; font-size: 12px; margin-top: 1px; }
 .diff-up { color: var(--green); }
 .diff-down { color: var(--red); }
 .weight-empty { color: var(--text3); }
@@ -770,7 +770,7 @@ function closeDetail() {
 .session-card { background: var(--bg2); border: 1px solid var(--card-border); border-radius: var(--r2); padding: 12px; margin-bottom: 12px; }
 .session-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .session-week { font-size: 13px; font-weight: 700; }
-.session-date { font-size: 11px; color: var(--text3); }
+.session-date { font-size: 12px; color: var(--text3); }
 .set-list { display: flex; flex-direction: column; gap: 6px; }
 .set-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
 .set-num { color: var(--text2); width: 56px; flex-shrink: 0; }

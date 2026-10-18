@@ -247,7 +247,7 @@ async function deleteProgression(id: string) {
       </button>
       <div style="flex: 1">
         <div style="font-size:12px;color:var(--text2);font-weight:600;letter-spacing:.5px">EDITAR PLAN</div>
-        <div v-if="!editingPlanName" style="font-size:28px;font-weight:800;letter-spacing:-.5px;margin-top:4px; display: flex; align-items: center; gap: 8px;" @click="editPlanName">
+        <div v-if="!editingPlanName" style="font-size:28px;font-weight:800;letter-spacing:-.5px;margin-top:4px; display: flex; align-items: center; gap: 8px;" @click="editPlanName" role="button" tabindex="0" @keydown.enter.self.prevent="editPlanName" @keydown.space.self.prevent="editPlanName">
           {{ plan.name }}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="16 3 21 8 8 21 3 21 3 16 16 3"></polygon></svg>
         </div>
@@ -258,8 +258,8 @@ async function deleteProgression(id: string) {
     </div>
     
     <div class="tabs">
-      <div class="tab" :class="{ active: activeTab === 'exercises' }" @click="activeTab = 'exercises'">Ejercicios</div>
-      <div class="tab" :class="{ active: activeTab === 'progression' }" @click="activeTab = 'progression'">Progresión</div>
+      <div class="tab" :class="{ active: activeTab === 'exercises' }" @click="activeTab = 'exercises'" role="button" tabindex="0" @keydown.enter.self.prevent="activeTab = 'exercises'" @keydown.space.self.prevent="activeTab = 'exercises'">Ejercicios</div>
+      <div class="tab" :class="{ active: activeTab === 'progression' }" @click="activeTab = 'progression'" role="button" tabindex="0" @keydown.enter.self.prevent="activeTab = 'progression'" @keydown.space.self.prevent="activeTab = 'progression'">Progresión</div>
     </div>
 
     <!-- Pestaña: Ejercicios -->
@@ -276,7 +276,7 @@ async function deleteProgression(id: string) {
       </div>
 
       <div v-for="(day, di) in days" :key="day.id" class="day-card">
-        <div class="day-header" @click="toggleDay(day.id)">
+        <div class="day-header" @click="toggleDay(day.id)" role="button" tabindex="0" @keydown.enter.self.prevent="toggleDay(day.id)" @keydown.space.self.prevent="toggleDay(day.id)">
           <div style="font-weight: 700; font-size: 16px;">Día {{ day.day_number }}: {{ day.session_name }}</div>
           <div style="color: var(--text2); font-size: 12px; display:flex; gap: 6px; align-items: center;">
             <span style="margin-right: 4px;">{{ plansStore.exercisesForDay(day.id).length }} ej.</span>
@@ -297,10 +297,10 @@ async function deleteProgression(id: string) {
 
         <div :id="'day-content-' + day.id" class="day-content" style="display: none;">
           <div v-for="(ex, exi) in plansStore.exercisesForDay(day.id)" :key="ex.id" class="ex-row" :style="getGroupStyle(ex.group_type)">
-            <div style="margin-right: 12px; display:flex; align-items:center;" @click="openEditExercise(ex.id, ex)">
+            <div style="margin-right: 12px; display:flex; align-items:center;" @click="openEditExercise(ex.id, ex)" role="button" tabindex="0" @keydown.enter.self.prevent="openEditExercise(ex.id, ex)" @keydown.space.self.prevent="openEditExercise(ex.id, ex)">
               <ExerciseIcon :name="ex.exercise_name" :type="ex.exercise_type" />
             </div>
-            <div style="flex:1" @click="openEditExercise(ex.id, ex)">
+            <div style="flex:1" @click="openEditExercise(ex.id, ex)" role="button" tabindex="0" @keydown.enter.self.prevent="openEditExercise(ex.id, ex)" @keydown.space.self.prevent="openEditExercise(ex.id, ex)">
               <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
                 {{ ex.exercise_name }}
                 <span v-if="ex.group_type" class="group-badge" :class="'badge-' + ex.group_type">{{ ex.group_type.replace('_', ' ') }}</span>
@@ -330,7 +330,7 @@ async function deleteProgression(id: string) {
 
     <!-- Pestaña: Progresión -->
     <div style="padding:12px 16px" v-if="activeTab === 'progression'">
-      <div v-for="prog in progressions" :key="prog.id" class="day-card" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;" @click="openEditProgression(prog)">
+      <div v-for="prog in progressions" :key="prog.id" class="day-card" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;" @click="openEditProgression(prog)" role="button" tabindex="0" @keydown.enter.self.prevent="openEditProgression(prog)" @keydown.space.self.prevent="openEditProgression(prog)">
         <div>
           <div style="font-weight: 700; font-size: 16px; margin-bottom: 4px;">Semana {{ prog.week_number }} <span style="font-size: 12px; font-weight: normal; color: var(--text2)">({{ prog.phase }})</span></div>
           <div style="font-size: 13px; color: var(--text2);">
@@ -565,9 +565,9 @@ async function deleteProgression(id: string) {
 .week-overview-title { font-size: 12px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
 .week-overview-grid { display: flex; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
 .week-overview-card { background: var(--bg2); border: 1px solid var(--card-border); border-radius: var(--r2); padding: 10px 12px; min-width: 110px; flex-shrink: 0; }
-.wo-day { font-size: 11px; font-weight: 700; color: var(--accent2); }
+.wo-day { font-size: 12px; font-weight: 700; color: var(--accent2); }
 .wo-name { font-size: 13px; font-weight: 600; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.wo-stats { font-size: 11px; color: var(--text2); margin-top: 4px; }
+.wo-stats { font-size: 12px; color: var(--text2); margin-top: 4px; }
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.4); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; z-index: 1000; animation: fade-in .2s ease-out; }
 .modal-content { background: var(--bg2); padding: 8px 20px 24px; border-radius: var(--r) var(--r) 0 0; width: 100%; max-width: 430px; box-shadow: 0 -8px 40px rgba(0,0,0,.2); padding-bottom: calc(24px + env(safe-area-inset-bottom,0px)); animation: sheet-up .28s cubic-bezier(.32,.72,0,1); }
 .modal-content::before { content: ''; display: block; width: 36px; height: 5px; border-radius: 3px; background: var(--border2); margin: 0 auto 16px; opacity: .6; }
@@ -579,7 +579,7 @@ async function deleteProgression(id: string) {
 .modal-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r3); color: var(--text); padding: 12px; font-size: 16px; box-sizing: border-box; }
 .modal-input:focus { outline: none; border-color: var(--accent); }
 select.modal-input { appearance: none; }
-.group-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
+.group-badge { font-size: 12px; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
 .badge-superset { background: #b388ff; color: #000; }
 .badge-triset { background: #82b1ff; color: #000; }
 .badge-giant_set { background: #b9f6ca; color: #000; }

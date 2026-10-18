@@ -220,7 +220,7 @@ function handleLogClick() {
       <div v-if="fmtRest" class="ex-rest">⏱ descanso: {{ fmtRest }}</div>
     </div>
     
-    <button class="ex-log-btn" :class="{ 'logged': isEffectivelyLogged, 'partial': isPartiallyLogged }" @click="handleLogClick">
+    <button class="ex-log-btn" :aria-label="`Registrar ${rawName}`" :class="{ 'logged': isEffectivelyLogged, 'partial': isPartiallyLogged }" @click="handleLogClick">
       {{ isEffectivelyLogged ? '✓' : (isPartiallyLogged ? `${todaysSetsCount}/${targetSets}` : 'Log') }}
     </button>
   </div>
@@ -238,12 +238,12 @@ function handleLogClick() {
 .ex-log-btn:active { transform: scale(0.92); }
 .ex-log-btn.logged { background: var(--accent); color: #fff; }
 .ex-log-btn.partial { background: var(--amber); color: #fff; }
-.ex-hint { font-size: 11px; color: var(--accent2); margin-top: 3px; font-style: italic; opacity: .8; }
-.ex-rest { font-size: 11px; color: var(--text3); margin-top: 2px; }
-.ex-suggested { font-size: 11px; color: var(--green); margin-top: 2px; font-weight: 600; }
+.ex-hint { font-size: 12px; color: var(--accent2); margin-top: 3px; font-style: italic; opacity: .8; }
+.ex-rest { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.ex-suggested { font-size: 12px; color: var(--green); margin-top: 2px; font-weight: 600; }
 
 .ex-tags { display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap; }
-.ex-tag { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; background: var(--bg4); color: var(--text2); border: 1px solid var(--border); }
+.ex-tag { font-size: 12px; font-weight: 600; padding: 2px 7px; border-radius: 20px; background: var(--bg4); color: var(--text2); border: 1px solid var(--border); }
 .ex-tag.superset { background: rgba(167,139,250,.12); color: var(--accent2); border-color: rgba(167,139,250,.3); }
 .ex-tag.tempo { background: rgba(251,191,36,.1); color: var(--amber); border-color: rgba(251,191,36,.25); }
 .ex-row.is-grouped { border-left: 2px solid var(--accent2); }

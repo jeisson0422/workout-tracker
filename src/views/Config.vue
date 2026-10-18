@@ -241,7 +241,7 @@ const appVersion = __APP_VERSION__
         <div v-if="userStore.stats_history.length > 0" class="history-list">
           <div v-for="(entry, b) in userStore.stats_history" :key="b" class="history-item">
             <div class="history-date">{{ new Date(entry.recorded_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) }}</div>
-            <div class="history-val">{{ entry.weight_kg }}<span style="font-size: 10px; margin-left: 2px;">kg</span></div>
+            <div class="history-val">{{ entry.weight_kg }}<span style="font-size: 12px; margin-left: 2px;">kg</span></div>
             <div class="history-diff" v-if="b < userStore.stats_history.length - 1">
               <span :class="entry.weight_kg < userStore.stats_history[b+1].weight_kg ? 'down' : 'up'">
                 {{ (entry.weight_kg - userStore.stats_history[b+1].weight_kg).toFixed(1) }}
@@ -305,7 +305,7 @@ const appVersion = __APP_VERSION__
           </select>
         </div>
 
-        <div class="cfg-lbl mt-6" style="font-size: 11px;">Equipamiento Disponible</div>
+        <div class="cfg-lbl mt-6" style="font-size: 12px;">Equipamiento Disponible</div>
         <div class="modalities-grid">
           <div 
             v-for="m in TRAINING_MODALITIES" 
@@ -369,12 +369,12 @@ input:focus, .custom-select:focus { outline: none; border-color: var(--accent); 
 .history-item { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .history-date { font-size: 12px; color: var(--text2); width: 60px; }
 .history-val { font-size: 16px; font-weight: 700; flex: 1; }
-.history-diff { font-size: 11px; font-weight: 600; }
+.history-diff { font-size: 12px; font-weight: 600; }
 .history-diff .up { color: var(--red); }
 .history-diff .up::before { content: '+'; }
 .history-diff .down { color: var(--green); }
 .mt-4 { margin-top: 16px; }
 .mt-6 { margin-top: 24px; }
 .mt-8 { margin-top: 32px; }
-.app-version { text-align: center; font-size: 11px; color: var(--text3); margin-top: 20px; }
+.app-version { text-align: center; font-size: 12px; color: var(--text3); margin-top: 20px; }
 </style>

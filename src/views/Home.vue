@@ -171,7 +171,7 @@ async function quickWeightEntry() {
     </div>
 
     <!-- Acceso Rápido Peso -->
-    <div class="weight-quick-access" @click="quickWeightEntry">
+    <div class="weight-quick-access" @click="quickWeightEntry" role="button" tabindex="0" @keydown.enter.self.prevent="quickWeightEntry" @keydown.space.self.prevent="quickWeightEntry">
       <div class="weight-info">
         <span class="weight-lbl">PESO ACTUAL:</span>
         <span class="weight-val">{{ userStore.profile.weight_kg || '--' }}<span class="unit">kg</span></span>
@@ -180,7 +180,7 @@ async function quickWeightEntry() {
     </div>
 
     <!-- 1. Próximo Entrenamiento (CTA Principal) -->
-    <div class="card next-workout-card" v-if="nextWorkout" @click="startNextWorkout">
+    <div class="card next-workout-card" v-if="nextWorkout" @click="startNextWorkout" role="button" tabindex="0" @keydown.enter.self.prevent="startNextWorkout" @keydown.space.self.prevent="startNextWorkout">
       <div class="next-info">
         <div class="next-lbl">SIGUIENTE SESIÓN</div>
         <div class="next-val">{{ nextWorkout.name }}</div>
@@ -212,7 +212,7 @@ async function quickWeightEntry() {
       </div>
 
       <div class="prog-bar"><div class="prog-fill" :style="{ width: pct + '%' }"></div></div>
-      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--text3)">
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size: 12px;color:var(--text3)">
         <span>{{ doneSets }} / {{ totalSets }} sets</span>
         <span>RPE meta: <span style="color:var(--accent2);font-weight:600">{{ info.rpe_target ?? '—' }}</span></span>
       </div>
@@ -292,7 +292,7 @@ async function quickWeightEntry() {
   transform: scale(0.98);
 }
 .next-info { display: flex; flex-direction: column; }
-.next-lbl { font-size: 11px; font-weight: 700; color: var(--text2); letter-spacing: 0.5px; margin-bottom: 4px; }
+.next-lbl { font-size: 12px; font-weight: 700; color: var(--text2); letter-spacing: 0.5px; margin-bottom: 4px; }
 .next-val { font-size: 18px; font-weight: 700; color: var(--text); }
 .btn-start {
   background: var(--accent);
@@ -411,7 +411,7 @@ async function quickWeightEntry() {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text2);
 }
 .leg-dot {
@@ -435,10 +435,10 @@ async function quickWeightEntry() {
   transition: transform .15s;
 }
 .weight-info { display: flex; align-items: center; gap: 8px; }
-.weight-lbl { font-size: 11px; font-weight: 700; color: var(--text2); }
+.weight-lbl { font-size: 12px; font-weight: 700; color: var(--text2); }
 .weight-val { font-size: 18px; font-weight: 800; color: var(--accent); }
-.weight-val .unit { font-size: 10px; margin-left: 2px; color: var(--text2); }
+.weight-val .unit { font-size: 12px; margin-left: 2px; color: var(--text2); }
 .weight-btn { font-size: 12px; font-weight: 700; color: var(--accent2); text-transform: uppercase; border: 1px solid var(--accent2); padding: 4px 10px; border-radius: 12px; }
 
-.streak-badge { font-size: 11px; font-weight: 700; color: var(--amber, #d97706); background: rgba(251,191,36,.12); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.streak-badge { font-size: 12px; font-weight: 700; color: var(--amber, #d97706); background: rgba(251,191,36,.12); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
 </style>

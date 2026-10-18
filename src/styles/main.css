@@ -14,7 +14,7 @@
   --blue:#2563eb;
   --text:#111827;
   --text2:#4b5563;
-  --text3:#6b7280;
+  --text3:#5b6472;
   --border:#d1d5db;
   --border2:#9ca3af;
   --danger-bg: #fee2e2;
@@ -43,7 +43,7 @@
   --blue:#60a5fa;
   --text:#f0f0ff;
   --text2:#9898b8;
-  --text3:#555577;
+  --text3:#8a8aab;
   --border:#2a2a44;
   --border2:#3a3a5a;
   --danger-bg: #2a1a1a;
@@ -114,6 +114,21 @@ body {
 .swal-cancel-btn ~ .swal-confirm-btn { border-top: 1px solid var(--border) !important; }
 .swal-cancel-btn { color: var(--text2) !important; }
 .swal-custom-popup.danger-popup .swal-confirm-btn { color: var(--red) !important; }
+
+/* Keyboard focus ring */
+:focus-visible {
+  outline: 2px solid var(--accent2);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 
 /* Translucent glass surface (tab bar, sheets, sticky headers) */
 .ios-glass {

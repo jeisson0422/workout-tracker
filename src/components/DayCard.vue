@@ -42,7 +42,7 @@ function getGroupLabel(type: string) {
 
 <template>
   <div class="day-card" :class="{ open: isOpen }">
-    <div v-if="!startOpen" class="day-header" @click="isOpen = !isOpen">
+    <div v-if="!startOpen" class="day-header" :aria-expanded="isOpen" @click="isOpen = !isOpen" role="button" tabindex="0" @keydown.enter.self.prevent="isOpen = !isOpen" @keydown.space.self.prevent="isOpen = !isOpen">
       <div class="day-num" :style="isDone ? 'background:var(--green)' : ''">D{{ dayIndex + 1 }}</div>
       <div class="day-info">
         <div class="day-name">{{ dayLabel }}</div>
@@ -81,5 +81,5 @@ function getGroupLabel(type: string) {
 .day-chevron { color: var(--text2); transition: transform .2s; flex-shrink: 0; width: 18px; height: 18px; }
 .day-card.open .day-chevron { transform: rotate(90deg); }
 .ex-list { border-top: 1px solid var(--border); }
-.group-header { font-size: 10px; font-weight: 700; color: var(--accent2); text-transform: uppercase; letter-spacing: .5px; padding: 8px 16px 0; opacity: .7; }
+.group-header { font-size: 12px; font-weight: 700; color: var(--accent2); text-transform: uppercase; letter-spacing: .5px; padding: 8px 16px 0; opacity: .7; }
 </style>

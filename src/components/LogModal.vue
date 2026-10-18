@@ -342,9 +342,9 @@ function formatRest(sec: number) {
                 <button class="unit-btn" :class="{active: weightUnit === 'lbs'}" @click="setWeightUnit('lbs')">lbs</button>
               </div>
             </div>
-            <div v-if="weightUnit === 'lbs'" style="font-size:11px;color:var(--text3);margin-top:4px">= {{ Math.round(mWeight / 2.2046 * 100) / 100 }} kg guardado</div>
-            <div v-if="weightUnit === 'kg' && mWeight > 0" style="font-size:11px;color:var(--text3);margin-top:4px">= {{ Math.round(mWeight * 2.2046 * 10) / 10 }} lbs</div>
-            <div style="font-size:10px;color:var(--text3);margin-top:3px">📌 Registra el peso <b>por mancuerna</b></div>
+            <div v-if="weightUnit === 'lbs'" style="font-size: 12px;color:var(--text3);margin-top:4px">= {{ Math.round(mWeight / 2.2046 * 100) / 100 }} kg guardado</div>
+            <div v-if="weightUnit === 'kg' && mWeight > 0" style="font-size: 12px;color:var(--text3);margin-top:4px">= {{ Math.round(mWeight * 2.2046 * 10) / 10 }} lbs</div>
+            <div style="font-size: 12px;color:var(--text3);margin-top:3px">📌 Registra el peso <b>por mancuerna</b></div>
           </div>
         </div>
 
@@ -472,7 +472,7 @@ function formatRest(sec: number) {
 }
 
 .history-card { background: var(--bg3); border-radius: var(--r2); padding: 12px 14px; margin-bottom: 16px; }
-.history-title { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px; }
+.history-title { font-size: 12px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px; }
 .history-row { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; font-size: 13px; }
 .history-week { color: var(--text2); font-weight: 600; flex-shrink: 0; }
 .history-detail { color: var(--text); font-weight: 600; text-align: right; }
@@ -514,7 +514,7 @@ input:focus { outline: none; border-color: var(--accent); }
 .set-dot.done:active { transform: scale(0.88); }
 .set-dot.next { background: var(--accent); color: #fff; cursor: pointer; box-shadow: 0 0 0 4px rgba(108,99,255,.25); }
 .set-dot.next:active { transform: scale(0.88); }
-.set-undo-hint { text-align: center; font-size: 11px; color: var(--text3); margin-bottom: 10px; }
+.set-undo-hint { text-align: center; font-size: 12px; color: var(--text3); margin-bottom: 10px; }
 .btn-set-done { background: var(--accent); color: var(--accent-text); margin-bottom: 0; }
 .set-tracker-done-hint { text-align: center; font-size: 12px; color: var(--green); font-weight: 600; }
 .unit-toggle { display: flex; border: 1px solid var(--border2); border-radius: 8px; overflow: hidden; flex-shrink: 0; }

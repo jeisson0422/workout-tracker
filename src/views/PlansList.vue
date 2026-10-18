@@ -156,7 +156,7 @@ function importPlan() {
       </div>
       
       <div class="plan-card" v-for="plan in plansStore.plans" :key="plan.id" :class="{ active: plan.is_active }">
-        <div class="plan-header" @click="router.push(`/plans/${plan.id}`)">
+        <div class="plan-header" @click="router.push(`/plans/${plan.id}`)" role="button" tabindex="0" @keydown.enter.self.prevent="router.push(`/plans/${plan.id}`)" @keydown.space.self.prevent="router.push(`/plans/${plan.id}`)">
           <div class="plan-title">{{ plan.name }}</div>
           <div class="plan-badge" v-if="plan.is_active">Activo</div>
         </div>
@@ -232,7 +232,7 @@ function importPlan() {
 .plan-card.active { border-color: var(--accent); background: linear-gradient(180deg, rgba(200,255,0,0.05) 0%, rgba(200,255,0,0) 100%), var(--bg2); }
 .plan-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; cursor: pointer; }
 .plan-title { font-size: 18px; font-weight: 700; color: var(--text); }
-.plan-badge { background: var(--accent); color: var(--accent-text); font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; }
+.plan-badge { background: var(--accent); color: var(--accent-text); font-size: 12px; font-weight: 800; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; }
 .plan-actions { display: flex; gap: 8px; }
 .btn { width: 100%; padding: 14px; border-radius: var(--r2); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform .1s, opacity .2s; text-align: center; }
 .btn:active { transform: scale(0.97); }
@@ -256,6 +256,6 @@ function importPlan() {
 .btn-ai-alt { background: var(--bg3); color: var(--accent); border: 1px solid var(--accent); font-size: 13px; padding: 10px; }
 
 .ai-modal { max-width: 500px !important; }
-.prompt-preview { background: var(--bg3); padding: 12px; border-radius: var(--r3); font-size: 11px; font-family: monospace; height: 200px; overflow-y: auto; color: var(--text2); border: 1px solid var(--border); white-space: pre-wrap; }
+.prompt-preview { background: var(--bg3); padding: 12px; border-radius: var(--r3); font-size: 12px; font-family: monospace; height: 200px; overflow-y: auto; color: var(--text2); border: 1px solid var(--border); white-space: pre-wrap; }
 .import-area { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r3); color: var(--text); padding: 12px; font-size: 12px; font-family: monospace; height: 200px; resize: none; }
 </style>

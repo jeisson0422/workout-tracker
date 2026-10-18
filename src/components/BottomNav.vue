@@ -47,7 +47,7 @@ import { haptic } from '../services/haptics'
   border: none;
   background: transparent;
   color: var(--text3);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: -.1px;
   cursor: pointer;
