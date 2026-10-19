@@ -164,6 +164,10 @@ const focusText = computed(() => {
   return f ? f.charAt(0).toUpperCase() + f.slice(1) : ''
 })
 
+// El enfoque puede ser una frase larga: en el encabezado solo cabe si es corto;
+// completo se lee en "Parámetros de esta fase".
+const shortFocus = computed(() => (focusText.value.length <= 36 ? focusText.value : ''))
+
 const weekCells = computed(() => {
   store.dbUpdateTrigger;
   return Array.from({ length: totalWeeks.value }, (_, i) => {
@@ -189,14 +193,14 @@ const weekCells = computed(() => {
       </div>
       <p class="phase-line" :class="'ph-' + phaseKey">
         <span class="phase-swatch" aria-hidden="true"></span>
-        <b>{{ phaseLabel }}</b><template v-if="focusText"> · {{ focusText }}</template>
+        <b>{{ phaseLabel }}</b><span v-if="shortFocus" class="phase-focus">{{ shortFocus }}</span>
       </p>
       <p v-if="streakWeeks > 0" class="streak">
         {{ streakWeeks }} {{ streakWeeks === 1 ? 'semana seguida' : 'semanas seguidas' }} cumpliendo tus días
       </p>
     </header>
 
-    <button v-if="nextWorkout" class="hero" @click="startNextWorkout">
+    <button v-if="nextWorkout" class="hero" :class="{ 'hero-long': nextWorkout.name.length > 24 }" @click="startNextWorkout">
       <span class="hero-lbl">Siguiente sesión</span>
       <span class="display hero-name">{{ nextWorkout.name }}</span>
       <span class="hero-cta">Empezar <ArrowRightIcon aria-hidden="true" /></span>
@@ -263,7 +267,7 @@ const weekCells = computed(() => {
         <div><dt>Peso</dt><dd>{{ info.weight_change_pct || '—' }}</dd></div>
         <div><dt>Reps</dt><dd>{{ info.reps_change || '—' }}</dd></div>
         <div><dt>RPE</dt><dd>{{ info.rpe_target || '—' }}</dd></div>
-        <div><dt>Enfoque</dt><dd>{{ focusText || '—' }}</dd></div>
+        <div :class="{ stacked: focusText.length > 28 }"><dt>Enfoque</dt><dd>{{ focusText || '—' }}</dd></div>
       </dl>
     </section>
   </div>
@@ -285,7 +289,8 @@ const weekCells = computed(() => {
 .weight-chip strong { color: var(--text); font-size: 15px; }
 .weight-chip svg { width: 13px; height: 13px; }
 .phase-line { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-size: 15px; color: var(--text2); }
-.phase-line b { color: var(--text); }
+.phase-line b { color: var(--text); flex-shrink: 0; }
+.phase-focus::before { content: '·'; margin: 0 8px 0 0; }
 .phase-swatch { width: 14px; height: 14px; border-radius: 50%; background: var(--ph); box-shadow: inset 0 0 0 3px var(--bg), 0 0 0 1.5px var(--ph); flex-shrink: 0; }
 .streak { margin: 6px 0 0 22px; font-size: 13px; color: var(--text2); }
 
@@ -298,7 +303,8 @@ const weekCells = computed(() => {
 }
 .hero:active { transform: scale(0.985); }
 .hero-lbl { font-size: 13px; font-weight: 600; opacity: .8; }
-.hero-name { font-size: 44px; text-wrap: balance; }
+.hero-name { font-size: 44px; text-wrap: balance; overflow-wrap: anywhere; }
+.hero-long .hero-name { font-size: 32px; line-height: 1; }
 .hero-cta { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 9px 14px; background: var(--accent-text); color: var(--accent); border-radius: 999px; font-size: 14px; font-weight: 700; }
 .hero-cta svg { width: 16px; height: 16px; }
 .hero-done { background: var(--bg2); color: var(--text); border: 1.5px solid var(--border); }
@@ -345,9 +351,10 @@ const weekCells = computed(() => {
 .leg-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ph); }
 
 .params { margin: 0; }
-.params > div { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.params > div { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; padding: 10px 0; border-bottom: 1px solid var(--border); }
 .params > div:first-child { padding-top: 0; }
 .params > div:last-child { padding-bottom: 0; border-bottom: none; }
 .params dt { font-size: 14px; color: var(--text2); flex-shrink: 0; }
 .params dd { margin: 0; font-size: 15px; font-weight: 600; text-align: right; }
+.params > div.stacked dd { flex-basis: 100%; text-align: left; font-weight: 500; line-height: 1.45; color: var(--text); }
 </style>
