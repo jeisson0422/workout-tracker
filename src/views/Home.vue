@@ -218,7 +218,7 @@ const weekCells = computed(() => {
             <svg v-if="day.isComplete" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </span>
           <span class="day-name">{{ day.label }}</span>
-          <span class="sr-only">{{ day.isComplete ? '(completado)' : '(pendiente)' }}</span>
+          <span class="day-state">{{ day.isComplete ? 'Hecho' : 'Pendiente' }}</span>
         </li>
       </ul>
       <div class="prog-bar" role="progressbar" :aria-valuenow="pct" aria-valuemin="0" aria-valuemax="100" aria-label="Series completadas esta semana">
@@ -309,13 +309,16 @@ const weekCells = computed(() => {
 .block-head h2 { margin: 0; font-size: 15px; font-weight: 700; }
 .pct { font-size: 30px; }
 
-.days-checklist { list-style: none; margin: 0 0 14px; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
-.day-check { display: flex; align-items: center; gap: 8px; color: var(--text3); }
+.days-checklist { list-style: none; margin: 0 0 14px; padding: 0; }
+.day-check { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); color: var(--text2); }
+.day-check:first-child { padding-top: 0; }
 .day-check.done { color: var(--text); }
+.day-state { margin-left: auto; font-size: 13px; color: var(--text3); }
+.day-check.done .day-state { color: var(--text); font-weight: 600; }
 .check-box { width: 18px; height: 18px; border: 1.5px solid var(--border2); border-radius: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .day-check.done .check-box { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
 .check-box svg { width: 11px; height: 11px; }
-.day-name { font-size: 13px; font-weight: 600; line-height: 1.25; }
+.day-name { font-size: 15px; font-weight: 600; line-height: 1.25; }
 
 .prog-bar { height: 10px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
 .prog-fill { height: 100%; background: var(--accent); transition: width .4s; }
@@ -341,7 +344,10 @@ const weekCells = computed(() => {
 .leg-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
 .leg-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ph); }
 
-.params { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px; margin: 0; }
-.params dt { font-size: 12px; color: var(--text3); }
-.params dd { margin: 2px 0 0; font-size: 15px; font-weight: 600; }
+.params { margin: 0; }
+.params > div { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.params > div:first-child { padding-top: 0; }
+.params > div:last-child { padding-bottom: 0; border-bottom: none; }
+.params dt { font-size: 14px; color: var(--text2); flex-shrink: 0; }
+.params dd { margin: 0; font-size: 15px; font-weight: 600; text-align: right; }
 </style>
