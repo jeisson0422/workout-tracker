@@ -4,13 +4,24 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { execSync } from 'node:child_process'
 
+function git(cmd: string) {
+  return execSync(`git ${cmd}`, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+}
+
+// Versión = v0.<número de commits>. Los builds de CI suelen clonar de forma superficial
+// (depth 1) y el conteo daba siempre 1, así que se intenta completar el historial y,
+// si aun así no es posible, se usa el hash del commit para que cada despliegue cambie.
 function getAppVersion() {
   try {
-    const commitCount = execSync('git rev-list --count HEAD').toString().trim()
-    return `v0.${commitCount}`
-  } catch {
-    return 'v0.0'
-  }
+    if (git('rev-parse --is-shallow-repository') === 'true') {
+      try { git('fetch --unshallow --quiet') } catch { /* sin acceso al remoto */ }
+    }
+    if (git('rev-parse --is-shallow-repository') !== 'true') {
+      return `v0.${git('rev-list --count HEAD')}`
+    }
+  } catch { /* sin git */ }
+  const sha = (process.env.WORKERS_CI_COMMIT_SHA || process.env.CF_PAGES_COMMIT_SHA || process.env.GITHUB_SHA || '').slice(0, 7)
+  return sha ? `v0-${sha}` : 'v0.0'
 }
 
 export default defineConfig({

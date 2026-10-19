@@ -200,7 +200,8 @@ async function handleSignOut() {
   router.push('/login')
 }
 
-const appVersion = __APP_VERSION__
+const buildDate = new Date(__BUILD_TIME__).toLocaleString('es-CR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+const appVersion = `${__APP_VERSION__} · compilada ${buildDate}`
 </script>
 
 <template>
