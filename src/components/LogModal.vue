@@ -430,8 +430,8 @@ function formatRest(sec: number) {
     </div>
 
     <div class="log-footer">
-      <button class="btn btn-primary" @click="saveLog">✓ Registrar</button>
       <button class="btn btn-secondary s-1386d5" @click="emit('close')">Cancelar</button>
+      <button class="btn btn-primary" @click="saveLog">✓ Registrar</button>
     </div>
   </div>
 </template>
@@ -491,13 +491,18 @@ function formatRest(sec: number) {
 .log-body {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 20px 20px 24px;
 }
 
+.log-footer .btn { width: auto; margin: 0; }
+.log-footer .btn-primary { flex: 1; }
+.log-footer .btn-secondary { flex: 0 0 auto; padding-left: 20px; padding-right: 20px; }
 .log-footer {
   flex-shrink: 0;
+  display: flex;
+  gap: 10px;
   padding: 12px 20px;
-  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   border-top: 0.5px solid var(--border);
   background: var(--bg);
 }
