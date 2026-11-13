@@ -3,6 +3,7 @@ import { onMounted, computed, watch, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useWorkoutStore } from './stores/workout'
 import { useAuthStore } from './stores/auth'
+import { useNutritionStore } from './stores/nutrition'
 import { syncService } from './services/syncService'
 import BottomNav from './components/BottomNav.vue'
 import ToastHost from './components/ToastHost.vue'
@@ -17,7 +18,8 @@ const updateAvailable = ref(false)
 onMounted(async () => {
   await authStore.initialize()
   await store.initialize()
-  
+  useNutritionStore().load()
+
   if (authStore.user) {
     syncService.startAutoSync()
   }

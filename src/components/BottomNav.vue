@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { HomeIcon, CalendarIcon, LayoutListIcon, BarChart2Icon, SettingsIcon } from 'lucide-vue-next'
+import { HomeIcon, CalendarIcon, LayoutListIcon, BarChart2Icon, UtensilsIcon } from 'lucide-vue-next'
+import { useRoute } from 'vue-router'
 import { haptic } from '../services/haptics'
+
+const route = useRoute()
 </script>
 
 <template>
@@ -15,11 +18,12 @@ import { haptic } from '../services/haptics'
       <span class="today-badge"><CalendarIcon aria-hidden="true" /></span>
       <span>Hoy</span>
     </router-link>
+    <!-- Comida incluye /nutricion/plan: son rutas distintas, por eso se marca a mano -->
+    <router-link to="/nutricion" class="nav-btn" :class="{ active: route.path.startsWith('/nutricion') }">
+      <UtensilsIcon aria-hidden="true" /> <span>Comida</span>
+    </router-link>
     <router-link to="/stats" class="nav-btn" active-class="active">
       <BarChart2Icon aria-hidden="true" /> <span>Stats</span>
-    </router-link>
-    <router-link to="/config" class="nav-btn" active-class="active">
-      <SettingsIcon aria-hidden="true" /> <span>Ajustes</span>
     </router-link>
   </nav>
 </template>

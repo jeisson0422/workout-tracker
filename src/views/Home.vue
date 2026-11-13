@@ -8,7 +8,7 @@ import { dbService } from '../services/localDb'
 import { getSwalSettings } from '../services/swalHelper'
 import { haptic } from '../services/haptics'
 import Swal from 'sweetalert2'
-import { ArrowRightIcon, PencilIcon } from 'lucide-vue-next'
+import { ArrowRightIcon, PencilIcon, SettingsIcon } from 'lucide-vue-next'
 
 const router = useRouter()
 const store = useWorkoutStore()
@@ -191,10 +191,13 @@ const weekCells = computed(() => {
           <PencilIcon aria-hidden="true" />
         </button>
       </div>
-      <p class="phase-line" :class="'ph-' + phaseKey">
-        <span class="phase-swatch" aria-hidden="true"></span>
-        <b>{{ phaseLabel }}</b><span v-if="shortFocus" class="phase-focus">{{ shortFocus }}</span>
-      </p>
+      <div class="head-sub">
+        <p class="phase-line" :class="'ph-' + phaseKey">
+          <span class="phase-swatch" aria-hidden="true"></span>
+          <b>{{ phaseLabel }}</b><span v-if="shortFocus" class="phase-focus">{{ shortFocus }}</span>
+        </p>
+        <router-link to="/config" class="gear" aria-label="Ajustes"><SettingsIcon aria-hidden="true" /></router-link>
+      </div>
       <p v-if="streakWeeks > 0" class="streak">
         {{ streakWeeks }} {{ streakWeeks === 1 ? 'semana seguida' : 'semanas seguidas' }} cumpliendo tus días
       </p>
@@ -288,6 +291,11 @@ const weekCells = computed(() => {
 }
 .weight-chip strong { color: var(--text); font-size: 15px; }
 .weight-chip svg { width: 13px; height: 13px; }
+.head-sub { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; }
+.head-sub .phase-line { margin: 0; min-width: 0; }
+.gear { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 1.5px solid var(--border2); border-radius: 50%; color: var(--text2); transition: transform .16s ease-out; }
+.gear svg { width: 20px; height: 20px; }
+.gear:active { transform: scale(.94); }
 .phase-line { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-size: 15px; color: var(--text2); }
 .phase-line b { color: var(--text); flex-shrink: 0; }
 .phase-focus::before { content: '·'; margin: 0 8px 0 0; }

@@ -5,10 +5,12 @@ import { dbService } from '../services/localDb'
 import { usePlansStore } from '../stores/plans'
 import { useWorkoutStore } from '../stores/workout'
 import { useUserStore } from '../stores/user'
+import { useNutritionStore } from '../stores/nutrition'
 
 const plansStore = usePlansStore()
 const workoutStore = useWorkoutStore()
 const userStore = useUserStore()
+const nutrition = useNutritionStore()
 const planId = computed(() => plansStore.activePlan?.id || null)
 
 const selectedDay = ref('')
@@ -497,6 +499,16 @@ function closeDetail() {
         <div class="kpi-card"><div class="kpi-val">{{ kpis.avgRpe }}</div><div class="kpi-lbl">RPE promedio</div></div>
       </div>
 
+      <router-link v-if="nutrition.weight.current !== null" to="/nutricion" class="card mt-4 mx-4 weight-card">
+        <div class="card-title">Peso, promedio semanal</div>
+        <div class="w-row">
+          <b class="display">{{ nutrition.weight.current.toFixed(1) }}<small> kg</small></b>
+          <span v-if="nutrition.weight.previous !== null">semana anterior {{ nutrition.weight.previous.toFixed(1) }} kg</span>
+        </div>
+        <p v-if="nutrition.weight.advice" class="w-advice"><b>{{ nutrition.weight.advice.headline }}.</b> {{ nutrition.weight.advice.text }}</p>
+        <p v-else class="w-advice">Con dos semanas de registros te digo si tu ritmo es el correcto.</p>
+      </router-link>
+
       <div class="card mt-4 mx-4">
         <div class="card-title">Volumen semanal (kg)</div>
         <div v-if="weeklyVolume.length === 0" class="empty">Registra series para ver tu volumen real.</div>
@@ -663,6 +675,12 @@ function closeDetail() {
 </template>
 
 <style scoped>
+.weight-card { display: block; color: var(--text); text-decoration: none; }
+.w-row { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.w-row b { font-size: 36px; }
+.w-row small { font-size: 14px; font-family: var(--font-body); letter-spacing: 0; color: var(--text2); }
+.w-row span { font-size: 13px; color: var(--text2); }
+.w-advice { margin: 8px 0 0; font-size: 14px; line-height: 1.5; }
 .text-center { text-align: center; }
 .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px 10px; margin-top: 12px; }
 .kpi-card { background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--r2); padding: 12px 14px; }
