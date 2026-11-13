@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useWorkoutStore } from '../stores/workout'
+import { useNutritionStore } from '../stores/nutrition'
 import { syncService } from '../services/syncService'
 import { swalInstance, getSwalSettings } from '../services/swalHelper'
 import { haptic } from '../services/haptics'
@@ -8,6 +9,7 @@ import DayCard from '../components/DayCard.vue'
 import LogModal from '../components/LogModal.vue'
 
 const store = useWorkoutStore()
+const nutrition = useNutritionStore()
 
 const currentWeek = computed(() => store.currentWeek)
 const info = computed(() => store.getWeekInfo(currentWeek.value))
@@ -84,6 +86,15 @@ const nextDayLabel = computed(() => {
       <p v-if="totalExercises" class="screen-sub">{{ loggedCount }} de {{ totalExercises }} ejercicios registrados</p>
     </header>
 
+    <router-link to="/nutricion" class="food-strip" aria-label="Abrir nutrición">
+      <span class="food-main">
+        <b>{{ nutrition.todayPlan.gym ? 'Día de gym' : 'Día de descanso' }}</b>
+        Meta ~{{ nutrition.todayPlan.target.toLocaleString('en-US') }} kcal · {{ nutrition.todayPlan.protTarget }} g de proteína
+      </span>
+      <span v-if="nutrition.nextMeal" class="food-next">Sigue: {{ nutrition.nextMeal.time }} · {{ nutrition.nextMeal.name }}</span>
+      <span v-else class="food-next">Comidas de hoy completas</span>
+    </router-link>
+
     <div v-if="dayObj">
       <DayCard
         :day-index="dayIndex"
@@ -114,6 +125,10 @@ const nextDayLabel = computed(() => {
 .today { padding-bottom: 24px; }
 .when { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 14px; color: var(--text2); }
 .phase-swatch { width: 14px; height: 14px; border-radius: 50%; background: var(--ph); box-shadow: inset 0 0 0 3px var(--bg), 0 0 0 1.5px var(--ph); flex-shrink: 0; }
+.food-strip { display: grid; gap: 4px; margin: 0 16px 14px; padding: 12px 14px; background: var(--bg2); border: 1.5px solid var(--border); border-left: 4px solid var(--accent); border-radius: var(--r); color: var(--text); font-size: 13px; line-height: 1.4; text-decoration: none; }
+.food-strip:active { transform: scale(.99); }
+.food-main b { display: block; font-size: 15px; }
+.food-next { color: var(--text2); }
 .finish { padding: 8px 16px 0; }
 .finish-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 14px 16px; }
 .finish-btn small { font-size: 13px; font-weight: 500; opacity: .75; }

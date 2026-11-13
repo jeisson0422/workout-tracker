@@ -29,8 +29,13 @@ const router = createRouter({
       component: () => import('../views/Stats.vue'),
       meta: { requiresAuth: true }
     },
-    { 
-      path: '/config', 
+    {
+      path: '/nutricion',
+      component: () => import('../views/Nutricion.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/config',
       component: () => import('../views/Config.vue'),
       meta: { requiresAuth: true }
     },

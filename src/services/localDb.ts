@@ -156,11 +156,36 @@ class LocalDbService {
       synced INTEGER DEFAULT 0
     )`);
     
+    // Casillas de nutrición (comidas, súper, preparación). Una fila por casilla.
+    this.run(`CREATE TABLE IF NOT EXISTS nutrition_checks (
+      kind TEXT NOT NULL,
+      period TEXT NOT NULL,
+      item TEXT NOT NULL,
+      checked INTEGER DEFAULT 1,
+      synced INTEGER DEFAULT 0,
+      PRIMARY KEY (kind, period, item)
+    )`);
+
     this.runMigrations();
     this.persistDB();
   }
 
   runMigrations() {
+    // user_stats necesita un id estable para sincronizar con Supabase (body_stats)
+    const colsStats = this.q("PRAGMA table_info(user_stats)");
+    if (colsStats.length && colsStats[0].values) {
+      if (!colsStats[0].values.some((col: any) => col[1] === 'sync_id')) {
+        this.run("ALTER TABLE user_stats ADD COLUMN sync_id TEXT");
+      }
+      const missing = this.q("SELECT id FROM user_stats WHERE sync_id IS NULL");
+      if (missing.length && missing[0].values) {
+        missing[0].values.forEach((row: any) => {
+          this.run("UPDATE user_stats SET sync_id = ?, synced = 0 WHERE id = ?", [crypto.randomUUID(), row[0]]);
+        });
+      }
+      this.run("CREATE UNIQUE INDEX IF NOT EXISTS idx_user_stats_sync_id ON user_stats(sync_id)");
+    }
+
     // Migrar workout_log
     const colsLog = this.q("PRAGMA table_info(workout_log)");
     if (colsLog.length && colsLog[0].values) {
@@ -335,8 +360,22 @@ class LocalDbService {
 
   addStats(stats: any) {
     this.run(
-      "INSERT INTO user_stats (weight_kg, body_fat_pct, notes, recorded_at, synced) VALUES (?, ?, ?, ?, 0)",
-      [stats.weight_kg, stats.body_fat_pct, stats.notes, stats.recorded_at || new Date().toISOString()]
+      "INSERT INTO user_stats (sync_id, weight_kg, body_fat_pct, notes, recorded_at, synced) VALUES (?, ?, ?, ?, ?, 0)",
+      [stats.sync_id || crypto.randomUUID(), stats.weight_kg, stats.body_fat_pct, stats.notes, stats.recorded_at || new Date().toISOString()]
+    );
+  }
+
+  // --- Casillas de nutrición ---
+  /** Ids marcados para un periodo: una fecha (comidas) o el lunes de la semana (súper, preparación). */
+  getNutritionChecks(kind: string, period: string): string[] {
+    const res = this.q("SELECT item FROM nutrition_checks WHERE kind=? AND period=? AND checked=1", [kind, period]);
+    return res.length && res[0].values ? res[0].values.map((r: any) => r[0]) : [];
+  }
+
+  setNutritionCheck(kind: string, period: string, item: string, checked: boolean) {
+    this.run(
+      "INSERT OR REPLACE INTO nutrition_checks (kind, period, item, checked, synced) VALUES (?, ?, ?, ?, 0)",
+      [kind, period, item, checked ? 1 : 0]
     );
   }
 

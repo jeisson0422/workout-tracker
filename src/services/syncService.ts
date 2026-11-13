@@ -6,6 +6,7 @@ import { useWorkoutStore } from '../stores/workout'
 import { usePlansStore } from '../stores/plans'
 import { DEFAULT_PROGRESSION } from '../stores/defaultData'
 import { injectDefaultPlan } from './planUtils'
+import { syncNutrition } from './nutritionSync'
 
 class SyncService {
   private syncInterval: any = null;
@@ -46,6 +47,7 @@ class SyncService {
       await this.pullLogs(authStore.user.id);
       await this.pullLogSets(authStore.user.id);
       await this.cleanOrphanDayCompletes(authStore.user.id);
+      await syncNutrition(authStore.user.id);
     } catch (e) {
       console.error('Error durante la sincronización:', e);
     } finally {

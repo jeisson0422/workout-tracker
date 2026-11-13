@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useWorkoutStore } from '../stores/workout'
 import { useUserStore } from '../stores/user'
 import { usePlansStore } from '../stores/plans'
+import { useNutritionStore } from '../stores/nutrition'
 import { dbService } from '../services/localDb'
 import { getSwalSettings } from '../services/swalHelper'
 import { haptic } from '../services/haptics'
@@ -14,6 +15,11 @@ const router = useRouter()
 const store = useWorkoutStore()
 const userStore = useUserStore()
 const plansStore = usePlansStore()
+const nutrition = useNutritionStore()
+const foodPct = computed(() => {
+  const total = nutrition.todayPlan.total.kcal
+  return total ? Math.min(100, Math.round((nutrition.todayProgress.kcal / total) * 100)) : 0
+})
 
 onMounted(async () => {
   store.dbUpdateTrigger; // forzar reactividad
@@ -211,6 +217,24 @@ const weekCells = computed(() => {
       <span class="hero-cta">Ver estadísticas <ArrowRightIcon aria-hidden="true" /></span>
     </router-link>
 
+    <router-link to="/nutricion" class="block food" aria-label="Abrir nutrición">
+      <div class="block-head">
+        <h2>Comida de hoy</h2>
+        <span class="food-badge" :class="{ gym: nutrition.todayPlan.gym }">{{ nutrition.todayPlan.gym ? 'Día de gym' : 'Descanso' }}</span>
+      </div>
+      <div class="food-nums">
+        <div><span class="display">{{ Math.round(nutrition.todayProgress.kcal).toLocaleString('en-US') }}</span><small>de {{ Math.round(nutrition.todayPlan.total.kcal).toLocaleString('en-US') }} kcal</small></div>
+        <div><span class="display">{{ Math.round(nutrition.todayProgress.p) }}</span><small>de {{ nutrition.todayPlan.protTarget }} g de proteína</small></div>
+      </div>
+      <div class="prog-bar" role="progressbar" aria-label="Calorías comidas hoy" :aria-valuenow="foodPct" aria-valuemin="0" aria-valuemax="100">
+        <div class="prog-fill" :style="{ width: foodPct + '%' }"></div>
+      </div>
+      <p class="food-next">
+        <template v-if="nutrition.nextMeal">Sigue: <b>{{ nutrition.nextMeal.time }} · {{ nutrition.nextMeal.name }}</b></template>
+        <template v-else>Ya marcaste todas las comidas de hoy.</template>
+      </p>
+    </router-link>
+
     <section class="block">
       <div class="block-head">
         <h2>Tu semana</h2>
@@ -312,6 +336,15 @@ const weekCells = computed(() => {
 
 .block { margin: 0 16px 18px; padding: 16px; background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--r); }
 .block-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
+.food { display: block; color: var(--text); text-decoration: none; }
+.food:active { transform: scale(.99); }
+.food-badge { padding: 3px 10px; border: 1.5px solid var(--border2); border-radius: 999px; font-size: 12px; font-weight: 700; color: var(--text2); }
+.food-badge.gym { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.food-nums { display: flex; gap: 28px; margin-bottom: 12px; }
+.food-nums .display { font-size: 38px; }
+.food-nums small { display: block; margin-top: 2px; font-size: 12px; color: var(--text2); }
+.food-next { margin: 10px 0 0; font-size: 14px; color: var(--text2); }
+.food-next b { color: var(--text); }
 .block-head h2 { margin: 0; font-size: 15px; font-weight: 700; }
 .pct { font-size: 30px; }
 
