@@ -6,7 +6,8 @@ import { useWorkoutStore } from './workout'
 import { buildDay, eatenTotal, DEFAULT_GYM_DAYS, PHASE_TIPS, type DinnerKind, type Pace, type DayPlan } from '../nutrition/plan'
 import { weeklyAverages, paceAdvice } from '../nutrition/advice'
 
-export type CheckKind = 'meal' | 'shop' | 'prep'
+// 'skip' = ingrediente omitido de una comida (item: '<idComida>:<alimento>')
+export type CheckKind = 'meal' | 'shop' | 'prep' | 'skip'
 
 // Fechas locales en formato YYYY-MM-DD (no usar toISOString: devuelve UTC).
 export function isoDate(d: Date): string {
@@ -79,8 +80,13 @@ export const useNutritionStore = defineStore('nutrition', {
       return meal ? { time: meal.time, name: meal.name } : null
     },
 
+    todaySkips(state): string[] {
+      state.tick
+      return dbService.getNutritionChecks('skip', this.todayIso)
+    },
+
     todayProgress(): { kcal: number; p: number } {
-      const t = eatenTotal(this.todayPlan, this.todayEaten)
+      const t = eatenTotal(this.todayPlan, this.todayEaten, this.todaySkips)
       return { kcal: t.kcal, p: t.p }
     },
 

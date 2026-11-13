@@ -122,9 +122,18 @@ export function buildDay(day: number, pace: Pace, dinner: DinnerKind, gymDays = 
   }
 }
 
-/** Suma de lo que ya comiste según los ids marcados. */
-export function eatenTotal(plan: DayPlan, eatenIds: string[]): Macros {
-  return sum(plan.meals.filter(m => eatenIds.includes(m.id)).map(m => m.total))
+/** Clave de un ingrediente omitido: '<idComida>:<alimento>', por ejemplo '0730:banano'. */
+export const skipKey = (mealId: string, food: string) => `${mealId}:${food}`
+
+/** Macros de una comida sin los ingredientes omitidos. Las comidas libres no tienen ingredientes. */
+export function mealTotal(m: Meal, skipped: string[] = []): Macros {
+  if (m.libre) return m.libre
+  return sum(m.items.filter(i => !skipped.includes(skipKey(m.id, i.food))).map(i => macrosOf(i.food, i.qty)))
+}
+
+/** Suma de lo que ya comiste según las comidas marcadas, sin lo que omitiste. */
+export function eatenTotal(plan: DayPlan, eatenIds: string[], skipped: string[] = []): Macros {
+  return sum(plan.meals.filter(m => eatenIds.includes(m.id)).map(m => mealTotal(m, skipped)))
 }
 
 /** Consejos por fase del entrenamiento (claves de plan_progressions.phase). */

@@ -3,7 +3,7 @@ import { computed, reactive } from 'vue'
 import { CheckIcon, ChevronDownIcon } from 'lucide-vue-next'
 import { haptic } from '../../services/haptics'
 import { useNutritionStore, dateOfWeekday } from '../../stores/nutrition'
-import { DAY_NAMES, eatenTotal } from '../../nutrition/plan'
+import { DAY_NAMES, eatenTotal, mealTotal, skipKey } from '../../nutrition/plan'
 import { FOODS, macrosOf } from '../../nutrition/foods'
 
 const props = defineProps<{ day: number }>()
@@ -12,7 +12,10 @@ const store = useNutritionStore()
 const plan = computed(() => store.planFor(props.day))
 const date = computed(() => dateOfWeekday(props.day))
 const eaten = computed(() => store.checks('meal', date.value))
-const sums = computed(() => eatenTotal(plan.value, eaten.value))
+const skips = computed(() => store.checks('skip', date.value))
+const sums = computed(() => eatenTotal(plan.value, eaten.value, skips.value))
+const isSkipped = (mealId: string, food: string) => skips.value.includes(skipKey(mealId, food))
+const skippedCount = (mealId: string) => skips.value.filter(k => k.startsWith(mealId + ':')).length
 const isToday = computed(() => props.day === store.todayIndex)
 const open = reactive<Record<string, boolean>>({})
 
@@ -28,6 +31,10 @@ const bars = computed(() => [
 function toggle(id: string) {
   haptic('light')
   store.toggleCheck('meal', date.value, id)
+}
+function toggleIngredient(mealId: string, food: string) {
+  haptic('light')
+  store.toggleCheck('skip', date.value, skipKey(mealId, food))
 }
 </script>
 
@@ -73,17 +80,24 @@ function toggle(id: string) {
               <CheckIcon aria-hidden="true" /><span>{{ eaten.includes(m.id) ? 'Comido' : 'Marcar' }}</span>
             </button>
           </div>
-          <p class="meal-stat">{{ fmt(m.total.kcal) }} kcal · {{ Math.round(m.total.p) }} g de proteína</p>
+          <p class="meal-stat">
+            {{ fmt(mealTotal(m, skips).kcal) }} kcal · {{ Math.round(mealTotal(m, skips).p) }} g de proteína<template v-if="skippedCount(m.id)"> · sin {{ skippedCount(m.id) }} {{ skippedCount(m.id) === 1 ? 'ingrediente' : 'ingredientes' }}</template>
+          </p>
 
           <p v-if="m.libre" class="libre">Come lo que quieras. Apunta a unas <b>{{ m.libre.kcal }} kcal</b> y al menos <b>{{ m.libre.p }} g de proteína</b>.</p>
           <template v-if="open[m.id] && !m.libre">
             <ul class="items">
-              <li v-for="it in m.items" :key="it.food">
-                <span class="q">{{ FOODS[it.food].label(it.qty)[0] }}</span>
-                <span class="n">{{ FOODS[it.food].label(it.qty)[1] }}</span>
-                <span class="kc">{{ Math.round(macrosOf(it.food, it.qty).kcal) }} kcal</span>
+              <li v-for="it in m.items" :key="it.food" :class="{ off: isSkipped(m.id, it.food) }">
+                <label>
+                  <input type="checkbox" :checked="!isSkipped(m.id, it.food)" @change="toggleIngredient(m.id, it.food)">
+                  <span class="box" aria-hidden="true"><CheckIcon /></span>
+                  <span class="q">{{ FOODS[it.food].label(it.qty)[0] }}</span>
+                  <span class="n">{{ FOODS[it.food].label(it.qty)[1] }}</span>
+                  <span class="kc">{{ Math.round(macrosOf(it.food, it.qty).kcal) }} kcal</span>
+                </label>
               </li>
             </ul>
+            <p class="hint-skip">Desmarca lo que no comiste y la comida se recalcula.</p>
             <p v-if="m.note" class="note">{{ m.note }}</p>
           </template>
         </div>
@@ -136,7 +150,15 @@ function toggle(id: string) {
 .chk[aria-pressed='true'] svg { opacity: 1; }
 .chk:active { transform: scale(.96); }
 .items { list-style: none; margin: 10px 0 0; padding: 0; }
-.items li { display: grid; grid-template-columns: 74px 1fr auto; gap: 8px; align-items: baseline; padding: 7px 0; border-top: 1px solid var(--border); font-size: 14px; }
+.items li { border-top: 1px solid var(--border); font-size: 14px; }
+.items label { position: relative; display: grid; grid-template-columns: 22px 66px 1fr auto; gap: 8px; align-items: center; min-height: 44px; padding: 6px 0; cursor: pointer; }
+.items input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.items .box { width: 22px; height: 22px; border: 1.5px solid var(--border2); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: transparent; }
+.items .box svg { width: 14px; height: 14px; stroke-width: 3.5; }
+.items li:not(.off) .box { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.items input:focus-visible ~ .box { outline: 3px solid var(--accent2); outline-offset: 2px; }
+.items li.off .q, .items li.off .n, .items li.off .kc { color: var(--text3); text-decoration: line-through; }
+.hint-skip { margin: 6px 0 0; font-size: 12px; color: var(--text3); }
 .items .q { font-weight: 700; }
 .items .n { color: var(--text2); min-width: 0; overflow-wrap: anywhere; }
 .items .kc { font-size: 12px; color: var(--text3); white-space: nowrap; }
