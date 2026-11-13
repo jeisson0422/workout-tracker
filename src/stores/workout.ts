@@ -106,7 +106,8 @@ export const useWorkoutStore = defineStore('workout', {
       const plansStore = usePlansStore();
       const activePlan = plansStore.activePlan;
       if (activePlan) {
-        dbService.run("UPDATE plans SET current_week = ? WHERE id = ?", [w, activePlan.id]);
+        // synced = 0 para que el cambio suba a Supabase en el próximo sync
+        dbService.run("UPDATE plans SET current_week = ?, synced = 0 WHERE id = ?", [w, activePlan.id]);
         plansStore.loadData();
       }
     },
