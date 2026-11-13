@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { HomeIcon, CalendarIcon, LayoutListIcon, BarChart2Icon, SettingsIcon } from 'lucide-vue-next'
+import { HomeIcon, CalendarIcon, LayoutListIcon, BarChart2Icon, UtensilsIcon } from 'lucide-vue-next'
 import { haptic } from '../services/haptics'
 </script>
 
@@ -15,11 +15,11 @@ import { haptic } from '../services/haptics'
       <span class="today-badge"><CalendarIcon aria-hidden="true" /></span>
       <span>Hoy</span>
     </router-link>
+    <router-link to="/nutricion" class="nav-btn" active-class="active">
+      <UtensilsIcon aria-hidden="true" /> <span>Comida</span>
+    </router-link>
     <router-link to="/stats" class="nav-btn" active-class="active">
       <BarChart2Icon aria-hidden="true" /> <span>Stats</span>
-    </router-link>
-    <router-link to="/config" class="nav-btn" active-class="active">
-      <SettingsIcon aria-hidden="true" /> <span>Ajustes</span>
     </router-link>
   </nav>
 </template>

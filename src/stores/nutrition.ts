@@ -3,7 +3,7 @@ import { dbService } from '../services/localDb'
 import { syncService } from '../services/syncService'
 import { useUserStore } from './user'
 import { useWorkoutStore } from './workout'
-import { buildDay, eatenTotal, DEFAULT_GYM_DAYS, PHASE_TIPS, type DinnerKind, type Pace, type DayPlan } from '../nutrition/plan'
+import { buildDay, DEFAULT_GYM_DAYS, PHASE_TIPS, type DinnerKind, type Pace, type DayPlan } from '../nutrition/plan'
 import { weeklyAverages, paceAdvice } from '../nutrition/advice'
 
 // 'skip' = ingrediente omitido de una comida (item: '<idComida>:<alimento>')
@@ -60,34 +60,6 @@ export const useNutritionStore = defineStore('nutrition', {
       useWorkoutStore().dbUpdateTrigger
       const res = dbService.q("SELECT COUNT(*) FROM workout_log WHERE substr(logged_at, 1, 10) = ? AND exercise != '_day_complete'", [isoDate(new Date())])
       return !!res.length && res[0].values[0][0] > 0
-    },
-
-    /** Plan de hoy. Si ya entrenaste hoy, cuenta como día de gym. */
-    todayPlan(state): DayPlan {
-      const gymDays = [...state.gymDays]
-      if (this.trainedToday) gymDays[this.todayIndex] = true
-      return buildDay(this.todayIndex, state.pace, state.dinner, gymDays)
-    },
-
-    todayEaten(state): string[] {
-      state.tick
-      return dbService.getNutritionChecks('meal', this.todayIso)
-    },
-
-    /** Primera comida de hoy que todavía no marcas como comida. */
-    nextMeal(): { time: string; name: string } | null {
-      const meal = this.todayPlan.meals.find(m => !this.todayEaten.includes(m.id))
-      return meal ? { time: meal.time, name: meal.name } : null
-    },
-
-    todaySkips(state): string[] {
-      state.tick
-      return dbService.getNutritionChecks('skip', this.todayIso)
-    },
-
-    todayProgress(): { kcal: number; p: number } {
-      const t = eatenTotal(this.todayPlan, this.todayEaten, this.todaySkips)
-      return { kcal: t.kcal, p: t.p }
     },
 
     /** Consejo según la fase de la semana de entrenamiento. */

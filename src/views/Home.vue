@@ -4,22 +4,16 @@ import { useRouter } from 'vue-router'
 import { useWorkoutStore } from '../stores/workout'
 import { useUserStore } from '../stores/user'
 import { usePlansStore } from '../stores/plans'
-import { useNutritionStore } from '../stores/nutrition'
 import { dbService } from '../services/localDb'
 import { getSwalSettings } from '../services/swalHelper'
 import { haptic } from '../services/haptics'
 import Swal from 'sweetalert2'
-import { ArrowRightIcon, PencilIcon } from 'lucide-vue-next'
+import { ArrowRightIcon, PencilIcon, SettingsIcon } from 'lucide-vue-next'
 
 const router = useRouter()
 const store = useWorkoutStore()
 const userStore = useUserStore()
 const plansStore = usePlansStore()
-const nutrition = useNutritionStore()
-const foodPct = computed(() => {
-  const total = nutrition.todayPlan.total.kcal
-  return total ? Math.min(100, Math.round((nutrition.todayProgress.kcal / total) * 100)) : 0
-})
 
 onMounted(async () => {
   store.dbUpdateTrigger; // forzar reactividad
@@ -197,10 +191,13 @@ const weekCells = computed(() => {
           <PencilIcon aria-hidden="true" />
         </button>
       </div>
-      <p class="phase-line" :class="'ph-' + phaseKey">
-        <span class="phase-swatch" aria-hidden="true"></span>
-        <b>{{ phaseLabel }}</b><span v-if="shortFocus" class="phase-focus">{{ shortFocus }}</span>
-      </p>
+      <div class="head-sub">
+        <p class="phase-line" :class="'ph-' + phaseKey">
+          <span class="phase-swatch" aria-hidden="true"></span>
+          <b>{{ phaseLabel }}</b><span v-if="shortFocus" class="phase-focus">{{ shortFocus }}</span>
+        </p>
+        <router-link to="/config" class="gear" aria-label="Ajustes"><SettingsIcon aria-hidden="true" /></router-link>
+      </div>
       <p v-if="streakWeeks > 0" class="streak">
         {{ streakWeeks }} {{ streakWeeks === 1 ? 'semana seguida' : 'semanas seguidas' }} cumpliendo tus días
       </p>
@@ -215,24 +212,6 @@ const weekCells = computed(() => {
       <span class="hero-lbl">Semana completa</span>
       <span class="display hero-name">Buen trabajo</span>
       <span class="hero-cta">Ver estadísticas <ArrowRightIcon aria-hidden="true" /></span>
-    </router-link>
-
-    <router-link to="/nutricion" class="block food" aria-label="Abrir nutrición">
-      <div class="block-head">
-        <h2>Comida de hoy</h2>
-        <span class="food-badge" :class="{ gym: nutrition.todayPlan.gym }">{{ nutrition.todayPlan.gym ? 'Día de gym' : 'Descanso' }}</span>
-      </div>
-      <div class="food-nums">
-        <div><span class="display">{{ Math.round(nutrition.todayProgress.kcal).toLocaleString('en-US') }}</span><small>de {{ Math.round(nutrition.todayPlan.total.kcal).toLocaleString('en-US') }} kcal</small></div>
-        <div><span class="display">{{ Math.round(nutrition.todayProgress.p) }}</span><small>de {{ nutrition.todayPlan.protTarget }} g de proteína</small></div>
-      </div>
-      <div class="prog-bar" role="progressbar" aria-label="Calorías comidas hoy" :aria-valuenow="foodPct" aria-valuemin="0" aria-valuemax="100">
-        <div class="prog-fill" :style="{ width: foodPct + '%' }"></div>
-      </div>
-      <p class="food-next">
-        <template v-if="nutrition.nextMeal">Sigue: <b>{{ nutrition.nextMeal.time }} · {{ nutrition.nextMeal.name }}</b></template>
-        <template v-else>Ya marcaste todas las comidas de hoy.</template>
-      </p>
     </router-link>
 
     <section class="block">
@@ -312,6 +291,11 @@ const weekCells = computed(() => {
 }
 .weight-chip strong { color: var(--text); font-size: 15px; }
 .weight-chip svg { width: 13px; height: 13px; }
+.head-sub { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; }
+.head-sub .phase-line { margin: 0; min-width: 0; }
+.gear { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 1.5px solid var(--border2); border-radius: 50%; color: var(--text2); transition: transform .16s ease-out; }
+.gear svg { width: 20px; height: 20px; }
+.gear:active { transform: scale(.94); }
 .phase-line { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-size: 15px; color: var(--text2); }
 .phase-line b { color: var(--text); flex-shrink: 0; }
 .phase-focus::before { content: '·'; margin: 0 8px 0 0; }
@@ -336,15 +320,6 @@ const weekCells = computed(() => {
 
 .block { margin: 0 16px 18px; padding: 16px; background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--r); }
 .block-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
-.food { display: block; color: var(--text); text-decoration: none; }
-.food:active { transform: scale(.99); }
-.food-badge { padding: 3px 10px; border: 1.5px solid var(--border2); border-radius: 999px; font-size: 12px; font-weight: 700; color: var(--text2); }
-.food-badge.gym { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
-.food-nums { display: flex; gap: 28px; margin-bottom: 12px; }
-.food-nums .display { font-size: 38px; }
-.food-nums small { display: block; margin-top: 2px; font-size: 12px; color: var(--text2); }
-.food-next { margin: 10px 0 0; font-size: 14px; color: var(--text2); }
-.food-next b { color: var(--text); }
 .block-head h2 { margin: 0; font-size: 15px; font-weight: 700; }
 .pct { font-size: 30px; }
 

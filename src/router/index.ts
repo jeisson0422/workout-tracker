@@ -35,6 +35,11 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/nutricion/plan',
+      component: () => import('../views/NutricionPlan.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/config',
       component: () => import('../views/Config.vue'),
       meta: { requiresAuth: true }
