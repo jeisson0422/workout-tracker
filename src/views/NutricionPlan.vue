@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ChevronLeftIcon } from 'lucide-vue-next'
+import { ChevronLeftIcon, ClipboardCopyIcon } from 'lucide-vue-next'
+import { copyCoachContext } from '../services/coachContext'
 import { useNutritionStore } from '../stores/nutrition'
 import { PACE_LABEL, SHOPPING, PREP_STEPS, PREP_YIELDS, STORAGE_TIPS, type Pace, type DinnerKind } from '../nutrition/plan'
 import WeekPanel from '../components/nutrition/WeekPanel.vue'
@@ -31,6 +32,14 @@ const shopGroups = computed<ChecklistGroup[]>(() =>
 )
 const prepGroups = computed<ChecklistGroup[]>(() => [{ items: PREP_STEPS.map(s => ({ id: s.id, title: s.title, text: s.text })) }])
 
+const copying = ref(false)
+async function copyContext() {
+  if (copying.value) return
+  copying.value = true
+  await copyCoachContext()
+  copying.value = false
+}
+
 // Al elegir un día en la semana, se abre ese día en Comida.
 function openDay(day: number) {
   router.push({ path: '/nutricion', query: { dia: String(day) } })
@@ -50,6 +59,7 @@ function moveTab(e: KeyboardEvent) {
     <header class="screen-head head">
       <button class="back-btn" aria-label="Volver a Comida" @click="router.push('/nutricion')"><ChevronLeftIcon aria-hidden="true" /></button>
       <h1 class="display screen-title">Plan completo</h1>
+      <button class="back-btn ctx-btn" :disabled="copying" aria-label="Copiar contexto para Claude" @click="copyContext"><ClipboardCopyIcon aria-hidden="true" /></button>
     </header>
 
     <div v-if="tab === 'semana' || tab === 'numeros'" class="controls">
@@ -107,6 +117,8 @@ function moveTab(e: KeyboardEvent) {
 .head { display: flex; align-items: center; gap: 12px; }
 .back-btn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; background: var(--bg2); border: 1.5px solid var(--border); border-radius: 50%; color: var(--text); cursor: pointer; transition: transform 160ms ease-out; }
 .back-btn:active { transform: scale(0.94); }
+.ctx-btn { margin-left: auto; flex-shrink: 0; }
+.ctx-btn:disabled { opacity: 0.5; }
 
 .controls { display: grid; gap: 8px; margin: 0 16px 12px; }
 .seg { display: flex; align-items: center; gap: 6px; }
