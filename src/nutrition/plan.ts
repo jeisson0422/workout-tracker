@@ -90,17 +90,17 @@ export function buildDay(day: number, pace: Pace, dinner: DinnerKind, gymDays = 
 
   meals.push(meal({
     id: '0730', time: '7:30', name: 'Antes de entrenar',
-    items: items(['leche', 150], ...(gym ? [['banano', 1] as [FoodId, number]] : []))
+    items: items(['leche', 35], ...(gym ? [['banano', 1] as [FoodId, number]] : []))
   }))
   meals.push(meal({
     id: '1000', time: '10:00', name: 'Desayuno después del gym',
-    items: items(['huevo', 2], ['claras', q.claras], ['pan', q.pan], ['mermelada', 1], ['whey', 1]),
-    note: 'Cocina huevos y claras con spray, sin mantequilla.'
+    items: items(['huevo', 2], ['claras', q.claras], ['pan', q.pan], ['mermelada', 1], ['whey', 1], ['leche', 110]),
+    note: 'Cocina huevos y claras con spray, sin mantequilla. Bate el scoop con 110 ml de leche y 110 ml de agua.'
   }))
   meals.push(rot
     ? meal({ id: '1400', time: '14:00', name: 'Almuerzo', items: items([rot[0], 130], ['arroz', q.arroz], ['frijoles', 100], ['verdura', 150], ['aguacate', q.aguacate]) })
     : meal({ id: '1400', time: '14:00', name: 'Almuerzo libre', items: [], libre: { kcal: 600, p: 40, c: 60, f: 20 } }))
-  meals.push(meal({ id: '1700', time: '17:00', name: 'Merienda', items: items(['yogur', 170], ['fruta', 100], ['avena', 20]) }))
+  meals.push(meal({ id: '1700', time: '17:00', name: 'Merienda', items: items(['yogur', 170], ['fruta', 100], ['avena', 20], ['leche', 35]) }))
   if (rot) {
     const base: [FoodId, number][] = [[rot[1], 130]]
     if (dinner === 'arepa') base.push(['masa', 114], ['mozz', 30])
@@ -180,7 +180,7 @@ export const SHOPPING: { group: string; items: { id: string; name: string; qty: 
     { id: 'aguacate', name: 'Aguacate', qty: '3 a 4' },
     { id: 'mozz', name: 'Mozzarella de bloque', qty: '60 g' },
     { id: 'mermelada', name: 'Mermelada de fresa', qty: '7 cdas' },
-    { id: 'leche', name: 'Leche semidescremada', qty: '~1.1 L' },
+    { id: 'leche', name: 'Leche semidescremada', qty: '~1.3 L' },
     { id: 'cafe', name: 'Café', qty: 'al gusto' },
     { id: 'spray', name: 'Spray de aceite de coco', qty: '1 lata' },
     { id: 'ajo', name: 'Ajo y especias', qty: 'al gusto' },

@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { haptic } from '../../services/haptics'
 import { showToast } from '../../services/toast'
+import { copyCoachContext } from '../../services/coachContext'
 import { useNutritionStore } from '../../stores/nutrition'
 import { useUserStore } from '../../stores/user'
 import { DAY_SHORT, DAY_NAMES, ENERGY_REFERENCES, TARGETS, RULES, RAISE_CALORIES_WHEN } from '../../nutrition/plan'
@@ -27,6 +28,14 @@ const entriesLast14 = computed(() => {
   return user.stats_history.filter(s => new Date(s.recorded_at).getTime() > limit).length
 })
 
+const copying = ref(false)
+async function copyContext() {
+  if (copying.value) return
+  copying.value = true
+  await copyCoachContext()
+  copying.value = false
+}
+
 const newWeight = ref<number | null>(null)
 function saveWeight() {
   if (!newWeight.value || newWeight.value <= 0) return
@@ -40,6 +49,12 @@ function saveWeight() {
 
 <template>
   <div class="numbers">
+    <section class="card">
+      <h2>Contexto para Claude</h2>
+      <p class="lead">Copia tu plan de entrenamiento, tus comidas, tu peso y lo que marcaste esta semana, leído de Supabase en este momento. Pégalo en un chat de Claude para hacer consultas exactas.</p>
+      <button class="btn btn-primary" :disabled="copying" @click="copyContext">{{ copying ? 'Armando contexto…' : 'Copiar contexto' }}</button>
+    </section>
+
     <section class="card">
       <h2>Control de peso</h2>
       <p class="lead">Pésate cada mañana en ayunas. Con dos semanas de datos te digo qué ajustar.</p>
