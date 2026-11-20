@@ -100,7 +100,7 @@ export function buildDay(day: number, pace: Pace, dinner: DinnerKind, gymDays = 
   meals.push(rot
     ? meal({ id: '1400', time: '14:00', name: 'Almuerzo', items: items([rot[0], 130], ['arroz', q.arroz], ['frijoles', 100], ['verdura', 150], ['aguacate', q.aguacate]) })
     : meal({ id: '1400', time: '14:00', name: 'Almuerzo libre', items: [], libre: { kcal: 600, p: 40, c: 60, f: 20 } }))
-  meals.push(meal({ id: '1700', time: '17:00', name: 'Merienda', items: items(['yogur', 170], ['fruta', 100], ['avena', 20], ['leche', 35]) }))
+  meals.push(meal({ id: '1700', time: '17:00', name: 'Merienda', items: items(['yogur', 170], ['fruta', 100], ['leche', 35]) }))
   if (rot) {
     const base: [FoodId, number][] = [[rot[1], 130]]
     if (dinner === 'arepa') base.push(['masa', 114], ['mozz', 30])
@@ -161,7 +161,6 @@ export const SHOPPING: { group: string; items: { id: string; name: string; qty: 
     { id: 'frijoles', name: 'Frijoles', qty: '1 bolsa o lata' },
     { id: 'camote', name: 'Camote', qty: '1 kg' },
     { id: 'papa', name: 'Papa', qty: '1 kg' },
-    { id: 'avena', name: 'Avena', qty: '140 g' },
     { id: 'bananos', name: 'Bananos', qty: '5' },
     { id: 'fruta', name: 'Fruta de temporada', qty: '~700 g' },
     { id: 'maiz', name: 'Maíz pelado para la arepa', qty: 'según uso' }
