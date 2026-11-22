@@ -38,6 +38,7 @@ interface LogRow {
 }
 interface StatRow { weight_kg: number; body_fat_pct: number | null; notes: string | null; recorded_at: string }
 interface CheckRow { kind: 'meal' | 'skip'; period: string; item: string }
+interface ExtraRow { period: string; name: string; kcal: number; protein_g: number }
 
 export interface CoachData {
   config: Record<string, string>
@@ -45,6 +46,7 @@ export interface CoachData {
   logs: LogRow[]
   stats: StatRow[]
   checks: CheckRow[]
+  extras: ExtraRow[]
 }
 
 function must<T>(res: { data: T | null; error: { message: string } | null }, what: string): T {
@@ -56,19 +58,21 @@ export async function fetchCoachData(now = new Date()): Promise<CoachData> {
   const since7 = isoDate(new Date(now.getTime() - 7 * DAY_MS))
   const since30 = new Date(now.getTime() - 30 * DAY_MS).toISOString()
 
-  const [cfgRes, planRes, statsRes, checksRes] = await Promise.all([
+  const [cfgRes, planRes, statsRes, checksRes, extrasRes] = await Promise.all([
     supabase.from('user_configs').select('key, value').in('key', ['current_week', 'nutri_pace', 'nutri_dinner', 'nutri_gym_days']),
     supabase.from('plans')
       .select('id, name, current_week, training_days(day_number, session_name, plan_exercises(*)), plan_progressions(*)')
       .eq('is_active', true),
     supabase.from('body_stats').select('weight_kg, body_fat_pct, notes, recorded_at').gte('recorded_at', since30).order('recorded_at', { ascending: false }),
-    supabase.from('nutrition_checks').select('kind, period, item').in('kind', ['meal', 'skip']).eq('checked', true).gte('period', since7)
+    supabase.from('nutrition_checks').select('kind, period, item').in('kind', ['meal', 'skip']).eq('checked', true).gte('period', since7),
+    supabase.from('nutrition_extras').select('period, name, kcal, protein_g').eq('deleted', false).gte('period', since7)
   ])
 
   const config = Object.fromEntries(must<{ key: string; value: string }[]>(cfgRes as any, 'configuración').map(r => [r.key, r.value]))
   const plan = must<PlanRow[]>(planRes as any, 'plan activo')[0] ?? null
   const stats = must<StatRow[]>(statsRes as any, 'peso')
   const checks = must<CheckRow[]>(checksRes as any, 'comidas')
+  const extras = must<ExtraRow[]>(extrasRes as any, 'comidas fuera del plan')
 
   let logs: LogRow[] = []
   if (plan) {
@@ -79,7 +83,7 @@ export async function fetchCoachData(now = new Date()): Promise<CoachData> {
       .order('logged_at', { ascending: false }).limit(600)
     logs = must<LogRow[]>(logsRes as any, 'registros de entrenamiento')
   }
-  return { config, plan, logs, stats, checks }
+  return { config, plan, logs, stats, checks, extras }
 }
 
 // ---------- Formato ----------
@@ -236,9 +240,13 @@ export function formatCoachContext(d: CoachData, now = new Date()): string {
     const eaten = d.checks.filter(c => c.kind === 'meal' && c.period === date).map(c => c.item)
     const skipped = d.checks.filter(c => c.kind === 'skip' && c.period === date).map(c => c.item)
     const label = `${DAY_NAMES[idx]} ${date}${back === 0 ? ' (hoy)' : ''}`
-    if (!eaten.length) { push(`- ${label}: nada marcado`); continue }
-    const t = eatenTotal(plan, eaten, skipped)
-    push(`- ${label}: ${eaten.length} de ${plan.meals.length} comidas, ~${r0(t.kcal)} kcal y ${r0(t.p)} g de proteína (plan del día: ${fmt(plan.total.kcal)} kcal)${skipped.length ? `; omitidos: ${skipped.join(', ')}` : ''}`)
+    const extras = d.extras.filter(e => e.period === date)
+    if (!eaten.length && !extras.length) { push(`- ${label}: nada marcado`); continue }
+    const t = eaten.length ? eatenTotal(plan, eaten, skipped) : { kcal: 0, p: 0 }
+    const xk = extras.reduce((a, e) => a + e.kcal, 0)
+    const xp = extras.reduce((a, e) => a + e.protein_g, 0)
+    const out = extras.length ? `; fuera del plan: ${extras.map(e => `${e.name} (~${r0(e.kcal)} kcal, ${r0(e.protein_g)} g de proteína)`).join(', ')}` : ''
+    push(`- ${label}: ${eaten.length} de ${plan.meals.length} comidas del plan, ~${r0(t.kcal + xk)} kcal y ${r0(t.p + xp)} g de proteína en total (plan del día: ${fmt(plan.total.kcal)} kcal)${skipped.length ? `; omitidos: ${skipped.join(', ')}` : ''}${out}`)
   }
 
   // Peso
