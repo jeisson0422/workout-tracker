@@ -30,7 +30,8 @@ export const FOODS: Record<FoodId, Food> = {
   frijoles:  { per: 100, kcal: 130, p: 8.5,  c: 23,   f: 0.5,  label: grams('de frijoles') },
   verdura:   { per: 100, kcal: 33,  p: 2,    c: 6,    f: 0.3,  label: grams('de verdura (brócoli, zanahoria, chile)') },
   aguacate:  { per: 100, kcal: 160, p: 2,    c: 9,    f: 15,   label: grams('de aguacate') },
-  yogur:     { per: 100, kcal: 59,  p: 10,   c: 3.6,  f: 0.4,  label: grams('de yogur griego natural') },
+  // Dos Pinos Griego Plus, promedio de arándano (150 kcal) y fresa-banano (154 kcal) por vasito de 200 ml.
+  yogur:     { per: 100, kcal: 76,  p: 12.5, c: 4.75, f: 0.75, label: q => [`${q} ml`, 'de yogur Dos Pinos Griego Plus (1 vasito)'] },
   fruta:     { per: 100, kcal: 50,  p: 0.6,  c: 12,   f: 0.2,  label: grams('de fruta') },
   avena:     { per: 100, kcal: 380, p: 13,   c: 67,   f: 7,    label: grams('de avena') },
   camote:    { per: 100, kcal: 90,  p: 2,    c: 21,   f: 0.1,  label: grams('de camote al horno') },
