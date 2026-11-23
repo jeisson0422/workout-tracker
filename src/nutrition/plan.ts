@@ -100,7 +100,7 @@ export function buildDay(day: number, pace: Pace, dinner: DinnerKind, gymDays = 
   meals.push(rot
     ? meal({ id: '1400', time: '14:00', name: 'Almuerzo', items: items([rot[0], 130], ['arroz', q.arroz], ['frijoles', 100], ['verdura', 150], ['aguacate', q.aguacate]) })
     : meal({ id: '1400', time: '14:00', name: 'Almuerzo libre', items: [], libre: { kcal: 600, p: 40, c: 60, f: 20 } }))
-  meals.push(meal({ id: '1700', time: '17:00', name: 'Merienda', items: items(['yogur', 170], ['fruta', 100], ['leche', 35]) }))
+  meals.push(meal({ id: '1700', time: '17:00', name: 'Merienda', items: items(['yogur', 200], ['fruta', 100], ['leche', 35]) }))
   if (rot) {
     const base: [FoodId, number][] = [[rot[1], 130]]
     if (dinner === 'arepa') base.push(['masa', 114], ['mozz', 30])
@@ -152,7 +152,7 @@ export const SHOPPING: { group: string; items: { id: string; name: string; qty: 
     { id: 'pollo', name: 'Pollo, pechuga o muslo sin piel', qty: '1.2 kg' },
     { id: 'carne', name: 'Carne molida 90/10', qty: '700 g' },
     { id: 'atun', name: 'Atún en lata', qty: '2 latas' },
-    { id: 'yogur', name: 'Yogur griego natural', qty: '1.2 kg' },
+    { id: 'yogur', name: 'Yogur Dos Pinos Griego Plus (vasitos de 200 ml)', qty: '2 cajas (8 vasitos)' },
     { id: 'whey', name: 'Proteína en polvo', qty: '7 scoops' }
   ] },
   { group: 'Carbohidratos', items: [
