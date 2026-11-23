@@ -130,6 +130,21 @@ export const useNutritionStore = defineStore('nutrition', {
       this.tick++
       syncService.sync()
     },
+    /** Comidas fuera del plan anotadas para una fecha. */
+    extras(period: string) {
+      this.tick
+      return dbService.getExtras(period)
+    },
+    addExtra(period: string, name: string, kcal: number, protein_g: number) {
+      dbService.addExtra(crypto.randomUUID(), period, name.trim(), kcal, protein_g)
+      this.tick++
+      syncService.sync()
+    },
+    removeExtra(id: string) {
+      dbService.removeExtra(id)
+      this.tick++
+      syncService.sync()
+    },
     clearChecks(kind: CheckKind, period: string) {
       dbService.getNutritionChecks(kind, period).forEach(item => dbService.setNutritionCheck(kind, period, item, false))
       this.tick++

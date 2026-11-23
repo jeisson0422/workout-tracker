@@ -166,6 +166,17 @@ class LocalDbService {
       PRIMARY KEY (kind, period, item)
     )`);
 
+    // Comidas fuera del plan (lo que se comió y no estaba en el plan). Borrado lógico para poder sincronizarlo.
+    this.run(`CREATE TABLE IF NOT EXISTS nutrition_extras (
+      id TEXT PRIMARY KEY,
+      period TEXT NOT NULL,
+      name TEXT NOT NULL,
+      kcal REAL NOT NULL,
+      protein_g REAL NOT NULL DEFAULT 0,
+      deleted INTEGER DEFAULT 0,
+      synced INTEGER DEFAULT 0
+    )`);
+
     this.runMigrations();
     this.persistDB();
   }
@@ -377,6 +388,25 @@ class LocalDbService {
       "INSERT OR REPLACE INTO nutrition_checks (kind, period, item, checked, synced) VALUES (?, ?, ?, ?, 0)",
       [kind, period, item, checked ? 1 : 0]
     );
+  }
+
+  // --- Comidas fuera del plan ---
+  getExtras(period: string): { id: string; name: string; kcal: number; protein_g: number }[] {
+    const res = this.q("SELECT id, name, kcal, protein_g FROM nutrition_extras WHERE period=? AND deleted=0 ORDER BY rowid", [period]);
+    return res.length && res[0].values
+      ? res[0].values.map((r: any) => ({ id: r[0], name: r[1], kcal: r[2], protein_g: r[3] }))
+      : [];
+  }
+
+  addExtra(id: string, period: string, name: string, kcal: number, protein_g: number) {
+    this.run(
+      "INSERT OR REPLACE INTO nutrition_extras (id, period, name, kcal, protein_g, deleted, synced) VALUES (?, ?, ?, ?, ?, 0, 0)",
+      [id, period, name, kcal, protein_g]
+    );
+  }
+
+  removeExtra(id: string) {
+    this.run("UPDATE nutrition_extras SET deleted=1, synced=0 WHERE id=?", [id]);
   }
 
   getStatsHistory(limit: number = 20): any[] {

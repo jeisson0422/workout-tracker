@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, reactive } from 'vue'
-import { CheckIcon, ChevronDownIcon } from 'lucide-vue-next'
+import { computed, reactive, ref } from 'vue'
+import { CheckIcon, ChevronDownIcon, PlusIcon, XIcon } from 'lucide-vue-next'
 import { haptic } from '../../services/haptics'
 import { useNutritionStore, dateOfWeekday } from '../../stores/nutrition'
 import { DAY_NAMES, eatenTotal, mealTotal, skipKey } from '../../nutrition/plan'
@@ -13,7 +13,31 @@ const plan = computed(() => store.planFor(props.day))
 const date = computed(() => dateOfWeekday(props.day))
 const eaten = computed(() => store.checks('meal', date.value))
 const skips = computed(() => store.checks('skip', date.value))
-const sums = computed(() => eatenTotal(plan.value, eaten.value, skips.value))
+const planSums = computed(() => eatenTotal(plan.value, eaten.value, skips.value))
+const extras = computed(() => store.extras(date.value))
+// Lo comido = comidas del plan marcadas + lo que anotaste fuera del plan (solo calorías y proteína).
+const sums = computed(() => ({
+  ...planSums.value,
+  kcal: planSums.value.kcal + extras.value.reduce((a, e) => a + e.kcal, 0),
+  p: planSums.value.p + extras.value.reduce((a, e) => a + e.protein_g, 0)
+}))
+
+const adding = ref(false)
+const form = reactive({ name: '', kcal: null as number | null, protein: null as number | null })
+const canSave = computed(() => form.name.trim().length > 0 && !!form.kcal && form.kcal > 0 && form.kcal <= 5000 && (form.protein ?? 0) >= 0 && (form.protein ?? 0) <= 500)
+function saveExtra() {
+  if (!canSave.value) return
+  store.addExtra(date.value, form.name, form.kcal as number, form.protein ?? 0)
+  haptic('success')
+  form.name = ''
+  form.kcal = null
+  form.protein = null
+  adding.value = false
+}
+function removeExtra(id: string) {
+  haptic('light')
+  store.removeExtra(id)
+}
 const isSkipped = (mealId: string, food: string) => skips.value.includes(skipKey(mealId, food))
 const skippedCount = (mealId: string) => skips.value.filter(k => k.startsWith(mealId + ':')).length
 const isToday = computed(() => props.day === store.todayIndex)
@@ -103,6 +127,37 @@ function toggleIngredient(mealId: string, food: string) {
         </div>
       </li>
     </ol>
+
+    <section class="extras" aria-label="Comidas fuera del plan">
+      <h3>Fuera del plan</h3>
+      <ul v-if="extras.length" class="extra-list">
+        <li v-for="e in extras" :key="e.id">
+          <div><b>{{ e.name }}</b><span>{{ fmt(e.kcal) }} kcal · {{ Math.round(e.protein_g) }} g de proteína</span></div>
+          <button class="x" :aria-label="`Quitar ${e.name}`" @click="removeExtra(e.id)"><XIcon aria-hidden="true" /></button>
+        </li>
+      </ul>
+      <p v-else-if="!adding" class="extra-hint">Si comiste algo que no estaba en el plan, anótalo con tus calorías estimadas.</p>
+
+      <form v-if="adding" class="extra-form" @submit.prevent="saveExtra">
+        <label for="ex-name">Qué comiste</label>
+        <input id="ex-name" v-model="form.name" type="text" maxlength="80" placeholder="Sándwich de lomo" autocomplete="off">
+        <div class="two">
+          <div>
+            <label for="ex-kcal">Calorías</label>
+            <input id="ex-kcal" v-model.number="form.kcal" type="number" min="1" max="5000" step="1" inputmode="numeric" placeholder="700">
+          </div>
+          <div>
+            <label for="ex-p">Proteína (g)</label>
+            <input id="ex-p" v-model.number="form.protein" type="number" min="0" max="500" step="1" inputmode="numeric" placeholder="40">
+          </div>
+        </div>
+        <div class="two">
+          <button type="button" class="btn ghost" @click="adding = false">Cancelar</button>
+          <button type="submit" class="btn btn-primary" :disabled="!canSave">Anotar</button>
+        </div>
+      </form>
+      <button v-else class="btn add" @click="adding = true"><PlusIcon aria-hidden="true" />Anotar comida fuera del plan</button>
+    </section>
   </div>
 </template>
 
@@ -164,6 +219,24 @@ function toggleIngredient(mealId: string, food: string) {
 .items .kc { font-size: 12px; color: var(--text3); white-space: nowrap; }
 .note { margin: 8px 0 0; font-size: 13px; color: var(--text2); }
 .libre { margin: 8px 0 0; font-size: 14px; line-height: 1.45; }
+.extras { margin: 18px 16px 0; padding: 14px; background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--r); }
+.extras h3 { margin: 0 0 8px; font-size: 15px; font-weight: 700; }
+.extra-hint { margin: 0 0 12px; font-size: 13px; line-height: 1.45; color: var(--text2); }
+.extra-list { list-style: none; margin: 0 0 12px; padding: 0; }
+.extra-list li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-top: 1px solid var(--border); }
+.extra-list li:first-child { border-top: none; }
+.extra-list b { display: block; font-size: 15px; overflow-wrap: anywhere; }
+.extra-list span { font-size: 13px; color: var(--text2); }
+.x { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex-shrink: 0; background: transparent; border: none; border-radius: 50%; color: var(--text3); cursor: pointer; transition: transform 160ms ease-out; }
+.x:active { transform: scale(0.94); }
+.x svg { width: 18px; height: 18px; }
+.extra-form label { display: block; margin: 0 0 6px; font-size: 13px; font-weight: 600; color: var(--text2); }
+.extra-form input { width: 100%; min-width: 0; box-sizing: border-box; padding: 12px; background: var(--bg); border: 1.5px solid var(--border2); border-radius: var(--r2); color: var(--text); font: inherit; font-size: 16px; }
+.extra-form .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.extra-form .btn:disabled { opacity: .45; }
+.extra-form .ghost { background: transparent; border: 1.5px solid var(--border2); color: var(--text2); }
+.add { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; background: transparent; border: 1.5px dashed var(--border2); color: var(--text); }
+.add svg { width: 18px; height: 18px; }
 :focus-visible { outline: 3px solid var(--accent2); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .fill, .meal-name svg { transition: none; } }
 </style>

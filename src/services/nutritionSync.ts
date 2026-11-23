@@ -8,7 +8,8 @@ import { useNutritionStore } from '../stores/nutrition'
 
 const CURSOR_STATS = 'last_body_stats_sync_date'
 const CURSOR_CHECKS = 'last_nutrition_checks_sync_date'
-const EPOCH = '2000-01-01T00:00:00.000Z'
+const CURSOR_EXTRAS = 'last_nutrition_extras_sync_date'
+const EPOCH ='2000-01-01T00:00:00.000Z'
 
 // Los cursores no se suben a user_configs: se guardan ya marcados como sincronizados.
 function getCursor(key: string): string {
@@ -82,11 +83,42 @@ async function pullChecks() {
   return true
 }
 
+async function pushExtras(userId: string) {
+  const rows = rowsOf(dbService.q('SELECT id, period, name, kcal, protein_g, deleted FROM nutrition_extras WHERE synced = 0'))
+  if (!rows.length) return
+  const payload = rows.map(r => ({ id: r[0], user_id: userId, period: r[1], name: r[2], kcal: r[3], protein_g: r[4], deleted: r[5] === 1 }))
+  const { error } = await supabase.from('nutrition_extras').upsert(payload)
+  if (error) return
+  for (const r of rows) dbService.run('UPDATE nutrition_extras SET synced = 1 WHERE id = ?', [r[0]])
+}
+
+async function pullExtras() {
+  const cursor = getCursor(CURSOR_EXTRAS)
+  const { data, error } = await supabase.from('nutrition_extras').select('*').gt('updated_at', cursor).order('updated_at', { ascending: true })
+  if (error || !data?.length) return false
+
+  let latest = cursor
+  for (const e of data) {
+    dbService.run(
+      `INSERT INTO nutrition_extras (id, period, name, kcal, protein_g, deleted, synced) VALUES (?, ?, ?, ?, ?, ?, 1)
+       ON CONFLICT(id) DO UPDATE SET period = excluded.period, name = excluded.name, kcal = excluded.kcal,
+         protein_g = excluded.protein_g, deleted = excluded.deleted, synced = 1
+       WHERE nutrition_extras.synced = 1`,
+      [e.id, e.period, e.name, e.kcal, e.protein_g, e.deleted ? 1 : 0]
+    )
+    if (e.updated_at > latest) latest = e.updated_at
+  }
+  setCursor(CURSOR_EXTRAS, latest)
+  return true
+}
+
 /** Sube lo pendiente y baja lo nuevo. Recarga la tienda si llegó algo del servidor. */
 export async function syncNutrition(userId: string): Promise<void> {
   await pushBodyStats(userId)
   await pushChecks(userId)
+  await pushExtras(userId)
   const gotStats = await pullBodyStats()
   const gotChecks = await pullChecks()
-  if (gotStats || gotChecks) useNutritionStore().reload()
+  const gotExtras = await pullExtras()
+  if (gotStats || gotChecks || gotExtras) useNutritionStore().reload()
 }
