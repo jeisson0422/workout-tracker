@@ -7,6 +7,7 @@ import { dbService } from '../services/localDb'
 import { haptic } from '../services/haptics'
 import { startRestTimer, dismissRestTimer } from '../services/restTimer'
 import { showToast } from '../services/toast'
+import RpeHelp from './RpeHelp.vue'
 
 const props = defineProps<{
   isOpen: boolean
@@ -343,7 +344,10 @@ function formatRest(sec: number) {
           <div class="input-group"><label>Series realizadas</label><input type="number" v-model="mSets" min="1" max="10"></div>
           <div v-if="data?.exType === 'isometric'" class="input-group"><label>Repeticiones</label><input type="number" v-model="mReps" min="0" max="50"></div>
           <div v-else class="input-group"><label>Repeticiones</label><input type="number" v-model="mReps" min="1" max="50"></div>
-          <div class="input-group input-group-narrow"><label>RPE</label><input type="number" v-model="mRpe" min="1" max="10" step="0.5"></div>
+          <div class="input-group input-group-narrow">
+            <div class="label-row"><label>RPE</label><RpeHelp /></div>
+            <input type="number" v-model="mRpe" min="1" max="10" step="0.5">
+          </div>
         </div>
         <div v-if="data?.exType === 'isometric'" class="input-row">
           <div class="input-group"><label>Segundos (hold)</label><input type="number" v-model="mDurationSec" min="1" max="300"></div>
@@ -517,6 +521,7 @@ function formatRest(sec: number) {
 .input-row { display: flex; gap: 10px; margin-bottom: 12px; }
 .input-group { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .input-group-narrow { flex: 0 0 64px; }
+.label-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; min-width: 0; }
 .input-group label { font-size: 12px; color: var(--text2); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 input[type=number], input[type=text] { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r3); color: var(--text); font-size: 16px; padding: 12px; width: 100%; }
 input:focus { outline: none; border-color: var(--accent); }
