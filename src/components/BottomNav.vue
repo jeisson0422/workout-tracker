@@ -41,6 +41,8 @@ const route = useRoute()
   display: flex;
   z-index: 100;
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* Capa propia: evita que Safari lo reposicione mal al rotar */
+  transform: translateZ(0);
 }
 .nav-btn {
   position: relative;

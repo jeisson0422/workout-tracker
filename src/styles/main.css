@@ -92,12 +92,23 @@
   --color-border2: var(--border2);
 }
 
+/* iOS agranda el texto al girar a horizontal y puede dejar la página con zoom,
+   lo que desplaza los elementos fixed (el menú inferior) hacia el centro. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overflow-x: clip;
+}
+
 body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
   min-height: 100vh;
-  overflow-x: hidden;
+  min-height: 100dvh;
+  /* clip en vez de hidden: hidden convierte el body en contenedor de scroll en iOS
+     y position: fixed deja de anclarse a la pantalla */
+  overflow-x: clip;
   -webkit-tap-highlight-color: transparent;
 }
 

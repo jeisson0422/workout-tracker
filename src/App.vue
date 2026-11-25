@@ -76,6 +76,7 @@ const showBottomNav = computed(() => !route.meta.hideNav)
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
   max-width: 430px;
   margin: 0 auto;
 }

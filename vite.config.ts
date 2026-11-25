@@ -49,6 +49,8 @@ export default defineConfig({
         name: 'Workout Tracker',
         short_name: 'Workout',
         display: 'standalone',
+        // Solo aplica a la app instalada en Android; iOS lo ignora
+        orientation: 'portrait',
         background_color: '#141517',
         theme_color: '#f5c800',
         icons: [
