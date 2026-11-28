@@ -149,6 +149,44 @@ function registerWeight() {
   showToast('Peso registrado: ' + newWeight.value + 'kg', 'success')
 }
 
+async function editWeightEntry(entry: { sync_id?: string; weight_kg: number; recorded_at: string }) {
+  if (!entry.sync_id) return
+  const fecha = new Date(entry.recorded_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'long' })
+  const result = await Swal.fire({
+    ...getSwalSettings('default'),
+    title: 'Peso del ' + fecha,
+    input: 'number',
+    inputLabel: 'Peso (kg)',
+    inputValue: entry.weight_kg,
+    inputAttributes: { step: '0.1', min: '0' },
+    inputValidator: (v: string) => (!v || parseFloat(v) <= 0 ? 'Escribe un peso válido' : null),
+    showCancelButton: true,
+    showDenyButton: true,
+    confirmButtonText: 'Guardar',
+    denyButtonText: 'Eliminar'
+  })
+  if (result.isConfirmed) {
+    userStore.updateWeightEntry(entry.sync_id, parseFloat(result.value))
+    haptic('success')
+    showToast('Peso actualizado', 'success')
+  } else if (result.isDenied) {
+    const confirm = await Swal.fire({
+      ...getSwalSettings('danger'),
+      title: '¿Eliminar este registro?',
+      text: entry.weight_kg + ' kg del ' + fecha + '. Se borra de tu historial y de la nube. No se puede deshacer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Eliminar registro',
+      cancelButtonText: 'Conservar'
+    })
+    if (confirm.isConfirmed) {
+      userStore.deleteWeightEntry(entry.sync_id)
+      haptic('success')
+      showToast('Registro eliminado', 'success')
+    }
+  }
+}
+
 async function resetAll() {
   const result = await Swal.fire({
     ...getSwalSettings('danger'),
@@ -263,7 +301,7 @@ const appVersion = `${__APP_VERSION__} · compilada ${buildDate}`
         </div>
 
         <div v-if="userStore.stats_history.length > 0" class="history-list">
-          <div v-for="(entry, b) in userStore.stats_history" :key="b" class="history-item">
+          <div v-for="(entry, b) in userStore.stats_history" :key="entry.sync_id || b" class="history-item" role="button" tabindex="0" :aria-label="'Editar o eliminar peso de ' + entry.weight_kg + ' kg'" @click="editWeightEntry(entry)" @keydown.enter.prevent="editWeightEntry(entry)" @keydown.space.prevent="editWeightEntry(entry)">
             <div class="history-date">{{ new Date(entry.recorded_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) }}</div>
             <div class="history-val">{{ entry.weight_kg }}<span class="unit">kg</span></div>
             <div class="history-diff" v-if="b < userStore.stats_history.length - 1">
@@ -271,8 +309,10 @@ const appVersion = `${__APP_VERSION__} · compilada ${buildDate}`
                 {{ (entry.weight_kg - userStore.stats_history[b+1].weight_kg).toFixed(1) }}
               </span>
             </div>
+            <span class="history-edit" aria-hidden="true">✎</span>
           </div>
         </div>
+        <p v-if="userStore.stats_history.length > 0" class="history-hint">Toca un registro para editarlo o eliminarlo.</p>
       </div>
 
       <div class="separator"></div>
@@ -405,7 +445,10 @@ textarea { width: 100%; background: var(--bg2); border: 1px solid var(--border);
 .modality-item.active .modality-check { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
 
 .history-list { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 10px; }
-.history-item { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.history-item { display: flex; align-items: center; padding: 8px 0; min-height: 44px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.history-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.history-edit { margin-left: 12px; color: var(--text2); font-size: 16px; }
+.history-hint { margin: 10px 0 0; font-size: 12px; color: var(--text3); }
 .history-date { font-size: 13px; color: var(--text2); width: 60px; }
 .history-val { font-size: 16px; font-weight: 700; flex: 1; }
 .history-val .unit { font-size: 12px; margin-left: 2px; font-weight: 500; color: var(--text2); }

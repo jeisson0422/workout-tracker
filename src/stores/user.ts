@@ -16,6 +16,7 @@ export interface UserProfile {
 }
 
 export interface UserStats {
+  sync_id?: string;
   weight_kg: number;
   body_fat_pct: number | null;
   notes: string;
@@ -81,6 +82,25 @@ export const useUserStore = defineStore('user', {
       this.profile.weight_kg = weight; // Update current weight in profile
       this.saveProfile();
       this.loadStats();
+    },
+
+    /** Tras editar o borrar, el peso actual del perfil vuelve a ser el registro más reciente. */
+    refreshCurrentWeight() {
+      const latest = this.stats_history[0];
+      this.profile.weight_kg = latest ? latest.weight_kg : null;
+      this.saveProfile();
+    },
+
+    updateWeightEntry(syncId: string, weight: number) {
+      dbService.updateStatsWeight(syncId, weight);
+      this.loadStats();
+      this.refreshCurrentWeight();
+    },
+
+    deleteWeightEntry(syncId: string) {
+      dbService.deleteStats(syncId);
+      this.loadStats();
+      this.refreshCurrentWeight();
     }
   }
 });
