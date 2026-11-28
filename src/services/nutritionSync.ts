@@ -22,8 +22,13 @@ function setCursor(key: string, value: string) {
 const rowsOf = (res: any[]): any[][] => (res.length && res[0].values ? res[0].values : [])
 
 async function pushBodyStats(userId: string) {
-  const rows = rowsOf(dbService.q('SELECT sync_id, weight_kg, body_fat_pct, notes, recorded_at FROM user_stats WHERE synced = 0 AND sync_id IS NOT NULL'))
+  const rows = rowsOf(dbService.q('SELECT sync_id, weight_kg, body_fat_pct, notes, recorded_at, deleted FROM user_stats WHERE synced = 0 AND sync_id IS NOT NULL'))
   for (const r of rows) {
+    if (r[5] === 1) {
+      const { error } = await supabase.from('body_stats').delete().eq('id', r[0])
+      if (!error) dbService.run('DELETE FROM user_stats WHERE sync_id = ?', [r[0]])
+      continue
+    }
     const { error } = await supabase.from('body_stats').upsert({
       id: r[0], user_id: userId, weight_kg: r[1], body_fat_pct: r[2], notes: r[3] || '',
       recorded_at: new Date(r[4]).toISOString()

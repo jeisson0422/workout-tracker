@@ -195,6 +195,10 @@ class LocalDbService {
         });
       }
       this.run("CREATE UNIQUE INDEX IF NOT EXISTS idx_user_stats_sync_id ON user_stats(sync_id)");
+      // Borrado lógico: permite avisar a Supabase antes de quitar la fila local
+      if (!colsStats[0].values.some((col: any) => col[1] === 'deleted')) {
+        this.run("ALTER TABLE user_stats ADD COLUMN deleted INTEGER DEFAULT 0");
+      }
     }
 
     // Migrar workout_log
@@ -410,16 +414,27 @@ class LocalDbService {
   }
 
   getStatsHistory(limit: number = 20): any[] {
-    const res = this.q("SELECT weight_kg, body_fat_pct, notes, recorded_at FROM user_stats ORDER BY recorded_at DESC LIMIT ?", [limit]);
+    const res = this.q("SELECT sync_id, weight_kg, body_fat_pct, notes, recorded_at FROM user_stats WHERE COALESCE(deleted, 0) = 0 ORDER BY recorded_at DESC LIMIT ?", [limit]);
     if (res.length && res[0].values) {
       return res[0].values.map((r: any) => ({
-        weight_kg: r[0],
-        body_fat_pct: r[1],
-        notes: r[2],
-        recorded_at: r[3]
+        sync_id: r[0],
+        weight_kg: r[1],
+        body_fat_pct: r[2],
+        notes: r[3],
+        recorded_at: r[4]
       }));
     }
     return [];
+  }
+
+  /** Corrige el peso de un registro; se vuelve a subir a Supabase en el próximo sync. */
+  updateStatsWeight(syncId: string, weightKg: number) {
+    this.run("UPDATE user_stats SET weight_kg = ?, synced = 0 WHERE sync_id = ?", [weightKg, syncId]);
+  }
+
+  /** Marca el registro como borrado; el sync lo elimina de Supabase y luego de la base local. */
+  deleteStats(syncId: string) {
+    this.run("UPDATE user_stats SET deleted = 1, synced = 0 WHERE sync_id = ?", [syncId]);
   }
 
   saveLogSets(logSyncId: string, sets: { setNumber: number; weight: number; reps: number; rpe: number; durationSec: number | null }[]) {
